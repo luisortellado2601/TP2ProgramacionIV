@@ -1,59 +1,87 @@
-# NextplayFrontend
+# NextPlay – Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
+Frontend en **Angular 22** de NextPlay, la red social de videojuegos del TP #2 de Programación IV (UTN Avellaneda).
+Consume la API NestJS de la carpeta [`../Backend`](../Backend). El estado del proyecto y los sprints están en [`../Backend/README.md`](../Backend/README.md).
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node.js 22 o superior y npm.
+- El backend levantado en `http://localhost:3000` (ver `../Backend/README.md`).
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Cómo levantarlo
 
 ```bash
-ng generate component component-name
+npm install
+npm start            # ng serve → http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Otros comandos:
 
-```bash
-ng generate --help
+| Comando | Qué hace |
+|---|---|
+| `npm run build` | Build de producción en `dist/nextplay-frontend` |
+| `npm test` | Tests unitarios con Vitest |
+| `npm run watch` | Build en modo desarrollo, recompilando al guardar |
+
+## Configuración de la API
+
+La URL del backend se define en los environments:
+
+- `src/environments/environment.development.ts` → se usa con `ng serve` (`http://localhost:3000`).
+- `src/environments/environment.ts` → se usa en el build de producción. **Antes del deploy hay que reemplazar `apiUrl` por la URL pública del backend.**
+
+## Estructura
+
+```
+src/
+├── app/
+│   ├── componentes/
+│   │   ├── login/          Login por correo o nombre de usuario
+│   │   ├── registro/       Registro con validaciones por campo
+│   │   ├── publicaciones/  Listado de publicaciones (esqueleto, contenido en Sprint #2)
+│   │   ├── mi-perfil/      Datos del usuario logueado (publicaciones en Sprint #2)
+│   │   ├── navbar/         Navegación y cierre de sesión
+│   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
+│   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
+│   ├── models/             Interfaces de usuario, sesión y payloads
+│   ├── services/           AuthService (sesión en localStorage) y ModalService
+│   ├── utils/              Validadores propios y helper de mensajes de error
+│   ├── app.routes.ts       Rutas con lazy loading
+│   └── app.config.ts       Providers (router, HttpClient)
+├── environments/           URL de la API por entorno
+└── styles.css              Sistema de diseño global (variables, formularios, botones)
 ```
 
-## Building
+## Rutas
 
-To build the project run:
+| Ruta | Componente | Acceso |
+|---|---|---|
+| `/login` | Login | Solo sin sesión |
+| `/registro` | Registro | Solo sin sesión |
+| `/publicaciones` | Publicaciones | Requiere sesión |
+| `/perfil` | Mi perfil | Requiere sesión |
+| cualquier otra | redirige a `/publicaciones` | — |
 
-```bash
-ng build
-```
+## Validaciones del registro
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Son las mismas que aplica el backend (`RegistroDto`), para que el usuario vea los errores antes de enviar:
 
-## Running unit tests
+| Campo | Regla |
+|---|---|
+| Nombre / Apellido | Obligatorio, 2 a 50 caracteres, solo letras (con tildes y ñ), espacios, `'` y `-` |
+| Correo | Obligatorio, formato válido, máximo 100 caracteres; se envía en minúsculas |
+| Nombre de usuario | 3 a 20 caracteres: letras, números, `.` y `_`, sin espacios |
+| Contraseña | 8 a 64 caracteres, al menos una mayúscula y un número |
+| Repetir contraseña | Obligatorio e igual a la contraseña |
+| Fecha de nacimiento | Obligatoria, no puede ser futura ni anterior a 1900 |
+| Descripción | Opcional, máximo 280 caracteres |
+| Perfil | `usuario` (por defecto) o `administrador` |
+| Imagen de perfil | Opcional, JPG/PNG/WEBP, máximo 2 MB, con vista previa. Se envía como data URL en base64 y el back la guarda en Supabase Storage |
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+En el login se pide correo o nombre de usuario (máximo 100 caracteres) y una contraseña con el mismo formato que en el registro.
 
-```bash
-ng test
-```
+## Decisiones de diseño
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Sin librerías de UI: estilos propios en `styles.css` con variables CSS, reutilizados por todas las pantallas.
+- Nada de `alert()`: todos los mensajes pasan por `ModalService` y el componente `Modal`.
+- Los mensajes de error del backend (`message` de Nest, string o array) se muestran tal cual en el modal (`utils/mensaje-error.ts`).

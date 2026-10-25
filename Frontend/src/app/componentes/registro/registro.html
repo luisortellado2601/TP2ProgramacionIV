@@ -9,11 +9,22 @@
         <input
           id="nombre"
           type="text"
+          maxlength="50"
           formControlName="nombre"
           [class.is-invalid]="form.controls.nombre.invalid && form.controls.nombre.touched"
         />
-        @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-          <span class="form-field__error">El nombre es obligatorio.</span>
+        @if (form.controls.nombre.touched && form.controls.nombre.errors; as errores) {
+          <span class="form-field__error">
+            @if (errores['required'] || errores['soloEspacios']) {
+              El nombre es obligatorio.
+            } @else if (errores['minlength']) {
+              Debe tener al menos 2 caracteres.
+            } @else if (errores['maxlength']) {
+              No puede superar los 50 caracteres.
+            } @else if (errores['pattern']) {
+              Solo letras, espacios, apóstrofes y guiones.
+            }
+          </span>
         }
       </div>
 
@@ -22,11 +33,22 @@
         <input
           id="apellido"
           type="text"
+          maxlength="50"
           formControlName="apellido"
           [class.is-invalid]="form.controls.apellido.invalid && form.controls.apellido.touched"
         />
-        @if (form.controls.apellido.invalid && form.controls.apellido.touched) {
-          <span class="form-field__error">El apellido es obligatorio.</span>
+        @if (form.controls.apellido.touched && form.controls.apellido.errors; as errores) {
+          <span class="form-field__error">
+            @if (errores['required'] || errores['soloEspacios']) {
+              El apellido es obligatorio.
+            } @else if (errores['minlength']) {
+              Debe tener al menos 2 caracteres.
+            } @else if (errores['maxlength']) {
+              No puede superar los 50 caracteres.
+            } @else if (errores['pattern']) {
+              Solo letras, espacios, apóstrofes y guiones.
+            }
+          </span>
         }
       </div>
 
@@ -35,11 +57,20 @@
         <input
           id="correo"
           type="email"
+          maxlength="100"
           formControlName="correo"
           [class.is-invalid]="form.controls.correo.invalid && form.controls.correo.touched"
         />
-        @if (form.controls.correo.invalid && form.controls.correo.touched) {
-          <span class="form-field__error">Ingresá un correo válido.</span>
+        @if (form.controls.correo.touched && form.controls.correo.errors; as errores) {
+          <span class="form-field__error">
+            @if (errores['required']) {
+              El correo es obligatorio.
+            } @else if (errores['maxlength']) {
+              No puede superar los 100 caracteres.
+            } @else {
+              Ingresá un correo válido (ej: nombre&#64;mail.com).
+            }
+          </span>
         }
       </div>
 
@@ -48,13 +79,27 @@
         <input
           id="nombreUsuario"
           type="text"
+          maxlength="20"
           formControlName="nombreUsuario"
           [class.is-invalid]="
             form.controls.nombreUsuario.invalid && form.controls.nombreUsuario.touched
           "
         />
-        @if (form.controls.nombreUsuario.invalid && form.controls.nombreUsuario.touched) {
-          <span class="form-field__error">Debe tener al menos 3 caracteres.</span>
+        @if (
+          form.controls.nombreUsuario.touched && form.controls.nombreUsuario.errors;
+          as errores
+        ) {
+          <span class="form-field__error">
+            @if (errores['required']) {
+              El nombre de usuario es obligatorio.
+            } @else if (errores['minlength']) {
+              Debe tener al menos 3 caracteres.
+            } @else if (errores['maxlength']) {
+              No puede superar los 20 caracteres.
+            } @else if (errores['pattern']) {
+              Solo letras, números, puntos y guiones bajos (sin espacios).
+            }
+          </span>
         }
       </div>
 
@@ -63,12 +108,21 @@
         <input
           id="contrasena"
           type="password"
+          maxlength="64"
           formControlName="contrasena"
           [class.is-invalid]="form.controls.contrasena.invalid && form.controls.contrasena.touched"
         />
-        @if (form.controls.contrasena.invalid && form.controls.contrasena.touched) {
+        @if (form.controls.contrasena.touched && form.controls.contrasena.errors; as errores) {
           <span class="form-field__error">
-            Mínimo 8 caracteres, con al menos una mayúscula y un número.
+            @if (errores['required']) {
+              La contraseña es obligatoria.
+            } @else if (errores['minlength']) {
+              Debe tener al menos 8 caracteres.
+            } @else if (errores['maxlength']) {
+              No puede superar los 64 caracteres.
+            } @else if (errores['pattern']) {
+              Debe tener al menos una mayúscula y un número.
+            }
           </span>
         }
       </div>
@@ -78,17 +132,19 @@
         <input
           id="repetirContrasena"
           type="password"
+          maxlength="64"
           formControlName="repetirContrasena"
           [class.is-invalid]="
             form.controls.repetirContrasena.touched &&
             (form.controls.repetirContrasena.invalid || form.errors?.['contrasenasDistintas'])
           "
         />
-        @if (
-          form.controls.repetirContrasena.touched &&
-          (form.controls.repetirContrasena.invalid || form.errors?.['contrasenasDistintas'])
-        ) {
-          <span class="form-field__error">Las contraseñas no coinciden.</span>
+        @if (form.controls.repetirContrasena.touched) {
+          @if (form.controls.repetirContrasena.errors?.['required']) {
+            <span class="form-field__error">Repetí la contraseña.</span>
+          } @else if (form.errors?.['contrasenasDistintas']) {
+            <span class="form-field__error">Las contraseñas no coinciden.</span>
+          }
         }
       </div>
 
@@ -97,21 +153,78 @@
         <input
           id="fechaNacimiento"
           type="date"
+          [min]="fechaMinima"
+          [max]="fechaMaxima"
           formControlName="fechaNacimiento"
           [class.is-invalid]="
             form.controls.fechaNacimiento.invalid && form.controls.fechaNacimiento.touched
           "
         />
-        @if (form.controls.fechaNacimiento.invalid && form.controls.fechaNacimiento.touched) {
-          <span class="form-field__error">La fecha de nacimiento es obligatoria.</span>
+        @if (
+          form.controls.fechaNacimiento.touched && form.controls.fechaNacimiento.errors;
+          as errores
+        ) {
+          <span class="form-field__error">
+            @if (errores['required']) {
+              La fecha de nacimiento es obligatoria.
+            } @else if (errores['fechaFutura']) {
+              La fecha de nacimiento no puede ser futura.
+            } @else if (errores['fechaMuyAntigua']) {
+              La fecha de nacimiento no puede ser anterior a 1900.
+            } @else {
+              Ingresá una fecha válida.
+            }
+          </span>
         }
       </div>
 
       <div class="form-field">
-        <label for="descripcion">Descripción breve</label>
-        <textarea id="descripcion" rows="3" formControlName="descripcion"></textarea>
+        <label for="descripcion">
+          Descripción breve
+          <span class="text-muted">({{ form.controls.descripcion.value.length }}/280)</span>
+        </label>
+        <textarea
+          id="descripcion"
+          rows="3"
+          maxlength="280"
+          formControlName="descripcion"
+          [class.is-invalid]="
+            form.controls.descripcion.invalid && form.controls.descripcion.touched
+          "
+        ></textarea>
         @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
           <span class="form-field__error">Máximo 280 caracteres.</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="imagenPerfil">
+          Imagen de perfil <span class="text-muted">(opcional · JPG, PNG o WEBP · máx. 2 MB)</span>
+        </label>
+        <div class="imagen-perfil">
+          @if (imagenPerfil(); as imagen) {
+            <img class="imagen-perfil__preview" [src]="imagen" alt="Vista previa de la imagen" />
+          } @else {
+            <div class="imagen-perfil__placeholder">🎮</div>
+          }
+          <div class="imagen-perfil__acciones">
+            <input
+              #inputImagen
+              id="imagenPerfil"
+              type="file"
+              [accept]="tiposImagen"
+              [class.is-invalid]="errorImagen()"
+              (change)="seleccionarImagen($event)"
+            />
+            @if (imagenPerfil()) {
+              <button class="btn btn-link" type="button" (click)="quitarImagen(inputImagen)">
+                Quitar imagen
+              </button>
+            }
+          </div>
+        </div>
+        @if (errorImagen(); as error) {
+          <span class="form-field__error">{{ error }}</span>
         }
       </div>
 

@@ -11,6 +11,7 @@ import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema';
 import { RegistroDto } from './dto/registro.dto';
 import { LoginDto } from './dto/login.dto';
 import { PasswordHasher } from './password-hasher';
+import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private readonly usuarioModel: Model<UsuarioDocument>,
     private readonly passwordHasher: PasswordHasher,
     private readonly jwtService: JwtService,
+    private readonly almacenamientoService: AlmacenamientoService,
   ) {}
 
   async registro(dto: RegistroDto) {
@@ -39,6 +41,14 @@ export class AuthService {
       );
     }
 
+    // Se sube después de validar duplicados para no dejar imágenes huérfanas.
+    const imagenPerfilUrl = dto.imagenPerfil
+      ? await this.almacenamientoService.subirImagen(
+          dto.imagenPerfil,
+          'perfiles',
+        )
+      : undefined;
+
     const usuario = await this.usuarioModel.create({
       nombre: dto.nombre,
       apellido: dto.apellido,
@@ -47,6 +57,7 @@ export class AuthService {
       contrasena: this.passwordHasher.hash(dto.contrasena),
       fechaNacimiento: dto.fechaNacimiento,
       descripcion: dto.descripcion,
+      imagenPerfilUrl,
       perfil: dto.perfil,
     });
 
@@ -57,7 +68,8 @@ export class AuthService {
     const usuario = await this.usuarioModel
       .findOne({
         $or: [
-          { correo: dto.usuarioOCorreo },
+          // Los correos se guardan en minúsculas; el nombre de usuario se respeta tal cual.
+          { correo: dto.usuarioOCorreo.toLowerCase() },
           { nombreUsuario: dto.usuarioOCorreo },
         ],
       })

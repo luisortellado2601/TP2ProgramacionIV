@@ -16,10 +16,10 @@ export class Usuario {
   @Prop({ required: true })
   apellido: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   correo: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, trim: true })
   nombreUsuario: string;
 
   @Prop({ required: true })

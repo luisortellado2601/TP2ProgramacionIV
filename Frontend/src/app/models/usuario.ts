@@ -32,6 +32,7 @@ export interface RegistroPayload {
   fechaNacimiento: string;
   descripcion?: string;
   perfil?: PerfilUsuario;
+  imagenPerfil?: string; // data URL en base64
 }
 
 export interface LoginPayload {

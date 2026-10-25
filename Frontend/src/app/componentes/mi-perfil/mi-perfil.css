@@ -20,6 +20,11 @@
   text-transform: uppercase;
 }
 
+.perfil-avatar--imagen {
+  object-fit: cover;
+  border: 2px solid var(--color-primary);
+}
+
 .perfil-datos h2 {
   margin-bottom: 0.25rem;
 }

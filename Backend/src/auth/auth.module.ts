@@ -6,12 +6,12 @@ import { Usuario, UsuarioSchema } from '../usuarios/usuario.schema';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordHasher } from './password-hasher';
+import { AlmacenamientoModule } from '../almacenamiento/almacenamiento.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Usuario.name, schema: UsuarioSchema },
-    ]),
+    AlmacenamientoModule,
+    MongooseModule.forFeature([{ name: Usuario.name, schema: UsuarioSchema }]),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

@@ -23,8 +23,14 @@ export class Login {
   protected readonly enviando = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
-    usuarioOCorreo: ['', [Validators.required, sinSoloEspaciosValidator()]],
-    contrasena: ['', [Validators.required, Validators.pattern(PATRON_CONTRASENA)]],
+    usuarioOCorreo: [
+      '',
+      [Validators.required, sinSoloEspaciosValidator(), Validators.maxLength(100)],
+    ],
+    contrasena: [
+      '',
+      [Validators.required, Validators.maxLength(64), Validators.pattern(PATRON_CONTRASENA)],
+    ],
   });
 
   enviar(): void {

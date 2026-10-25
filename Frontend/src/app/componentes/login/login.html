@@ -9,13 +9,23 @@
         <input
           id="usuarioOCorreo"
           type="text"
+          maxlength="100"
           formControlName="usuarioOCorreo"
           [class.is-invalid]="
             form.controls.usuarioOCorreo.invalid && form.controls.usuarioOCorreo.touched
           "
         />
-        @if (form.controls.usuarioOCorreo.invalid && form.controls.usuarioOCorreo.touched) {
-          <span class="form-field__error">Ingresá tu correo o nombre de usuario.</span>
+        @if (
+          form.controls.usuarioOCorreo.touched && form.controls.usuarioOCorreo.errors;
+          as errores
+        ) {
+          <span class="form-field__error">
+            @if (errores['maxlength']) {
+              No puede superar los 100 caracteres.
+            } @else {
+              Ingresá tu correo o nombre de usuario.
+            }
+          </span>
         }
       </div>
 
@@ -24,12 +34,19 @@
         <input
           id="contrasena"
           type="password"
+          maxlength="64"
           formControlName="contrasena"
           [class.is-invalid]="form.controls.contrasena.invalid && form.controls.contrasena.touched"
         />
-        @if (form.controls.contrasena.invalid && form.controls.contrasena.touched) {
+        @if (form.controls.contrasena.touched && form.controls.contrasena.errors; as errores) {
           <span class="form-field__error">
-            La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.
+            @if (errores['required']) {
+              Ingresá tu contraseña.
+            } @else if (errores['maxlength']) {
+              No puede superar los 64 caracteres.
+            } @else {
+              La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.
+            }
           </span>
         }
       </div>

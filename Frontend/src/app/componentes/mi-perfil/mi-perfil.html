@@ -1,9 +1,17 @@
 @if (authService.usuarioActual(); as usuario) {
   <div class="page">
     <div class="card perfil-card">
-      <div class="perfil-avatar">
-        {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
-      </div>
+      @if (usuario.imagenPerfilUrl) {
+        <img
+          class="perfil-avatar perfil-avatar--imagen"
+          [src]="usuario.imagenPerfilUrl"
+          [alt]="'Foto de perfil de ' + usuario.nombre"
+        />
+      } @else {
+        <div class="perfil-avatar">
+          {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
+        </div>
+      }
 
       <div class="perfil-datos">
         <h2>{{ usuario.nombre }} {{ usuario.apellido }}</h2>

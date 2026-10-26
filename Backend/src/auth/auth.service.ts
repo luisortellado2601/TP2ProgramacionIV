@@ -7,11 +7,11 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
-import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema';
-import { RegistroDto } from './dto/registro.dto';
-import { LoginDto } from './dto/login.dto';
-import { PasswordHasher } from './password-hasher';
-import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service';
+import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema.js';
+import { RegistroDto } from './dto/registro.dto.js';
+import { LoginDto } from './dto/login.dto.js';
+import { PasswordHasher } from './password-hasher.js';
+import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service.js';
 
 @Injectable()
 export class AuthService {

@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Usuario, UsuarioSchema } from '../usuarios/usuario.schema';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { PasswordHasher } from './password-hasher';
-import { AlmacenamientoModule } from '../almacenamiento/almacenamiento.module';
+import { Usuario, UsuarioSchema } from '../usuarios/usuario.schema.js';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
+import { PasswordHasher } from './password-hasher.js';
+import { AlmacenamientoModule } from '../almacenamiento/almacenamiento.module.js';
 
 @Module({
   imports: [

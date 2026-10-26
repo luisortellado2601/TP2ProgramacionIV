@@ -10,9 +10,9 @@ import {
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { PerfilUsuario } from '../../usuarios/usuario.schema';
-import { recortar, recortarYMinusculas } from './transformadores';
-import { FechaNacimientoValida } from './fecha-nacimiento-valida.validator';
+import { PerfilUsuario } from '../../usuarios/usuario.schema.js';
+import { recortar, recortarYMinusculas } from './transformadores.js';
+import { FechaNacimientoValida } from './fecha-nacimiento-valida.validator.js';
 
 // Mismas reglas que el formulario de registro del front.
 const PATRON_NOMBRE = /^[\p{L}' -]+$/u;

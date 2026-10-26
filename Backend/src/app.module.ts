@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsuariosModule } from './usuarios/usuarios.module';
-import { AuthModule } from './auth/auth.module';
-import { PublicacionesModule } from './publicaciones/publicaciones.module';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { UsuariosModule } from './usuarios/usuarios.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { PublicacionesModule } from './publicaciones/publicaciones.module.js';
 import { MongooseModule } from '@nestjs/mongoose';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();

@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { recortar } from './transformadores';
+import { recortar } from './transformadores.js';
 
 export class LoginDto {
   @Transform(recortar)

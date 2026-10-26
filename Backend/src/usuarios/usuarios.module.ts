@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UsuariosService } from './usuarios.service';
-import { Usuario, UsuarioSchema } from './usuario.schema';
+import { UsuariosService } from './usuarios.service.js';
+import { Usuario, UsuarioSchema } from './usuario.schema.js';
 
 // UsuariosController (CRUD de prueba) está desactivado hasta el Sprint #4: sin
 // guard devolvía todos los usuarios con el hash de la contraseña. Se vuelve a

@@ -34,10 +34,10 @@
 ### Próximo paso
 Para cerrar el Sprint #1:
 1. **Deploy en Vercel** (front y back son dos proyectos de Vercel del mismo repositorio):
-   - [ ] **Back:** crear un proyecto en Vercel con *Root Directory* = `Backend`. Vercel detecta NestJS solo (entrada `src/main.ts`, no hace falta `vercel.json`). Cargar las variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. `PORT` no hace falta.
-   - [ ] En Atlas → Network Access, permitir `0.0.0.0/0`: Vercel no tiene IPs fijas.
-   - [ ] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
-   - [ ] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
+   - [x] **Back:** crear un proyecto en Vercel con *Root Directory* = `Backend`. Vercel detecta NestJS solo (entrada `src/main.ts`, no hace falta `vercel.json`). Cargar las variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. `PORT` no hace falta.
+   - [x] En Atlas → Network Access, permitir `0.0.0.0/0`: Vercel no tiene IPs fijas.
+   - [x] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
+   - [x] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
    - [ ] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`).
    - [ ] Con la URL del front, definir `CORS_ORIGIN` en el proyecto del back (sin `/` final, ej. `https://nextplay.vercel.app`) y redeployar el back.
    - [ ] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
@@ -48,7 +48,7 @@ Después, arrancar Sprint #2 (Publicaciones y Mi Perfil reales) — ver sección
 
 ### Hallazgos de la revisión del 2026-10-25
 - **Seguridad – actualización 2026-10-26: `UsuariosController` desactivado antes del deploy.** Se quitó de `controllers` en `UsuariosModule` (el archivo y el servicio siguen); se vuelve a registrar en el Sprint #4 con guard JWT + rol administrador. Auth no depende de él. Contexto original (decisión 2026-10-25, se había dejado abierto a propósito para probar desde Postman). Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
-- **Deploy:** `environment.ts` (producción) sigue apuntando a `http://localhost:3000`. El CORS ya se restringe con `CORS_ORIGIN` (falta definir la variable en el hosting).
+- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`). El CORS ya se restringe con `CORS_ORIGIN` (falta definir la variable en el hosting).
 - **Guía técnica para estudiar y explicar el código:** [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 - ~~Correo case-sensitive~~ → resuelto. Ojo: los usuarios que ya estaban en la BD con mayúsculas en el correo no se modifican solos; si existen, pasarlos a minúsculas a mano en Atlas.
 - ~~Fecha de nacimiento futura~~ → resuelto, junto con validaciones completas por campo en front y back.
@@ -157,7 +157,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] Campo `file` de imagen de perfil (front + back con Supabase Storage). Probado: GIF → 400, imagen > 2 MB → 400, PNG válido → 201 con URL pública accesible.
 - [x] CORS del back configurable con la variable `CORS_ORIGIN` (sin definir acepta cualquier origen; en producción se define con el dominio del front).
 - [x] `Frontend/vercel.json` creado (build de Angular + redirección de todas las rutas a `index.html`).
-- [ ] `apiUrl` de producción en `Frontend/src/environments/environment.ts` (hoy sigue en `http://localhost:3000`; se completa cuando exista la URL del back en Vercel).
+- [x] `apiUrl` de producción en `Frontend/src/environments/environment.ts` (`https://nextplay-delta.vercel.app`, el back ya desplegado en Vercel).
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |

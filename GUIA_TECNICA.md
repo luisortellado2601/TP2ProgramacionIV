@@ -302,7 +302,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 ### 4.8 Environments y build
 
 - `environment.ts` (producción) y `environment.development.ts` (local). En `angular.json`, la configuración **development** reemplaza uno por otro (`fileReplacements`), así que `ng serve` usa `localhost:3000` y `ng build` usa el de producción.
-- **Pendiente para el deploy:** `environment.ts` todavía apunta a `http://localhost:3000`; hay que reemplazarlo por la URL pública del back.
+- `environment.ts` de producción apunta a la URL pública del back (`https://nextplay-delta.vercel.app`). Como `apiUrl` se compila dentro del JS, **cambiarla exige un nuevo build/deploy del front**.
 - **Dos proyectos en Vercel:** cada uno apunta a una carpeta (*Root Directory*), `Backend` o `Frontend`. Vercel detecta NestJS sin configuración (entrada `src/main.ts`) y lo ejecuta como una Vercel Function.
 - `vercel.json` del front: indica el comando de build, la carpeta de salida (`dist/nextplay-frontend/browser`) y una regla `rewrites` que manda **todas** las rutas a `index.html`. Sin eso, recargar `/perfil` en producción daría 404, porque ese archivo no existe en el servidor (el routing lo hace Angular en el navegador: es una SPA).
 
@@ -391,7 +391,8 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Carrera en el registro | Dos registros simultáneos con el mismo correo pasan el chequeo; el índice único de Mongo frena al segundo, pero devolvería un 500 en vez de un 409 | Capturar el error de clave duplicada (código 11000) y convertirlo en `ConflictException` |
 | Imagen en base64 dentro del JSON | Más pesado que `multipart/form-data` y exige subir el límite del body | Se eligió porque Multer no se vio en la cursada |
 | `scryptSync` | Bloquea el hilo unos ms | Usar `scrypt` asíncrono si hubiera mucha carga |
-| Deploy | `apiUrl` de producción sin definir, `CORS_ORIGIN` sin definir en el hosting | Ver "Próximo paso" en `Backend/README.md` |
+| CORS en producción | `CORS_ORIGIN` todavía no está definida en el back de Vercel, así que acepta cualquier origen | Definirla con `https://nextplaygaming.vercel.app` y redeployar el back (ver "Próximo paso" en `Backend/README.md`) |
+| Backend en ESM | `@nestjs/core` 12 es solo ESM; con CommonJS Vercel fallaba con `ERR_REQUIRE_ESM`. El back usa `"type": "module"` | Los imports relativos deben terminar en `.js` (`from './auth.service.js'`) aunque el archivo sea `.ts` |
 
 ---
 
@@ -429,7 +430,7 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Por qué la clave de Supabase no está en el front?** Porque todo lo que está en el front es público. La subida pasa por el back, que sí guarda el secreto.
 
-**¿Qué falta para cerrar el Sprint #1?** Deployar el back y el front en Vercel, apuntar `apiUrl` al back público y definir `CORS_ORIGIN`.
+**¿Qué falta para cerrar el Sprint #1?** El deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Solo falta definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
 
 ---
 

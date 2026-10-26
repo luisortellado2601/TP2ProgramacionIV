@@ -28,7 +28,11 @@ Otros comandos:
 La URL del backend se define en los environments:
 
 - `src/environments/environment.development.ts` → se usa con `ng serve` (`http://localhost:3000`).
-- `src/environments/environment.ts` → se usa en el build de producción. **Antes del deploy hay que reemplazar `apiUrl` por la URL pública del backend.**
+- `src/environments/environment.ts` → se usa en el build de producción y apunta al backend desplegado en Vercel (`https://nextplay-delta.vercel.app`). Si cambia la URL del backend hay que actualizar `apiUrl` y redeployar el front.
+
+## Deploy
+
+Proyecto de Vercel con *Root Directory* `Frontend` (https://nextplaygaming.vercel.app). `vercel.json` define el build, la carpeta de salida y redirige todas las rutas a `index.html`. No usa variables de entorno. Cada push a `master` redeploya.
 
 ## Estructura
 

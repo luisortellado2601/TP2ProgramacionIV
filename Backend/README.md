@@ -12,8 +12,14 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Fecha de última actualización:** 2026-10-25
-**Sprint en curso:** Sprint #1 – Base, registro y login (todo implementado y probado en local; solo falta el deploy)
+**Fecha de última actualización:** 2026-10-26
+**Sprint en curso:** Sprint #1 – Base, registro y login (implementado, probado en local y **deployado en Vercel**; solo queda restringir el CORS)
+**URLs de producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
+**Trabajo del 2026-10-26 (deploy):**
+- `UsuariosController` desactivado antes de publicar (exponía el hash de contraseñas).
+- **Backend migrado a ESM** (`"type": "module"`, imports relativos con `.js`, Jest en modo ESM): `@nestjs/core` 12 es solo ESM y el build CommonJS fallaba en Vercel con `ERR_REQUIRE_ESM`. Si se agregan archivos nuevos, los imports relativos deben terminar en `.js`.
+- Back desplegado en Vercel con las variables del `.env` y Atlas con acceso `0.0.0.0/0`; probado `POST /auth/login` (401 con credenciales inexistentes). Front desplegado con `apiUrl` apuntando al back; recargar `/perfil` responde 200 (redirección a `index.html`). Registro con foto, login y cierre de sesión probados en producción (verificado por el equipo).
+- Se agregó `GUIA_TECNICA.md` para estudiar y explicar el código.
 **Último día de trabajo completado (2026-10-25):** Revisión completa del Sprint #1 y cierre de pendientes:
 - Validaciones por campo idénticas en front (`Registro`/`Login`) y back (`RegistroDto`/`LoginDto`), con mensajes específicos por error.
 - Correo normalizado a minúsculas (DTO, esquema y login) y fecha de nacimiento que no puede ser futura ni anterior a 1900.
@@ -26,21 +32,24 @@
 ### Resumen de progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
-| #1 Registro/Login base | [x] | [x] | Funcional en local (incluida imagen de perfil); pendiente deploy |
+| #1 Registro/Login base | [x] | [x] | Funcional y deployado en Vercel; pendiente restringir CORS (`CORS_ORIGIN`) |
 | #2 Publicaciones y Mi Perfil | [ ] | [ ] | Sin iniciar |
 | #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Para cerrar el Sprint #1:
-1. **Deploy en Vercel** (front y back son dos proyectos de Vercel del mismo repositorio):
+Para cerrar el Sprint #1 solo falta el CORS:
+- [ ] **Definir `CORS_ORIGIN=https://nextplaygaming.vercel.app`** (sin `/` final) en *Settings → Environment Variables* del proyecto del **back** en Vercel y redeployar. Verificado el 2026-10-26: hoy el back responde con `Access-Control-Allow-Origin` a cualquier origen (la variable no está definida). Para volver a verificar: `curl -i -X OPTIONS https://nextplay-delta.vercel.app/auth/login -H "Origin: https://otro-sitio.com" -H "Access-Control-Request-Method: POST"` no debe devolver ese header.
+
+Deploy en Vercel (hecho, se deja el detalle como referencia):
+1. **Pasos** (front y back son dos proyectos de Vercel del mismo repositorio):
    - [x] **Back:** crear un proyecto en Vercel con *Root Directory* = `Backend`. Vercel detecta NestJS solo (entrada `src/main.ts`, no hace falta `vercel.json`). Cargar las variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. `PORT` no hace falta.
    - [x] En Atlas → Network Access, permitir `0.0.0.0/0`: Vercel no tiene IPs fijas.
    - [x] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
    - [x] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
-   - [ ] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`).
-   - [ ] Con la URL del front, definir `CORS_ORIGIN` en el proyecto del back (sin `/` final, ej. `https://nextplay.vercel.app`) y redeployar el back.
-   - [ ] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
+   - [x] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`). No lleva variables de entorno.
+   - [ ] Con la URL del front, definir `CORS_ORIGIN` en el proyecto del back (ver arriba) y redeployar el back.
+   - [x] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
    - Límite de Vercel: bodies de hasta 4,5 MB. Una imagen de 2 MB en base64 pesa ~2,7 MB, así que entra.
    - Hecho antes del deploy: `UsuariosController` desactivado (ver "Hallazgos").
 
@@ -48,7 +57,7 @@ Después, arrancar Sprint #2 (Publicaciones y Mi Perfil reales) — ver sección
 
 ### Hallazgos de la revisión del 2026-10-25
 - **Seguridad – actualización 2026-10-26: `UsuariosController` desactivado antes del deploy.** Se quitó de `controllers` en `UsuariosModule` (el archivo y el servicio siguen); se vuelve a registrar en el Sprint #4 con guard JWT + rol administrador. Auth no depende de él. Contexto original (decisión 2026-10-25, se había dejado abierto a propósito para probar desde Postman). Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
-- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`). El CORS ya se restringe con `CORS_ORIGIN` (falta definir la variable en el hosting).
+- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`). El CORS se restringe con `CORS_ORIGIN`, pero **la variable todavía no está definida en el back de Vercel** (ver "Próximo paso").
 - **Guía técnica para estudiar y explicar el código:** [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 - ~~Correo case-sensitive~~ → resuelto. Ojo: los usuarios que ya estaban en la BD con mayúsculas en el correo no se modifican solos; si existen, pasarlos a minúsculas a mano en Atlas.
 - ~~Fecha de nacimiento futura~~ → resuelto, junto con validaciones completas por campo en front y back.
@@ -122,7 +131,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 **Front**
 - [x] Crear proyecto Angular.
 - [x] Pantallas: Registro, Login, Publicaciones, MiPerfil. _(Publicaciones y MiPerfil son esqueletos navegables; el contenido real es Sprint #2.)_
-- [ ] Deploy en hosting (config lista en `vercel.json`; falta publicar y apuntar `apiUrl` al back).
+- [x] Deploy en hosting: https://nextplaygaming.vercel.app (Vercel, `Frontend/vercel.json`).
 - [x] Navegación entre componentes (sin límites de accesibilidad por ahora).
 - [x] Favicon propio.
 - [x] **Componente Login**

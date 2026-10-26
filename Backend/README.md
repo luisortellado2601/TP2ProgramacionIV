@@ -33,18 +33,23 @@
 
 ### Próximo paso
 Para cerrar el Sprint #1:
-1. **Deploy en hosting** del front y del back (elegir plataformas):
-   - `apiUrl` de producción en `Frontend/src/environments/environment.ts`.
-   - CORS del back restringido al dominio del front.
-   - Variables de entorno del `.env` cargadas en el hosting del back (Mongo, JWT y Supabase).
-   - En Atlas, permitir el acceso desde el hosting del back (Network Access).
-   - En el hosting del front, redirigir todas las rutas a `index.html` (si no, recargar `/perfil` da 404).
+1. **Deploy en Vercel** (front y back son dos proyectos de Vercel del mismo repositorio):
+   - [ ] **Back:** crear un proyecto en Vercel con *Root Directory* = `Backend`. Vercel detecta NestJS solo (entrada `src/main.ts`, no hace falta `vercel.json`). Cargar las variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. `PORT` no hace falta.
+   - [ ] En Atlas → Network Access, permitir `0.0.0.0/0`: Vercel no tiene IPs fijas.
+   - [ ] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
+   - [ ] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
+   - [ ] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`).
+   - [ ] Con la URL del front, definir `CORS_ORIGIN` en el proyecto del back (sin `/` final, ej. `https://nextplay.vercel.app`) y redeployar el back.
+   - [ ] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
+   - Límite de Vercel: bodies de hasta 4,5 MB. Una imagen de 2 MB en base64 pesa ~2,7 MB, así que entra.
+   - Hecho antes del deploy: `UsuariosController` desactivado (ver "Hallazgos").
 
 Después, arrancar Sprint #2 (Publicaciones y Mi Perfil reales) — ver sección 3.
 
 ### Hallazgos de la revisión del 2026-10-25
-- **Seguridad – decisión 2026-10-25: se deja abierto a propósito** por ser un proyecto en desarrollo y para poder probar desde Postman sin token. Se protege con guard JWT + rol administrador en el Sprint #4. Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
-- **Deploy:** `environment.ts` (producción) sigue apuntando a `http://localhost:3000`; `app.enableCors()` está abierto a cualquier origen (restringir al dominio del front al deployar).
+- **Seguridad – actualización 2026-10-26: `UsuariosController` desactivado antes del deploy.** Se quitó de `controllers` en `UsuariosModule` (el archivo y el servicio siguen); se vuelve a registrar en el Sprint #4 con guard JWT + rol administrador. Auth no depende de él. Contexto original (decisión 2026-10-25, se había dejado abierto a propósito para probar desde Postman). Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
+- **Deploy:** `environment.ts` (producción) sigue apuntando a `http://localhost:3000`. El CORS ya se restringe con `CORS_ORIGIN` (falta definir la variable en el hosting).
+- **Guía técnica para estudiar y explicar el código:** [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 - ~~Correo case-sensitive~~ → resuelto. Ojo: los usuarios que ya estaban en la BD con mayúsculas en el correo no se modifican solos; si existen, pasarlos a minúsculas a mano en Atlas.
 - ~~Fecha de nacimiento futura~~ → resuelto, junto con validaciones completas por campo en front y back.
 - ~~`lang="en"`~~ y ~~README del front genérico~~ → resueltos.
@@ -117,7 +122,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 **Front**
 - [x] Crear proyecto Angular.
 - [x] Pantallas: Registro, Login, Publicaciones, MiPerfil. _(Publicaciones y MiPerfil son esqueletos navegables; el contenido real es Sprint #2.)_
-- [ ] Deploy en hosting.
+- [ ] Deploy en hosting (config lista en `vercel.json`; falta publicar y apuntar `apiUrl` al back).
 - [x] Navegación entre componentes (sin límites de accesibilidad por ahora).
 - [x] Favicon propio.
 - [x] **Componente Login**
@@ -149,7 +154,10 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] Validaciones por campo, idénticas en front (`Registro`/`Login`) y back (`RegistroDto`/`LoginDto`): ver tabla en `Frontend/README.md`.
 - [x] `lang="es"` en `index.html`.
 - [x] README del front actualizado.
-- [x] Campo `file` de imagen de perfil (front + back con Supabase Storage). Probado: GIF → 400, imagen > 2 MB → 400, PNG válido → 201 con URL pública accesible.- [ ] `apiUrl` de producción y CORS restringido al dominio del front.
+- [x] Campo `file` de imagen de perfil (front + back con Supabase Storage). Probado: GIF → 400, imagen > 2 MB → 400, PNG válido → 201 con URL pública accesible.
+- [x] CORS del back configurable con la variable `CORS_ORIGIN` (sin definir acepta cualquier origen; en producción se define con el dominio del front).
+- [x] `Frontend/vercel.json` creado (build de Angular + redirección de todas las rutas a `index.html`).
+- [ ] `apiUrl` de producción en `Frontend/src/environments/environment.ts` (hoy sigue en `http://localhost:3000`; se completa cuando exista la URL del back en Vercel).
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |

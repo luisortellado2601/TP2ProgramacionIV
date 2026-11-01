@@ -12,9 +12,16 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Fecha de última actualización:** 2026-10-26
-**Sprint en curso:** Sprint #1 – Base, registro y login (implementado, probado en local y **deployado en Vercel**; solo queda restringir el CORS)
+**Fecha de última actualización:** 2026-10-31
+**Sprint en curso:** Sprint #2 – Publicaciones y Mi Perfil (back terminado, falta el front)
 **URLs de producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
+**Trabajo del 2026-10-31 (Sprint #2, back):**
+- `PublicacionesController` + `PublicacionesService`: `POST /publicaciones` (con imagen opcional subida a Supabase, reutilizando `AlmacenamientoService`), `GET /publicaciones` (orden por fecha o likes, filtro por usuario, paginación `offset`/`limit`, con el autor poblado vía `$lookup`), `DELETE /publicaciones/:id` (baja lógica, solo el autor o un administrador), `POST`/`DELETE /publicaciones/:id/like` (un like por usuario, devuelve 409 si ya existía o si no existía al querer sacarlo).
+- Identificación del usuario que actúa: como el guard JWT llega en el Sprint #3, estas rutas reciben `usuarioId` explícito (body o query) — ver la nota en la sección del Sprint #2 más abajo.
+- Se corrigió un bug de larga data en `jest.config.js`: el `moduleNameMapper` tenía el punto sin escapar dentro de un string JS (`'\.'` colapsa a `'.'`), lo que rompía la resolución de módulos `.mjs` de dependencias (`es-toolkit`, usado por `class-validator`) apenas un spec cargaba un DTO con decoradores. No se había notado porque ningún test anterior ejercitaba esa ruta.
+- Se agregaron specs básicos (`publicaciones.service.spec.ts`, `publicaciones.controller.spec.ts`). Tests 5/5, lint y build en verde. Probado manualmente con curl contra Mongo local: alta, listado (orden por fecha y por likes, filtro por usuario, paginación), like/unlike con sus 409, baja lógica propia (200) y ajena (403).
+- `darLike`/`quitarLike` ahora validan que el `usuarioId` corresponda a un usuario que existe (antes se podía dar un "like" con un id inventado con formato válido). Reutiliza el mismo chequeo que ya tenía `crear` (helper `obtenerUsuarioOFallar`). Probado en Postman con un ObjectId válido pero inexistente → 400 "El usuario no existe".
+- `Backend/postman/NextPlay.postman_collection.json`: se agregó una carpeta "Publicaciones" con los casos del Sprint #2 (alta, listado con los 3 filtros, like/unlike con sus 409, baja lógica propia/ajena), encadenados con variables de colección (`autorId`, `otroUsuarioId`, `publicacionId`) que se completan solas al correr los requests de "Setup".
 **Trabajo del 2026-10-26 (deploy):**
 - `UsuariosController` desactivado antes de publicar (exponía el hash de contraseñas).
 - **Backend migrado a ESM** (`"type": "module"`, imports relativos con `.js`, Jest en modo ESM): `@nestjs/core` 12 es solo ESM y el build CommonJS fallaba en Vercel con `ERR_REQUIRE_ESM`. Si se agregan archivos nuevos, los imports relativos deben terminar en `.js`.
@@ -32,14 +39,13 @@
 ### Resumen de progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
-| #1 Registro/Login base | [x] | [x] | Funcional y deployado en Vercel; pendiente restringir CORS (`CORS_ORIGIN`) |
-| #2 Publicaciones y Mi Perfil | [ ] | [ ] | Sin iniciar |
+| #1 Registro/Login base | [x] | [x] | Funcional y deployado en Vercel |
+| #2 Publicaciones y Mi Perfil | [ ] | [x] | Back listo (alta, listado con orden/paginación/filtro, baja lógica, likes); falta el front |
 | #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Para cerrar el Sprint #1 solo falta el CORS:
-- [ ] **Definir `CORS_ORIGIN=https://nextplaygaming.vercel.app`** (sin `/` final) en *Settings → Environment Variables* del proyecto del **back** en Vercel y redeployar. Verificado el 2026-10-26: hoy el back responde con `Access-Control-Allow-Origin` a cualquier origen (la variable no está definida). Para volver a verificar: `curl -i -X OPTIONS https://nextplay-delta.vercel.app/auth/login -H "Origin: https://otro-sitio.com" -H "Access-Control-Request-Method: POST"` no debe devolver ese header.
+Front del Sprint #2 (ver checklist en sección 3): componente de publicación, listado con orden/paginación, alta/baja, like/unlike, y Mi Perfil con datos + últimas 3 publicaciones.
 
 Deploy en Vercel (hecho, se deja el detalle como referencia):
 1. **Pasos** (front y back son dos proyectos de Vercel del mismo repositorio):
@@ -48,16 +54,13 @@ Deploy en Vercel (hecho, se deja el detalle como referencia):
    - [x] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
    - [x] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
    - [x] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`). No lleva variables de entorno.
-   - [ ] Con la URL del front, definir `CORS_ORIGIN` en el proyecto del back (ver arriba) y redeployar el back.
    - [x] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
    - Límite de Vercel: bodies de hasta 4,5 MB. Una imagen de 2 MB en base64 pesa ~2,7 MB, así que entra.
    - Hecho antes del deploy: `UsuariosController` desactivado (ver "Hallazgos").
 
-Después, arrancar Sprint #2 (Publicaciones y Mi Perfil reales) — ver sección 3.
-
 ### Hallazgos de la revisión del 2026-10-25
 - **Seguridad – actualización 2026-10-26: `UsuariosController` desactivado antes del deploy.** Se quitó de `controllers` en `UsuariosModule` (el archivo y el servicio siguen); se vuelve a registrar en el Sprint #4 con guard JWT + rol administrador. Auth no depende de él. Contexto original (decisión 2026-10-25, se había dejado abierto a propósito para probar desde Postman). Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
-- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`). El CORS se restringe con `CORS_ORIGIN`, pero **la variable todavía no está definida en el back de Vercel** (ver "Próximo paso").
+- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`).
 - **Guía técnica para estudiar y explicar el código:** [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 - ~~Correo case-sensitive~~ → resuelto. Ojo: los usuarios que ya estaban en la BD con mayúsculas en el correo no se modifican solos; si existen, pasarlos a minúsculas a mano en Atlas.
 - ~~Fecha de nacimiento futura~~ → resuelto, junto con validaciones completas por campo en front y back.
@@ -196,15 +199,17 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Mostrar mis últimas 3 publicaciones y sus comentarios.
 
 **Back – Publicaciones controller**
-- [ ] Alta, listado y baja lógica de publicaciones.
-- [ ] **POST**: guardar publicación relacionada a un usuario (título, descripción, URL de imagen si tiene; la imagen debe guardarse).
-- [ ] **DELETE**: baja lógica, solo por el creador o un administrador.
-- [ ] **GET**: listar últimas publicaciones.
-  - [ ] Parámetro de ordenamiento: por fecha / por cantidad de me gusta.
-  - [ ] Filtrar posteos de un usuario particular.
-  - [ ] Parámetros `offset` y `limit` para paginar.
-- [ ] **POST** (like): un usuario da me gusta a una publicación; **un solo me gusta por usuario por publicación**.
-- [ ] **DELETE** (like): eliminar me gusta, solo si el usuario lo había dado antes.
+- [x] Alta, listado y baja lógica de publicaciones.
+- [x] **POST**: guardar publicación relacionada a un usuario (título, descripción, URL de imagen si tiene; la imagen debe guardarse).
+- [x] **DELETE**: baja lógica, solo por el creador o un administrador.
+- [x] **GET**: listar últimas publicaciones.
+  - [x] Parámetro de ordenamiento: por fecha / por cantidad de me gusta.
+  - [x] Filtrar posteos de un usuario particular.
+  - [x] Parámetros `offset` y `limit` para paginar.
+- [x] **POST** (like): un usuario da me gusta a una publicación; **un solo me gusta por usuario por publicación**.
+- [x] **DELETE** (like): eliminar me gusta, solo si el usuario lo había dado antes.
+
+> **Nota de implementación:** como el `JwtAuthGuard` llega en el Sprint #3, estas rutas todavía no pueden identificar "quién llama" de forma confiable. Mientras tanto, el autor/actor viaja explícito como `usuarioId` (en el body de `POST /publicaciones` y `POST /publicaciones/:id/like`, y como query param en los `DELETE`). Queda pendiente para el Sprint #3 reemplazarlo por el id que viene del token validado.
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |

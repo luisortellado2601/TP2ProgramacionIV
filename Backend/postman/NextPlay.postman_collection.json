@@ -1,9 +1,14 @@
 {
   "info": {
-    "name": "NextPlay - Auth (Sprint 1)",
-    "description": "Pruebas de los endpoints de Autenticacion (registro y login) del backend NextPlay.",
+    "name": "NextPlay - Auth y Publicaciones (Sprint 1 y 2)",
+    "description": "Pruebas de los endpoints de Autenticacion (Sprint 1) y Publicaciones (Sprint 2) del backend NextPlay.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "autorId", "value": "" },
+    { "key": "otroUsuarioId", "value": "" },
+    { "key": "publicacionId", "value": "" }
+  ],
   "item": [
     {
       "name": "Auth",
@@ -189,6 +194,394 @@
               "host": ["localhost"],
               "port": "3000",
               "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Publicaciones",
+      "description": "Correr esta carpeta de arriba a abajo (botón Run). Los primeros dos requests crean usuarios de prueba y guardan sus ids en variables de colección (autorId, otroUsuarioId) que usan el resto de los requests. Como todavía no hay JwtAuthGuard (llega en el Sprint #3), el usuario que actúa viaja como `usuarioId` en el body o como query param.",
+      "item": [
+        {
+          "name": "Setup - Registrar autor (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('autorId', body.usuario.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"correo\": \"ana.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"ana{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/registro",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "registro"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Setup - Registrar otro usuario (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('otroUsuarioId', body.usuario.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Beto\",\n  \"apellido\": \"Lopez\",\n  \"correo\": \"beto.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"beto{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/auth/registro",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth", "registro"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear publicacion (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve id', () => pm.expect(body.id).to.be.a('string'));",
+                  "pm.collectionVariables.set('publicacionId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Mi primer post\",\n  \"mensaje\": \"Probando NextPlay\",\n  \"usuarioId\": \"{{autorId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear publicacion - titulo vacio (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"\",\n  \"mensaje\": \"Sin titulo\",\n  \"usuarioId\": \"{{autorId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar publicaciones (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve un array', () => pm.expect(body).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar publicaciones - orden por likes (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones?orden=likes&offset=0&limit=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones"],
+              "query": [
+                { "key": "orden", "value": "likes" },
+                { "key": "offset", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar publicaciones - filtro por usuario (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Todas son del autor filtrado', () => body.forEach((p) => pm.expect(p.autor.id).to.eql(pm.collectionVariables.get('autorId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones?usuario={{autorId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones"],
+              "query": [{ "key": "usuario", "value": "{{autorId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dar like - otro usuario (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('cantidadLikes es 1', () => pm.expect(body.cantidadLikes).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dar like duplicado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar publicacion ajena (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId={{otroUsuarioId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}"],
+              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar like (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('cantidadLikes vuelve a 0', () => pm.expect(body.cantidadLikes).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like?usuarioId={{otroUsuarioId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "like"],
+              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar like que no existe (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like?usuarioId={{otroUsuarioId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "like"],
+              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar publicacion propia (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda marcada como eliminada', () => pm.expect(body.eliminada).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId={{autorId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}"],
+              "query": [{ "key": "usuarioId", "value": "{{autorId}}" }]
             }
           },
           "response": []

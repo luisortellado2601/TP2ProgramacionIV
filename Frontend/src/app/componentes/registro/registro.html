@@ -1,7 +1,9 @@
 <div class="page">
   <div class="card card--narrow">
     <h2 class="text-center">Crear cuenta en NextPlay</h2>
-    <p class="text-center text-muted">Sumate a la comunidad y encontrá con quién jugar.</p>
+    <p class="text-center text-muted registro__bajada">
+      Sumate a la comunidad y encontrá con quién jugar.
+    </p>
 
     <form [formGroup]="form" (ngSubmit)="enviar()">
       <div class="form-field">
@@ -204,8 +206,6 @@
         <div class="imagen-perfil">
           @if (imagenPerfil(); as imagen) {
             <img class="imagen-perfil__preview" [src]="imagen" alt="Vista previa de la imagen" />
-          } @else {
-            <div class="imagen-perfil__placeholder">🎮</div>
           }
           <div class="imagen-perfil__acciones">
             <input

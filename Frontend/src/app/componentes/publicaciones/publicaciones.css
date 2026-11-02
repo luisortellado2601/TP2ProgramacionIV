@@ -51,3 +51,28 @@
   text-transform: none;
   letter-spacing: 0;
 }
+
+.publicaciones-header {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.publicaciones-paginacion {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .publicaciones-orden {
+    max-width: none;
+  }
+
+  .publicaciones-paginacion .btn {
+    flex: 1;
+  }
+
+  .publicaciones-paginacion span {
+    order: -1;
+    flex-basis: 100%;
+    text-align: center;
+  }
+}

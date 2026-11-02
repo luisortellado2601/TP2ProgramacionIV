@@ -156,3 +156,22 @@ button.corazon:hover {
   box-shadow: none;
   transform: none;
 }
+
+@media (max-width: 560px) {
+  .publicacion {
+    padding: 1rem;
+  }
+
+  .publicacion:hover {
+    transform: none;
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .publicacion h3 {
+    font-size: 1.2rem;
+  }
+
+  .publicacion__marco img {
+    max-height: 320px;
+  }
+}

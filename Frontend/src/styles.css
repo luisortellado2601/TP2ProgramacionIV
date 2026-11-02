@@ -288,3 +288,65 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* Botón de "seleccionar archivo" con el mismo estilo que el resto de los botones. */
+.form-field input[type='file'] {
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-field input[type='file']::file-selector-button {
+  margin-right: 0.85rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: var(--color-ink);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: 2px 2px 0 #000;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.form-field input[type='file']::file-selector-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+}
+
+/* ---------- Celulares ---------- */
+
+@media (max-width: 560px) {
+  .page {
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+  }
+}

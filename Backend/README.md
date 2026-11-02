@@ -12,20 +12,20 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-01
-**Sprint en curso:** #2 – Publicaciones y Mi Perfil (código completo y UI renovada, falta probarlo en el navegador)
+**Última actualización:** 2026-11-02
+**Sprint en curso:** #2 – Publicaciones y Mi Perfil (probado en el navegador; falta solo mostrar los comentarios en Mi Perfil)
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
-| #2 Publicaciones y Mi Perfil | [x] | [x] | Falta probar en el navegador (10 publicaciones, paginación, likes, Mi Perfil con 3) |
+| #2 Publicaciones y Mi Perfil | [x] | [x] | Probado. Pendiente: comentarios en Mi Perfil (requiere el back de comentarios) |
 | #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Probar el front del Sprint #2 en el navegador (crear 10 publicaciones, paginación de 5, orden por me gusta, like/unlike, eliminar, Mi Perfil con 3) y, si está bien, pasar al Sprint #3. Los comentarios de Mi Perfil llegan en el Sprint #3.
+Cerrar el Sprint #2 con el mínimo de comentarios: back (esquema, `POST` y `GET /publicaciones/:id/comentarios`, más recientes primero, paginado) y mostrarlos en Mi Perfil. La corrección es por sprint, por eso se adelanta esto. Después seguir con el Sprint #3 (editar comentarios, JWT, `autorizar`/`refrescar`, página de detalle).
 
 ### Pendientes y límites conocidos
 - Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId` (body o query); se reemplaza por el id del token validado.

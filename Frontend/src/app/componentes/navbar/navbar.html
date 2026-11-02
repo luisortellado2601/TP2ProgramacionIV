@@ -1,19 +1,69 @@
-<nav class="navbar">
-  <a class="navbar__brand" routerLink="/">
-    <span class="navbar__logo">🎮</span>
-    <span>NextPlay</span>
+<header class="topbar">
+  <button
+    class="topbar__menu"
+    type="button"
+    aria-label="Abrir menú"
+    [attr.aria-expanded]="abierto()"
+    (click)="alternar()"
+  >
+    <span></span><span></span><span></span>
+  </button>
+
+  <a class="marca" routerLink="/" (click)="cerrar()">
+    <span class="marca__logo">N</span>
+    <span class="marca__nombre">NextPlay</span>
   </a>
 
-  <div class="navbar__links">
-    @if (authService.estaAutenticado()) {
-      <a routerLink="/publicaciones" routerLinkActive="is-active">Publicaciones</a>
-      <a routerLink="/perfil" routerLinkActive="is-active">Mi perfil</a>
-      <button class="btn btn-secondary" type="button" (click)="cerrarSesion()">
-        Cerrar sesión
-      </button>
-    } @else {
-      <a routerLink="/login" routerLinkActive="is-active">Ingresar</a>
-      <a class="btn btn-primary" routerLink="/registro">Crear cuenta</a>
-    }
+  @if (authService.usuarioActual(); as usuario) {
+    <a class="topbar__usuario" routerLink="/perfil">&#64;{{ usuario.nombreUsuario }}</a>
+  }
+</header>
+
+<div class="cortina" [class.cortina--visible]="abierto()" (click)="cerrar()"></div>
+
+<aside class="cajon" [class.cajon--abierto]="abierto()" [attr.aria-hidden]="!abierto()">
+  <div class="cajon__cabecera">
+    <span class="marca__nombre">Menú</span>
+    <button class="cajon__cerrar" type="button" aria-label="Cerrar menú" (click)="cerrar()">
+      ✕
+    </button>
   </div>
-</nav>
+
+  @if (authService.usuarioActual(); as usuario) {
+    <div class="cajon__usuario">
+      @if (usuario.imagenPerfilUrl) {
+        <img [src]="usuario.imagenPerfilUrl" [alt]="'Foto de ' + usuario.nombre" />
+      } @else {
+        <div class="cajon__iniciales">
+          {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
+        </div>
+      }
+      <div>
+        <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+        <p>&#64;{{ usuario.nombreUsuario }}</p>
+      </div>
+    </div>
+  }
+
+  <nav class="cajon__links">
+    @if (authService.estaAutenticado()) {
+      <a routerLink="/publicaciones" routerLinkActive="is-active" (click)="cerrar()">
+        <small>01</small> Publicaciones
+      </a>
+      <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">
+        <small>02</small> Mi perfil
+      </a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="is-active" (click)="cerrar()">
+        <small>01</small> Ingresar
+      </a>
+      <a routerLink="/registro" routerLinkActive="is-active" (click)="cerrar()">
+        <small>02</small> Crear cuenta
+      </a>
+    }
+  </nav>
+
+  @if (authService.estaAutenticado()) {
+    <button class="cajon__salir" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  }
+</aside>

@@ -1,31 +1,40 @@
-/* Sistema de diseño global de NextPlay. Las pantallas y componentes reutilizan
-   estas variables y clases en lugar de definir estilos sueltos. */
+/* Sistema de diseño global de NextPlay: estética "arcade impreso" — papel crema,
+   tinta negra, bordes gruesos y sombras duras. Las pantallas y componentes
+   reutilizan estas variables y clases en lugar de definir estilos sueltos. */
 
 :root {
-  --color-bg: #0f1020;
-  --color-surface: #1a1b33;
-  --color-surface-alt: #232447;
-  --color-border: #32345f;
+  --color-bg: #0d1017;
+  --color-surface: #161b25;
+  --color-surface-alt: #202736;
+  --color-ink: #17120d;
+  --color-border: #3d475c;
+  --color-line: #3d475c;
 
-  --color-primary: #7c3aed;
-  --color-primary-hover: #8b5cf6;
-  --color-accent: #22d3ee;
+  --color-primary: #c6f432;
+  --color-primary-hover: #d8ff55;
+  --color-accent: #ff5c39;
+  --color-blue: #8fa0ff;
 
-  --color-text: #f1f1f8;
-  --color-text-muted: #9a9bc2;
+  --color-text: #e8ecf4;
+  --color-text-muted: #8f9ab0;
 
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  --color-success: #3ecf7a;
+  --color-danger: #f0585b;
+  --color-warning: #f2a900;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
 
-  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --borde: 2px solid var(--color-line);
+  --shadow-elevated: 5px 5px 0 #000;
+  --shadow-small: 3px 3px 0 #000;
 
-  --font-base:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+  --font-base: 'Figtree', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-marca: 'Bungee', 'Trebuchet MS', sans-serif;
+  --font-titulo: var(--font-display);
+  --font-mono: var(--font-base);
 }
 
 * {
@@ -36,14 +45,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: radial-gradient(rgba(232, 236, 244, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
   color: var(--color-text);
   font-family: var(--font-base);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 h1,
@@ -54,33 +65,60 @@ p {
   margin: 0;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
 a {
-  color: var(--color-accent);
-  text-decoration: none;
+  color: var(--color-blue);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 button {
   font-family: inherit;
 }
 
+::selection {
+  background: var(--color-primary);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
 /* ---------- Layout ---------- */
 
 .page {
-  max-width: 960px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: 2.5rem 1.25rem 5rem;
 }
 
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border: var(--borde);
+  border-radius: var(--radius-md);
   padding: 2rem;
   box-shadow: var(--shadow-elevated);
 }
 
 .card--narrow {
-  max-width: 420px;
+  max-width: 440px;
   margin-inline: auto;
 }
 
@@ -94,40 +132,48 @@ button {
 }
 
 .form-field label {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--color-text-muted);
 }
 
 .form-field input,
 .form-field select,
 .form-field textarea {
-  background: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
+  background: #0a0d13;
+  border: var(--borde);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   padding: 0.65rem 0.8rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.15s ease;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
 }
 
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
   outline: none;
-  border-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-small);
+  transform: translate(-1px, -1px);
 }
 
 .form-field input.is-invalid,
 .form-field select.is-invalid,
 .form-field textarea.is-invalid {
   border-color: var(--color-danger);
+  box-shadow: 3px 3px 0 var(--color-danger);
 }
 
 .form-field__error {
   color: var(--color-danger);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .form-actions {
@@ -144,51 +190,70 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: none;
+  border: var(--borde);
   border-radius: var(--radius-sm);
-  padding: 0.7rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.85rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-small);
   cursor: pointer;
+  text-decoration: none;
   transition:
-    background 0.15s ease,
-    opacity 0.15s ease;
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.btn:not(:disabled):hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.btn:not(:disabled):active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--color-ink);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-primary {
   background: var(--color-primary);
-  color: #fff;
-}
-
-.btn-primary:not(:disabled):hover {
-  background: var(--color-primary-hover);
+  color: var(--color-ink);
+  border-color: var(--color-ink);
 }
 
 .btn-secondary {
-  background: transparent;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:not(:disabled):hover {
-  border-color: var(--color-primary-hover);
+  background: var(--color-surface);
 }
 
 .btn-danger {
   background: var(--color-danger);
   color: #fff;
+  border-color: #000;
 }
 
 .btn-link {
   background: transparent;
-  color: var(--color-accent);
+  border: none;
+  box-shadow: none;
+  color: var(--color-blue);
   padding: 0;
-  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-link:not(:disabled):hover,
+.btn-link:not(:disabled):active {
+  transform: none;
+  box-shadow: none;
 }
 
 /* ---------- Textos de apoyo ---------- */
@@ -206,4 +271,20 @@ button {
   color: var(--color-text-muted);
   font-size: 0.9rem;
   margin-top: 1.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Títulos de pantalla: tipografía propia, distinta de la de las tarjetas. */
+h2 {
+  font-family: var(--font-titulo);
+  font-weight: 700;
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

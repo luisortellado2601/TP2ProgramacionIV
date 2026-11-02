@@ -9,8 +9,10 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-accent);
+  border: var(--borde);
+  color: var(--color-ink);
+  font-family: var(--font-display);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,7 +24,7 @@
 
 .perfil-avatar--imagen {
   object-fit: cover;
-  border: 2px solid var(--color-primary);
+  border: var(--borde);
 }
 
 .perfil-datos h2 {

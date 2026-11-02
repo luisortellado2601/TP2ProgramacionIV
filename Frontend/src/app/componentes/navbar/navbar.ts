@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
@@ -14,7 +14,19 @@ export class Navbar {
   private readonly modalService = inject(ModalService);
   private readonly router = inject(Router);
 
+  protected readonly abierto = signal(false);
+
+  alternar(): void {
+    this.abierto.update((valor) => !valor);
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrar(): void {
+    this.abierto.set(false);
+  }
+
   cerrarSesion(): void {
+    this.cerrar();
     this.modalService.confirmar('¿Querés cerrar tu sesión?', () => {
       this.authService.logout();
       this.router.navigateByUrl('/login');

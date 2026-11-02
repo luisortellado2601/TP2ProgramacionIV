@@ -11,12 +11,12 @@
         {{ publicacion().autor.nombre.charAt(0) }}{{ publicacion().autor.apellido.charAt(0) }}
       </div>
     }
-    <div>
+    <div class="publicacion__quien">
       <strong>{{ publicacion().autor.nombre }} {{ publicacion().autor.apellido }}</strong>
-      <p class="text-muted publicacion__meta">
+      <span class="publicacion__meta">
         &#64;{{ publicacion().autor.nombreUsuario }} ·
-        {{ publicacion().fecha | date: 'dd/MM/yyyy HH:mm' }}
-      </p>
+        {{ publicacion().fecha | date: 'dd/MM/yy HH:mm' }}
+      </span>
     </div>
   </header>
 
@@ -24,30 +24,49 @@
   <p class="publicacion__mensaje">{{ publicacion().mensaje }}</p>
 
   @if (publicacion().imagenUrl) {
-    <img
-      class="publicacion__imagen"
-      [src]="publicacion().imagenUrl"
-      [alt]="'Imagen de la publicación ' + publicacion().titulo"
-    />
+    <div class="publicacion__marco">
+      <img
+        [src]="publicacion().imagenUrl"
+        [alt]="'Imagen de la publicación ' + publicacion().titulo"
+      />
+    </div>
   }
 
   <footer class="publicacion__acciones">
     @if (interactiva()) {
       <button
-        class="btn btn-secondary"
-        [class.publicacion__like--activo]="leDiMeGusta()"
+        class="corazon"
+        [class.corazon--activo]="leDiMeGusta()"
         type="button"
+        [attr.aria-pressed]="leDiMeGusta()"
+        [attr.aria-label]="leDiMeGusta() ? 'Quitar me gusta' : 'Dar me gusta'"
         (click)="alternarLike.emit(publicacion())"
       >
-        {{ leDiMeGusta() ? '♥ Quitar me gusta' : '♡ Me gusta' }} · {{ publicacion().cantidadLikes }}
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.4 4.5c2 0 3.7 1.1 5.6 3.2 1.9-2.1 3.6-3.2 5.6-3.2 3.7 0 5.5 3.9 4 7.3C19.500 16.400 12 21 12 21z"
+          />
+        </svg>
+        <span>{{ publicacion().cantidadLikes }}</span>
       </button>
       @if (esMia()) {
-        <button class="btn btn-danger" type="button" (click)="eliminar.emit(publicacion())">
+        <button
+          class="btn btn-danger publicacion__eliminar"
+          type="button"
+          (click)="eliminar.emit(publicacion())"
+        >
           Eliminar
         </button>
       }
     } @else {
-      <span class="text-muted">♥ {{ publicacion().cantidadLikes }} me gusta</span>
+      <span class="corazon corazon--estatico">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.5 6.4 4.5c2 0 3.7 1.1 5.6 3.2 1.9-2.1 3.6-3.2 5.6-3.2 3.7 0 5.5 3.9 4 7.3C19.500 16.400 12 21 12 21z"
+          />
+        </svg>
+        <span>{{ publicacion().cantidadLikes }}</span>
+      </span>
     }
   </footer>
 </article>

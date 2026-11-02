@@ -22,3 +22,32 @@
   gap: 1rem;
   margin-top: 1.5rem;
 }
+
+.publicaciones-orden select {
+  appearance: none;
+  font-family: var(--font-titulo);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding-right: 2.2rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-primary) 50%),
+    linear-gradient(135deg, var(--color-primary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 55%,
+    calc(100% - 12px) 55%;
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+.publicaciones-orden option {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-base);
+  text-transform: none;
+  letter-spacing: 0;
+}

@@ -21,6 +21,6 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.navbar__brand')?.textContent).toContain('NextPlay');
+    expect(compiled.querySelector('.marca')?.textContent).toContain('NextPlay');
   });
 });

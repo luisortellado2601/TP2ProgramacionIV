@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-01
-**Sprint en curso:** #2 – Publicaciones y Mi Perfil (código completo, falta probarlo en el navegador)
+**Sprint en curso:** #2 – Publicaciones y Mi Perfil (código completo y UI renovada, falta probarlo en el navegador)
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint

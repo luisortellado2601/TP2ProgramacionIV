@@ -341,7 +341,7 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Devuelve un array', () => pm.expect(body).to.be.an('array'));"
+                  "pm.test('Devuelve total y publicaciones', () => { pm.expect(body.total).to.be.a('number'); pm.expect(body.publicaciones).to.be.an('array'); });"
                 ]
               }
             }
@@ -398,7 +398,7 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Todas son del autor filtrado', () => body.forEach((p) => pm.expect(p.autor.id).to.eql(pm.collectionVariables.get('autorId'))));"
+                  "pm.test('Todas son del autor filtrado', () => body.publicaciones.forEach((p) => pm.expect(p.autor.id).to.eql(pm.collectionVariables.get('autorId'))));"
                 ]
               }
             }
@@ -500,6 +500,33 @@
               "port": "3000",
               "path": ["publicaciones", "{{publicacionId}}"],
               "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar publicacion - usuario inexistente (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensaje: El usuario no existe', () => pm.expect(pm.response.json().message).to.eql('El usuario no existe'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId=000000000000000000000000",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}"],
+              "query": [{ "key": "usuarioId", "value": "000000000000000000000000" }]
             }
           },
           "response": []

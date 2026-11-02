@@ -1,0 +1,56 @@
+.publicacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.publicacion__autor {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.publicacion__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.publicacion__meta {
+  font-size: 0.8rem;
+}
+
+.publicacion__mensaje {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.publicacion__imagen {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.publicacion__acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.publicacion__like--activo {
+  border-color: var(--color-primary-hover);
+  color: var(--color-primary-hover);
+}

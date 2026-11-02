@@ -29,8 +29,14 @@
   margin-bottom: 0.25rem;
 }
 
-.publicaciones-pendientes {
-  padding: 2.5rem 1.5rem;
+.perfil-subtitulo {
+  margin-bottom: 1rem;
+}
+
+.perfil-publicaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 @media (max-width: 480px) {

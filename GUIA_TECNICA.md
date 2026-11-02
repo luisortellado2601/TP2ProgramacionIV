@@ -1,6 +1,6 @@
 # NextPlay – Guía técnica para estudiar y explicar el código
 
-Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #1** (base, registro y login). Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta** cuando un usuario se registra o inicia sesión.
+Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #1** (base, registro y login) y el **back del Sprint #2** (publicaciones y likes, sección 3.11). El front del Sprint #2 (listado, alta, likes, baja y Mi Perfil) está escrito pero todavía no tiene su sección de explicación. Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta** cuando un usuario se registra o inicia sesión.
 
 > Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al estado del Sprint #1; lo que viene en los sprints siguientes se marca como _pendiente_.
 
@@ -47,7 +47,7 @@ TP2PrograIV/
 │       ├── app.module.ts    Módulo raíz: Config, Mongo y módulos de la app
 │       ├── auth/            Registro y login (controller, service, DTOs, hasher)
 │       ├── usuarios/        Esquema de Usuario + CRUD de prueba
-│       ├── publicaciones/   Solo esquema y módulo (el resto es Sprint #2)
+│       ├── publicaciones/   Esquema, controller, service y DTOs (alta, listado, baja lógica, likes)
 │       └── almacenamiento/  Subida de imágenes a Supabase
 └── Frontend/                Angular
     ├── vercel.json          Configuración de deploy
@@ -70,7 +70,7 @@ TP2PrograIV/
 | Concepto | Qué es | Dónde está en el proyecto |
 |---|---|---|
 | **Módulo** (`@Module`) | Agrupa controllers y providers de una funcionalidad | `AuthModule`, `UsuariosModule`, `PublicacionesModule`, `AlmacenamientoModule` |
-| **Controller** (`@Controller`) | Recibe la petición HTTP y delega; no tiene lógica de negocio | `AuthController` |
+| **Controller** (`@Controller`) | Recibe la petición HTTP y delega; no tiene lógica de negocio | `AuthController`, `PublicacionesController` |
 | **Provider / Service** (`@Injectable`) | Contiene la lógica; se inyecta por constructor | `AuthService`, `PasswordHasher`, `AlmacenamientoService` |
 | **DTO** | Clase que describe y valida el cuerpo de una petición | `RegistroDto`, `LoginDto` |
 | **Pipe** | Transforma/valida datos antes de llegar al controller | `ValidationPipe` global en `main.ts` |
@@ -111,7 +111,7 @@ Esquema de Mongoose declarado con decoradores (`@Schema`, `@Prop`) a partir de u
 
 `unique: true` crea un **índice único** en MongoDB: es la última barrera contra duplicados (aunque dos registros lleguen casi a la vez).
 
-`Backend/src/publicaciones/publicacion.schema.ts` ya define `titulo`, `mensaje`, `imagenUrl?`, `usuario` (referencia a Usuario), `fecha`, `likes` (array de ids) y `eliminada` (baja lógica). Todavía no tiene controller ni service.
+`Backend/src/publicaciones/publicacion.schema.ts` ya define `titulo`, `mensaje`, `imagenUrl?`, `usuario` (referencia a Usuario), `fecha`, `likes` (array de ids) y `eliminada` (baja lógica). Su controller y service se explican en la sección 3.11.
 
 ### 3.5 Registro: `POST /auth/registro` → **201 Created**
 
@@ -205,7 +205,23 @@ Decisiones:
 
 `usuarios.service.ts` es un CRUD genérico anterior a Auth (`delete` ya hace **baja lógica**, `habilitado: false`). El `usuarios.controller.ts` existe pero **no está registrado** en el módulo: se reactiva y se rehace con guard de administrador en el Sprint #4 (ver sección 7).
 
-### 3.11 Variables de entorno (`Backend/.env.example`)
+### 3.11 Publicaciones y likes (Sprint #2): `Backend/src/publicaciones/`
+
+| Método y ruta | Qué hace | Respuestas |
+|---|---|---|
+| `POST /publicaciones` | Crea una publicación (título, mensaje, imagen opcional en base64, `usuarioId`) | 201, 400 |
+| `GET /publicaciones?orden=&usuario=&offset=&limit=` | Lista publicaciones activas con el autor incluido. Responde `{ total, publicaciones }`; `total` cuenta todas las que cumplen el filtro (sin paginar) para armar "Página X de Y" | 200, 400 |
+| `DELETE /publicaciones/:id?usuarioId=` | Baja lógica (`eliminada: true`), solo el autor o un administrador | 200, 403, 404 |
+| `POST /publicaciones/:id/like` | Da me gusta (uno por usuario) | 200, 409 si ya lo dio |
+| `DELETE /publicaciones/:id/like?usuarioId=` | Quita el me gusta | 200, 409 si no lo había dado |
+
+- **`usuarioId` explícito:** hasta que llegue el `JwtAuthGuard` (Sprint #3) no hay forma confiable de saber quién llama, así que el actor viaja en el body o la query. Es un límite temporal conocido: hoy cualquiera puede actuar como otro usuario (ver sección 7).
+- **Imagen:** reutiliza `AlmacenamientoService.subirImagen(dto.imagen, 'publicaciones')`, igual que la foto de perfil.
+- **Likes:** array de ids de usuario dentro de la publicación; la regla "un like por usuario" se garantiza de forma atómica en Mongo: `$addToSet` con filtro `likes: { $ne: usuarioId }` para agregar y `$pull` con filtro `likes: usuarioId` para quitar. Si el filtro no matchea, se responde 409.
+- **Baja lógica:** nada se borra; `listar` filtra `eliminada: false` y las demás operaciones responden 404 sobre una publicación eliminada.
+- **Por qué `listar` usa `aggregate` y no `find`:** `find` no puede ordenar por una cantidad calculada. Orden por likes necesita `cantidadLikes = $size: '$likes'`, que no existe como campo en la base, y `$lookup` trae al autor en la misma consulta. El pipeline es `$match` → `$addFields` → `$sort` → `$skip` → `$limit` → `$lookup` → `$unwind`. Ordenar y paginar antes del `$lookup` evita unir autores de publicaciones que se van a descartar.
+
+### 3.12 Variables de entorno (`Backend/.env.example`)
 
 | Variable | Uso |
 |---|---|
@@ -351,17 +367,19 @@ Form ─► POST /auth/login { usuarioOCorreo, contrasena }
 |---|---|
 | 200 | Login correcto |
 | 201 | Registro correcto |
-| 400 | Validación fallida, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas |
+| 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas |
 | 401 | Credenciales incorrectas o usuario deshabilitado |
-| 409 | Correo o nombre de usuario ya registrado |
+| 403 | Eliminar la publicación de otro usuario sin ser administrador |
+| 404 | Publicación inexistente o dada de baja |
+| 409 | Correo o nombre de usuario ya registrado; like repetido o quitar un like inexistente |
 | 500 | Falla al subir la imagen a Supabase |
 
 ---
 
 ## 6. Pruebas y calidad
 
-- **Postman** (`Backend/postman/NextPlay.postman_collection.json`): 6 casos de Auth (registro 201, correo duplicado 409, contraseña débil 400, login por correo 200, login por usuario 200, contraseña incorrecta 401).
-- **Tests unitarios:** back 3 (Jest), front 2 (Vitest). Son básicos (creación de controller/service/app). La cobertura real se probó manualmente y con requests directos (ver README). Es un punto a ampliar.
+- **Postman** (`Backend/postman/NextPlay.postman_collection.json`): 6 casos de Auth (registro 201, correo duplicado 409, contraseña débil 400, login por correo 200, login por usuario 200, contraseña incorrecta 401) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, baja lógica propia y ajena).
+- **Tests unitarios:** back 5 (Jest), front 2 (Vitest). Son básicos (creación de controller/service/app). La cobertura real se probó manualmente y con requests directos (ver README). Es un punto a ampliar.
 - **Lint** del back con `oxlint`. **Build** de ambos proyectos en verde.
 
 Comandos:
@@ -385,13 +403,15 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 |---|---|---|
 | `UsuariosController` desactivado | Era un CRUD de prueba sin protección (`GET /usuarios` devolvía el hash de las contraseñas y `PATCH` permitía cambiar el `perfil`). Se quitó de `UsuariosModule` antes del deploy; el servicio y el esquema siguen | Sprint #4: se reactiva con guard JWT + rol administrador |
 | El back no valida el token | Se emite pero ninguna ruta lo exige | Sprint #3: `JwtAuthGuard`, `/auth/autorizar`, `/auth/refrescar` |
+| Publicaciones confían en `usuarioId` | Cualquiera puede publicar, dar like o borrar como otro usuario, y hacerse pasar por administrador si conoce su id | Sprint #3: tomar el id del token validado en el guard |
+| Likes atómicos (resuelto) | `darLike`/`quitarLike` usan `findOneAndUpdate` con `$addToSet` / `$pull` y la condición en el filtro (`likes: { $ne: id }` / `likes: id`); si no matchea, responde 409 | — |
 | `authGuard` solo mira `localStorage` | Un token vencido sigue habilitando las pantallas | Sprint #3: pantalla "Cargando" que valida el token + interceptor que ante un 401 redirige al login |
 | Token en `localStorage` | Es simple y suficiente para el TP; es vulnerable si hay XSS (Angular escapa el HTML por defecto, lo que mitiga el riesgo) | Alternativa: cookie `HttpOnly` |
 | Autoselección de `administrador` en el registro | Cualquiera puede registrarse como administrador | Lo pide el enunciado del Sprint #1; en un sistema real el alta de admins sería restringida |
 | Carrera en el registro | Dos registros simultáneos con el mismo correo pasan el chequeo; el índice único de Mongo frena al segundo, pero devolvería un 500 en vez de un 409 | Capturar el error de clave duplicada (código 11000) y convertirlo en `ConflictException` |
 | Imagen en base64 dentro del JSON | Más pesado que `multipart/form-data` y exige subir el límite del body | Se eligió porque Multer no se vio en la cursada |
 | `scryptSync` | Bloquea el hilo unos ms | Usar `scrypt` asíncrono si hubiera mucha carga |
-| CORS en producción | `CORS_ORIGIN` todavía no está definida en el back de Vercel, así que acepta cualquier origen | Definirla con `https://nextplaygaming.vercel.app` y redeployar el back (ver "Próximo paso" en `Backend/README.md`) |
+| CORS en producción | `CORS_ORIGIN` todavía no está definida en el back de Vercel, así que acepta cualquier origen | Definirla con `https://nextplaygaming.vercel.app` y redeployar el back |
 | Backend en ESM | `@nestjs/core` 12 es solo ESM; con CommonJS Vercel fallaba con `ERR_REQUIRE_ESM`. El back usa `"type": "module"` | Los imports relativos deben terminar en `.js` (`from './auth.service.js'`) aunque el archivo sea `.ts` |
 
 ---
@@ -430,7 +450,7 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Por qué la clave de Supabase no está en el front?** Porque todo lo que está en el front es público. La subida pasa por el back, que sí guarda el secreto.
 
-**¿Qué falta para cerrar el Sprint #1?** El deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Solo falta definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
+**¿Qué falta para cerrar el Sprint #1?** El deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Queda opcional definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
 
 ---
 
@@ -443,6 +463,7 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Lógica de registro/login y JWT | `Backend/src/auth/auth.service.ts` |
 | Hash de contraseñas | `Backend/src/auth/password-hasher.ts` |
 | Subida de imágenes | `Backend/src/almacenamiento/almacenamiento.service.ts` |
+| Listado, baja lógica y likes | `Backend/src/publicaciones/publicaciones.service.ts` |
 | Modelo de usuario | `Backend/src/usuarios/usuario.schema.ts` |
 | Sesión del lado del cliente | `Frontend/src/app/services/auth.ts` |
 | Formulario de registro | `Frontend/src/app/componentes/registro/registro.ts` |

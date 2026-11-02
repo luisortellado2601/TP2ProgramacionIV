@@ -23,9 +23,23 @@
       </div>
     </div>
 
-    <div class="card text-center publicaciones-pendientes">
-      <h3>Mis últimas publicaciones</h3>
-      <p class="text-muted">Se van a mostrar acá a partir del Sprint 2.</p>
-    </div>
+    <h3 class="perfil-subtitulo">Mis últimas publicaciones</h3>
+    @if (cargando()) {
+      <p class="text-muted text-center">Cargando...</p>
+    } @else if (falloCarga()) {
+      <div class="card text-center">
+        <p class="text-muted">No pudimos cargar tus publicaciones. Probá recargar la página.</p>
+      </div>
+    } @else if (ultimas().length === 0) {
+      <div class="card text-center">
+        <p class="text-muted">Todavía no publicaste nada.</p>
+      </div>
+    } @else {
+      <div class="perfil-publicaciones">
+        @for (publicacion of ultimas(); track publicacion.id) {
+          <app-publicacion [publicacion]="publicacion" [interactiva]="false" />
+        }
+      </div>
+    }
   </div>
 }

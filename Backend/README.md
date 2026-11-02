@@ -12,64 +12,29 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Fecha de última actualización:** 2026-10-31
-**Sprint en curso:** Sprint #2 – Publicaciones y Mi Perfil (back terminado, falta el front)
-**URLs de producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
-**Trabajo del 2026-10-31 (Sprint #2, back):**
-- `PublicacionesController` + `PublicacionesService`: `POST /publicaciones` (con imagen opcional subida a Supabase, reutilizando `AlmacenamientoService`), `GET /publicaciones` (orden por fecha o likes, filtro por usuario, paginación `offset`/`limit`, con el autor poblado vía `$lookup`), `DELETE /publicaciones/:id` (baja lógica, solo el autor o un administrador), `POST`/`DELETE /publicaciones/:id/like` (un like por usuario, devuelve 409 si ya existía o si no existía al querer sacarlo).
-- Identificación del usuario que actúa: como el guard JWT llega en el Sprint #3, estas rutas reciben `usuarioId` explícito (body o query) — ver la nota en la sección del Sprint #2 más abajo.
-- Se corrigió un bug de larga data en `jest.config.js`: el `moduleNameMapper` tenía el punto sin escapar dentro de un string JS (`'\.'` colapsa a `'.'`), lo que rompía la resolución de módulos `.mjs` de dependencias (`es-toolkit`, usado por `class-validator`) apenas un spec cargaba un DTO con decoradores. No se había notado porque ningún test anterior ejercitaba esa ruta.
-- Se agregaron specs básicos (`publicaciones.service.spec.ts`, `publicaciones.controller.spec.ts`). Tests 5/5, lint y build en verde. Probado manualmente con curl contra Mongo local: alta, listado (orden por fecha y por likes, filtro por usuario, paginación), like/unlike con sus 409, baja lógica propia (200) y ajena (403).
-- `darLike`/`quitarLike` ahora validan que el `usuarioId` corresponda a un usuario que existe (antes se podía dar un "like" con un id inventado con formato válido). Reutiliza el mismo chequeo que ya tenía `crear` (helper `obtenerUsuarioOFallar`). Probado en Postman con un ObjectId válido pero inexistente → 400 "El usuario no existe".
-- `Backend/postman/NextPlay.postman_collection.json`: se agregó una carpeta "Publicaciones" con los casos del Sprint #2 (alta, listado con los 3 filtros, like/unlike con sus 409, baja lógica propia/ajena), encadenados con variables de colección (`autorId`, `otroUsuarioId`, `publicacionId`) que se completan solas al correr los requests de "Setup".
-**Trabajo del 2026-10-26 (deploy):**
-- `UsuariosController` desactivado antes de publicar (exponía el hash de contraseñas).
-- **Backend migrado a ESM** (`"type": "module"`, imports relativos con `.js`, Jest en modo ESM): `@nestjs/core` 12 es solo ESM y el build CommonJS fallaba en Vercel con `ERR_REQUIRE_ESM`. Si se agregan archivos nuevos, los imports relativos deben terminar en `.js`.
-- Back desplegado en Vercel con las variables del `.env` y Atlas con acceso `0.0.0.0/0`; probado `POST /auth/login` (401 con credenciales inexistentes). Front desplegado con `apiUrl` apuntando al back; recargar `/perfil` responde 200 (redirección a `index.html`). Registro con foto, login y cierre de sesión probados en producción (verificado por el equipo).
-- Se agregó `GUIA_TECNICA.md` para estudiar y explicar el código.
-**Último día de trabajo completado (2026-10-25):** Revisión completa del Sprint #1 y cierre de pendientes:
-- Validaciones por campo idénticas en front (`Registro`/`Login`) y back (`RegistroDto`/`LoginDto`), con mensajes específicos por error.
-- Correo normalizado a minúsculas (DTO, esquema y login) y fecha de nacimiento que no puede ser futura ni anterior a 1900.
-- Imagen de perfil en el registro: el front la manda en base64, el back la valida y la sube a Supabase Storage (`AlmacenamientoService`) y guarda la URL; Mi perfil muestra la foto.
-- `lang="es"`, README del front reescrito y este README actualizado.
-- Probado en el navegador (registro con foto, validaciones, login por correo en mayúsculas y por usuario) y con requests directos (GIF → 400, imagen > 2 MB → 400, PNG válido → 201). Front y back compilan, tests (front 2/2, back 3/3) y lint en verde.
-- Repositorio unificado en `Frontend/` y `Backend/`.
-**Trabajo anterior (2026-10-22):** Front del Sprint #1: proyecto Angular con sistema de diseño propio (CSS puro con estilos globales en `styles.css`, sin librerías UI), `AuthService` + `ModalService` (modales propios, sin `alert()`), guards de rutas (`authGuard`/`guestGuard`), componentes **Login** y **Registro** (reactive forms con validaciones acordes al back, selector de perfil usuario/administrador), esqueletos de **Publicaciones** y **MiPerfil** (contenido completo queda para Sprint #2), header de navegación y favicon propio (SVG). Se agregó el campo `perfil` al `RegistroDto`/`AuthService.registro()` del back (antes no lo aceptaba) y `app.enableCors()` en `main.ts` para que el front pueda consumir la API. Probado end-to-end con curl (registro con perfil administrador, login correcto/incorrecto, preflight CORS) y manualmente sirviendo `ng serve` + `nest start:dev`. Se decidió no incluir el campo `file` de imagen de perfil todavía (ver bloqueo ya existente sobre Supabase Storage).
+**Última actualización:** 2026-11-01
+**Sprint en curso:** #2 – Publicaciones y Mi Perfil (código completo, falta probarlo en el navegador)
+**Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
-### Resumen de progreso por sprint
+### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
-| #1 Registro/Login base | [x] | [x] | Funcional y deployado en Vercel |
-| #2 Publicaciones y Mi Perfil | [ ] | [x] | Back listo (alta, listado con orden/paginación/filtro, baja lógica, likes); falta el front |
+| #1 Registro/Login base | [x] | [x] | Funcional y deployado |
+| #2 Publicaciones y Mi Perfil | [x] | [x] | Falta probar en el navegador (10 publicaciones, paginación, likes, Mi Perfil con 3) |
 | #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Front del Sprint #2 (ver checklist en sección 3): componente de publicación, listado con orden/paginación, alta/baja, like/unlike, y Mi Perfil con datos + últimas 3 publicaciones.
+Probar el front del Sprint #2 en el navegador (crear 10 publicaciones, paginación de 5, orden por me gusta, like/unlike, eliminar, Mi Perfil con 3) y, si está bien, pasar al Sprint #3. Los comentarios de Mi Perfil llegan en el Sprint #3.
 
-Deploy en Vercel (hecho, se deja el detalle como referencia):
-1. **Pasos** (front y back son dos proyectos de Vercel del mismo repositorio):
-   - [x] **Back:** crear un proyecto en Vercel con *Root Directory* = `Backend`. Vercel detecta NestJS solo (entrada `src/main.ts`, no hace falta `vercel.json`). Cargar las variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. `PORT` no hace falta.
-   - [x] En Atlas → Network Access, permitir `0.0.0.0/0`: Vercel no tiene IPs fijas.
-   - [x] Probar el back: `POST <url-del-back>/auth/login` desde Postman.
-   - [x] Poner la URL del back en `apiUrl` de `Frontend/src/environments/environment.ts`, commitear y pushear.
-   - [x] **Front:** crear un proyecto en Vercel con *Root Directory* = `Frontend` (el `vercel.json` ya define el build, la carpeta de salida y la redirección a `index.html`). No lleva variables de entorno.
-   - [x] Probar en producción: registro con foto, login, recargar `/perfil`, cerrar sesión.
-   - Límite de Vercel: bodies de hasta 4,5 MB. Una imagen de 2 MB en base64 pesa ~2,7 MB, así que entra.
-   - Hecho antes del deploy: `UsuariosController` desactivado (ver "Hallazgos").
-
-### Hallazgos de la revisión del 2026-10-25
-- **Seguridad – actualización 2026-10-26: `UsuariosController` desactivado antes del deploy.** Se quitó de `controllers` en `UsuariosModule` (el archivo y el servicio siguen); se vuelve a registrar en el Sprint #4 con guard JWT + rol administrador. Auth no depende de él. Contexto original (decisión 2026-10-25, se había dejado abierto a propósito para probar desde Postman). Detalle: `UsuariosController` (módulo de prueba) está **sin protección**: `GET /usuarios` devuelve todos los usuarios **con el hash de la contraseña**, `POST /usuarios` crea usuarios con `body: any` (sin validar y con la contraseña **en texto plano**) y `PATCH /usuarios/:id` permite cambiarse el `perfil` a administrador. Propuesta: quitar las rutas hasta el Sprint #4 (donde se rehacen con guard de admin) y marcar `contrasena` con `select: false` en el esquema.
-- **Deploy:** `environment.ts` (producción) apunta al back en Vercel (`https://nextplay-delta.vercel.app`).
-- **Guía técnica para estudiar y explicar el código:** [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
-- ~~Correo case-sensitive~~ → resuelto. Ojo: los usuarios que ya estaban en la BD con mayúsculas en el correo no se modifican solos; si existen, pasarlos a minúsculas a mano en Atlas.
-- ~~Fecha de nacimiento futura~~ → resuelto, junto con validaciones completas por campo en front y back.
-- ~~`lang="en"`~~ y ~~README del front genérico~~ → resueltos.
-- **Sesión en el front:** `authGuard` solo verifica que exista una sesión en `localStorage`; un token vencido (15 min) sigue habilitando las rutas. Se resuelve formalmente en el Sprint #3 (`autorizar` + interceptor).
-
-### Bloqueos / decisiones pendientes
-- **No se usa bcrypt** (no se vio en la cursada): el hash de contraseñas se hace con un servicio propio `PasswordHasher` implementado con el módulo nativo `node:crypto`.
-- **No se usa Multer** (no se vio en la cursada): la subida de imágenes (perfil y publicaciones) se hará más adelante con **Supabase Storage**. **Actualización 2026-10-25:** imagen de perfil implementada en el Sprint #1. El front la manda como data URL en base64 dentro del JSON del registro y el back la sube a Supabase con la secret key (que nunca llega al navegador). Variables nuevas en `.env`: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`. El mismo `AlmacenamientoService` se reutiliza para las imágenes de publicaciones en el Sprint #2.
+### Pendientes y límites conocidos
+- Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId` (body o query); se reemplaza por el id del token validado.
+- `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
+- `authGuard` del front solo mira `localStorage`: un token vencido sigue habilitando rutas. Se resuelve en el Sprint #3.
+- Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
+- Backend en ESM: los imports relativos terminan en `.js`.
+- Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 
 ---
 
@@ -80,7 +45,7 @@ TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
 └── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones
     ├── Funcional.md   Descripción funcional de NextPlay
-    └── postman/       Colección de pruebas de Auth (Sprint #1)
+    └── postman/       Colección de pruebas de Auth (Sprint #1) y Publicaciones (Sprint #2)
 ```
 
 **Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):
@@ -186,17 +151,17 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 ### SPRINT #2 – Publicaciones y Mi Perfil
 
 **Front**
-- [ ] **Página Publicaciones**
-  - [ ] Listado ordenado por fecha por defecto.
-  - [ ] Permitir ordenar por cantidad de "me gusta".
-  - [ ] Traer cantidad limitada de publicaciones, con paginación.
-  - [ ] Cada publicación es un **componente**.
-  - [ ] Dar y quitar "me gusta" siempre que corresponda.
-  - [ ] Poder eliminar mis propias publicaciones.
-  - [ ] Crear publicación (título, mensaje, imagen opcional).
-- [ ] **Componente Mi Perfil**
-  - [ ] Mostrar todos los datos del usuario y su foto de perfil.
-  - [ ] Mostrar mis últimas 3 publicaciones y sus comentarios.
+- [x] **Página Publicaciones**
+  - [x] Listado ordenado por fecha por defecto.
+  - [x] Permitir ordenar por cantidad de "me gusta".
+  - [x] Traer cantidad limitada de publicaciones, con paginación.
+  - [x] Cada publicación es un **componente**.
+  - [x] Dar y quitar "me gusta" siempre que corresponda.
+  - [x] Poder eliminar mis propias publicaciones.
+  - [x] Crear publicación (título, mensaje, imagen opcional).
+- [x] **Componente Mi Perfil**
+  - [x] Mostrar todos los datos del usuario y su foto de perfil.
+  - [ ] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Las 3 publicaciones están; los comentarios llegan con el back del Sprint #3.)_
 
 **Back – Publicaciones controller**
 - [x] Alta, listado y baja lógica de publicaciones.
@@ -328,6 +293,8 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 | GET | `/estadisticas/...` | Gráficos (admin) | 4 |
 
 > Los nombres de rutas son sugeridos; el enunciado solo fija métodos y comportamiento.
+>
+> Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId`: en el body de `POST /publicaciones` y `POST /publicaciones/:id/like`, y como query param en los `DELETE`.
 
 ---
 

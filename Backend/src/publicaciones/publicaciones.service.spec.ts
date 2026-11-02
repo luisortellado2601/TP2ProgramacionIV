@@ -19,6 +19,7 @@ describe('PublicacionesService', () => {
             create: jest.fn(),
             findById: jest.fn(),
             aggregate: jest.fn(),
+            countDocuments: jest.fn(),
           },
         },
         {

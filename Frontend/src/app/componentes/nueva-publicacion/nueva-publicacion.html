@@ -1,0 +1,64 @@
+<form class="card nueva-publicacion" [formGroup]="form" (ngSubmit)="publicar()" novalidate>
+  <h3>Nueva publicación</h3>
+
+  <div class="form-field">
+    <label for="titulo">Título</label>
+    <input
+      id="titulo"
+      type="text"
+      formControlName="titulo"
+      maxlength="100"
+      [class.is-invalid]="form.controls.titulo.touched && form.controls.titulo.invalid"
+    />
+    @if (form.controls.titulo.touched && form.controls.titulo.invalid) {
+      <span class="form-field__error">
+        @if (form.controls.titulo.hasError('minlength')) {
+          El título debe tener al menos 2 caracteres.
+        } @else {
+          El título es obligatorio.
+        }
+      </span>
+    }
+  </div>
+
+  <div class="form-field">
+    <label for="mensaje">Mensaje</label>
+    <textarea
+      id="mensaje"
+      rows="4"
+      formControlName="mensaje"
+      maxlength="2000"
+      [class.is-invalid]="form.controls.mensaje.touched && form.controls.mensaje.invalid"
+    ></textarea>
+    @if (form.controls.mensaje.touched && form.controls.mensaje.invalid) {
+      <span class="form-field__error">El mensaje es obligatorio.</span>
+    }
+  </div>
+
+  <div class="form-field">
+    <label for="imagen">Imagen (opcional · JPG, PNG o WEBP, hasta 2 MB)</label>
+    <input
+      #inputImagen
+      id="imagen"
+      type="file"
+      [accept]="tiposImagen"
+      (change)="seleccionarImagen($event)"
+    />
+    @if (errorImagen()) {
+      <span class="form-field__error">{{ errorImagen() }}</span>
+    }
+    @if (imagen()) {
+      <img class="nueva-publicacion__preview" [src]="imagen()" alt="Vista previa de la imagen" />
+      <button class="btn btn-link" type="button" (click)="quitarImagen(inputImagen)">
+        Quitar imagen
+      </button>
+    }
+  </div>
+
+  <div class="nueva-publicacion__acciones">
+    <button class="btn btn-secondary" type="button" (click)="cancelada.emit()">Cancelar</button>
+    <button class="btn btn-primary" type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Publicando...' : 'Publicar' }}
+    </button>
+  </div>
+</form>

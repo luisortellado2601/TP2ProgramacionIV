@@ -1,0 +1,53 @@
+<article class="card publicacion">
+  <header class="publicacion__autor">
+    @if (publicacion().autor.imagenPerfilUrl) {
+      <img
+        class="publicacion__avatar"
+        [src]="publicacion().autor.imagenPerfilUrl"
+        [alt]="'Foto de ' + publicacion().autor.nombreUsuario"
+      />
+    } @else {
+      <div class="publicacion__avatar">
+        {{ publicacion().autor.nombre.charAt(0) }}{{ publicacion().autor.apellido.charAt(0) }}
+      </div>
+    }
+    <div>
+      <strong>{{ publicacion().autor.nombre }} {{ publicacion().autor.apellido }}</strong>
+      <p class="text-muted publicacion__meta">
+        &#64;{{ publicacion().autor.nombreUsuario }} ·
+        {{ publicacion().fecha | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+    </div>
+  </header>
+
+  <h3>{{ publicacion().titulo }}</h3>
+  <p class="publicacion__mensaje">{{ publicacion().mensaje }}</p>
+
+  @if (publicacion().imagenUrl) {
+    <img
+      class="publicacion__imagen"
+      [src]="publicacion().imagenUrl"
+      [alt]="'Imagen de la publicación ' + publicacion().titulo"
+    />
+  }
+
+  <footer class="publicacion__acciones">
+    @if (interactiva()) {
+      <button
+        class="btn btn-secondary"
+        [class.publicacion__like--activo]="leDiMeGusta()"
+        type="button"
+        (click)="alternarLike.emit(publicacion())"
+      >
+        {{ leDiMeGusta() ? '♥ Quitar me gusta' : '♡ Me gusta' }} · {{ publicacion().cantidadLikes }}
+      </button>
+      @if (esMia()) {
+        <button class="btn btn-danger" type="button" (click)="eliminar.emit(publicacion())">
+          Eliminar
+        </button>
+      }
+    } @else {
+      <span class="text-muted">♥ {{ publicacion().cantidadLikes }} me gusta</span>
+    }
+  </footer>
+</article>

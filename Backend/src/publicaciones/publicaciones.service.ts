@@ -67,26 +67,29 @@ export class PublicacionesService {
         ? { cantidadLikes: -1, fecha: -1 }
         : { fecha: -1 };
 
-    const resultados = await this.publicacionModel
-      .aggregate([
-        { $match: filtro },
-        { $addFields: { cantidadLikes: { $size: '$likes' } } },
-        { $sort: orden },
-        { $skip: dto.offset },
-        { $limit: dto.limit },
-        {
-          $lookup: {
-            from: 'usuarios',
-            localField: 'usuario',
-            foreignField: '_id',
-            as: 'autor',
+    const [total, resultados] = await Promise.all([
+      this.publicacionModel.countDocuments(filtro).exec(),
+      this.publicacionModel
+        .aggregate([
+          { $match: filtro },
+          { $addFields: { cantidadLikes: { $size: '$likes' } } },
+          { $sort: orden },
+          { $skip: dto.offset },
+          { $limit: dto.limit },
+          {
+            $lookup: {
+              from: 'usuarios',
+              localField: 'usuario',
+              foreignField: '_id',
+              as: 'autor',
+            },
           },
-        },
-        { $unwind: '$autor' },
-      ])
-      .exec();
+          { $unwind: '$autor' },
+        ])
+        .exec(),
+    ]);
 
-    return resultados.map((publicacion) => ({
+    const publicaciones = resultados.map((publicacion) => ({
       id: publicacion._id.toString(),
       titulo: publicacion.titulo,
       mensaje: publicacion.mensaje,
@@ -96,15 +99,16 @@ export class PublicacionesService {
       cantidadLikes: publicacion.cantidadLikes,
       autor: this.aAutor(publicacion.autor),
     }));
+
+    return { total, publicaciones };
   }
 
   async eliminar(id: string, usuarioId: string) {
     const publicacion = await this.obtenerActivaOFallar(id);
-    const solicitante = await this.usuarioModel.findById(usuarioId).exec();
+    const solicitante = await this.obtenerUsuarioOFallar(usuarioId);
 
     const esAutor = publicacion.usuario.toString() === usuarioId;
-    const esAdministrador =
-      solicitante?.perfil === PerfilUsuario.ADMINISTRADOR;
+    const esAdministrador = solicitante.perfil === PerfilUsuario.ADMINISTRADOR;
     if (!esAutor && !esAdministrador) {
       throw new ForbiddenException(
         'No podés eliminar una publicación de otro usuario',
@@ -119,32 +123,39 @@ export class PublicacionesService {
 
   async darLike(id: string, usuarioId: string) {
     await this.obtenerUsuarioOFallar(usuarioId);
-    const publicacion = await this.obtenerActivaOFallar(id);
-    const yaDioLike = publicacion.likes.some(
-      (idUsuario) => idUsuario.toString() === usuarioId,
-    );
-    if (yaDioLike) {
+    await this.obtenerActivaOFallar(id);
+    const idUsuario = new Types.ObjectId(usuarioId);
+
+    // Operación atómica: el filtro y el cambio se resuelven juntos en Mongo.
+    const publicacion = await this.publicacionModel
+      .findOneAndUpdate(
+        { _id: id, eliminada: false, likes: { $ne: idUsuario } },
+        { $addToSet: { likes: idUsuario } },
+        { returnDocument: 'after' },
+      )
+      .exec();
+    if (!publicacion) {
       throw new ConflictException('Ya le diste me gusta a esta publicación');
     }
-
-    publicacion.likes.push(new Types.ObjectId(usuarioId));
-    await publicacion.save();
 
     return this.aRespuestaLikes(publicacion);
   }
 
   async quitarLike(id: string, usuarioId: string) {
     await this.obtenerUsuarioOFallar(usuarioId);
-    const publicacion = await this.obtenerActivaOFallar(id);
-    const indice = publicacion.likes.findIndex(
-      (idUsuario) => idUsuario.toString() === usuarioId,
-    );
-    if (indice === -1) {
+    await this.obtenerActivaOFallar(id);
+    const idUsuario = new Types.ObjectId(usuarioId);
+
+    const publicacion = await this.publicacionModel
+      .findOneAndUpdate(
+        { _id: id, eliminada: false, likes: idUsuario },
+        { $pull: { likes: idUsuario } },
+        { returnDocument: 'after' },
+      )
+      .exec();
+    if (!publicacion) {
       throw new ConflictException('No le diste me gusta a esta publicación');
     }
-
-    publicacion.likes.splice(indice, 1);
-    await publicacion.save();
 
     return this.aRespuestaLikes(publicacion);
   }

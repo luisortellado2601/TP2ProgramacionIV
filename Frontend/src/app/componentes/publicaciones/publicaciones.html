@@ -1,15 +1,58 @@
 <div class="page">
   <div class="publicaciones-header">
     <h2>Publicaciones</h2>
-    <button class="btn btn-primary" type="button" disabled title="Disponible en el Sprint 2">
-      Nueva publicación
+    <button class="btn btn-primary" type="button" (click)="creando.set(!creando())">
+      {{ creando() ? 'Cerrar' : 'Nueva publicación' }}
     </button>
   </div>
 
-  <div class="card text-center">
-    <p class="text-muted">
-      El listado de publicaciones, los "me gusta" y los comentarios se habilitan en el próximo
-      sprint. Por ahora esta pantalla confirma la navegación y que tu sesión está activa.
-    </p>
+  @if (creando()) {
+    <app-nueva-publicacion (creada)="publicacionCreada()" (cancelada)="creando.set(false)" />
+  }
+
+  <div class="publicaciones-orden form-field">
+    <label for="orden">Ordenar por</label>
+    <select id="orden" [value]="orden()" (change)="cambiarOrden($event)">
+      <option value="fecha">Más recientes</option>
+      <option value="likes">Más me gusta</option>
+    </select>
   </div>
+
+  @if (cargando() && publicaciones().length === 0) {
+    <p class="text-muted text-center">Cargando publicaciones...</p>
+  } @else if (publicaciones().length === 0) {
+    <div class="card text-center">
+      <p class="text-muted">Todavía no hay publicaciones. ¡Sé el primero en publicar!</p>
+    </div>
+  } @else {
+    <div class="publicaciones-lista">
+      @for (publicacion of publicaciones(); track publicacion.id) {
+        <app-publicacion
+          [publicacion]="publicacion"
+          (alternarLike)="alternarLike($event)"
+          (eliminar)="eliminar($event)"
+        />
+      }
+    </div>
+
+    <nav class="publicaciones-paginacion" aria-label="Paginación">
+      <button
+        class="btn btn-secondary"
+        type="button"
+        [disabled]="pagina() === 1 || cargando()"
+        (click)="irAPagina(pagina() - 1)"
+      >
+        Anterior
+      </button>
+      <span class="text-muted">Página {{ pagina() }} de {{ totalPaginas() }}</span>
+      <button
+        class="btn btn-secondary"
+        type="button"
+        [disabled]="pagina() >= totalPaginas() || cargando()"
+        (click)="irAPagina(pagina() + 1)"
+      >
+        Siguiente
+      </button>
+    </nav>
+  }
 </div>

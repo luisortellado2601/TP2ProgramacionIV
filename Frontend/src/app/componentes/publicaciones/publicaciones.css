@@ -4,3 +4,21 @@
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
+
+.publicaciones-orden {
+  max-width: 220px;
+}
+
+.publicaciones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.publicaciones-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}

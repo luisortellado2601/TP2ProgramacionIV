@@ -42,13 +42,16 @@ src/
 │   ├── componentes/
 │   │   ├── login/          Login por correo o nombre de usuario
 │   │   ├── registro/       Registro con validaciones por campo
-│   │   ├── publicaciones/  Listado de publicaciones (esqueleto, contenido en Sprint #2)
-│   │   ├── mi-perfil/      Datos del usuario logueado (publicaciones en Sprint #2)
+│   │   ├── publicaciones/  Listado paginado, orden por fecha o me gusta, crear y eliminar
+│   │   ├── publicacion/    Tarjeta de una publicación (presentacional, con like)
+│   │   ├── nueva-publicacion/  Formulario de alta con imagen opcional
+│   │   ├── comentarios/    Comentarios de una publicación (más recientes primero)
+│   │   ├── mi-perfil/      Datos del usuario, sus últimas 3 publicaciones y comentarios
 │   │   ├── navbar/         Navegación y cierre de sesión
 │   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
 │   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage) y ModalService
+│   ├── services/           AuthService (sesión en localStorage), ModalService, PublicacionesService y ComentariosService
 │   ├── utils/              Validadores propios y helper de mensajes de error
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient)

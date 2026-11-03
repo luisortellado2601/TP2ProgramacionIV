@@ -479,6 +479,137 @@
           "response": []
         },
         {
+          "name": "Comentar - Exitoso (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Nace sin modificar', () => pm.expect(body.modificado).to.eql(false));",
+                  "pm.test('Incluye al autor', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('otroUsuarioId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Buena resena, la voy a probar\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "comentarios"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Comentar - mensaje vacio (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"   \",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "comentarios"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Comentar - publicacion inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/000000000000000000000000/comentarios",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "000000000000000000000000", "comentarios"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar comentarios (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve total y comentarios', () => {",
+                  "  pm.expect(body.total).to.be.a('number');",
+                  "  pm.expect(body.comentarios).to.be.an('array');",
+                  "});",
+                  "pm.test('Mas recientes primero', () => {",
+                  "  const fechas = body.comentarios.map((c) => new Date(c.fecha).getTime());",
+                  "  pm.expect(fechas).to.eql([...fechas].sort((a, b) => b - a));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios?offset=0&limit=5",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["publicaciones", "{{publicacionId}}", "comentarios"],
+              "query": [
+                { "key": "offset", "value": "0" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Eliminar publicacion ajena (403)",
           "event": [
             {

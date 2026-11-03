@@ -1,0 +1,44 @@
+<section class="comentarios">
+  <h4 class="comentarios__titulo">Comentarios ({{ total() }})</h4>
+
+  @if (cargando()) {
+    <p class="text-muted">Cargando comentarios...</p>
+  } @else if (falloCarga()) {
+    <p class="text-muted">No pudimos cargar los comentarios.</p>
+  } @else if (comentarios().length === 0) {
+    <p class="text-muted">Todavía no hay comentarios.</p>
+  } @else {
+    <ul class="comentarios__lista">
+      @for (comentario of comentarios(); track comentario.id) {
+        <li class="comentario">
+          @if (comentario.autor.imagenPerfilUrl) {
+            <img
+              class="comentario__avatar"
+              [src]="comentario.autor.imagenPerfilUrl"
+              [alt]="'Foto de ' + comentario.autor.nombreUsuario"
+            />
+          } @else {
+            <div class="comentario__avatar">
+              {{ comentario.autor.nombre.charAt(0) }}{{ comentario.autor.apellido.charAt(0) }}
+            </div>
+          }
+          <div class="comentario__cuerpo">
+            <span class="comentario__meta">
+              <strong>&#64;{{ comentario.autor.nombreUsuario }}</strong> ·
+              {{ comentario.fecha | date: 'dd/MM/yy HH:mm' }}
+              @if (comentario.modificado) {
+                · <em>editado</em>
+              }
+            </span>
+            <p class="comentario__mensaje">{{ comentario.mensaje }}</p>
+          </div>
+        </li>
+      }
+    </ul>
+    @if (ocultos() > 0) {
+      <p class="comentarios__mas text-muted">
+        {{ ocultos() === 1 ? 'Y 1 comentario más' : 'Y ' + ocultos() + ' comentarios más' }}
+      </p>
+    }
+  }
+</section>

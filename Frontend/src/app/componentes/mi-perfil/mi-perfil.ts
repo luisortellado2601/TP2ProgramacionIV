@@ -3,12 +3,13 @@ import { AuthService } from '../../services/auth';
 import { PublicacionesService } from '../../services/publicaciones';
 import { Publicacion } from '../../models/publicacion';
 import { PublicacionCard } from '../publicacion/publicacion';
+import { Comentarios } from '../comentarios/comentarios';
 
 const CANTIDAD_ULTIMAS = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [PublicacionCard],
+  imports: [PublicacionCard, Comentarios],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

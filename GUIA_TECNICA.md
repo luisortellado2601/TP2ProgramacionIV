@@ -1,8 +1,10 @@
 # NextPlay – Guía técnica para estudiar y explicar el código
 
-Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #1** (base, registro y login) y el **back del Sprint #2** (publicaciones y likes, sección 3.11). El front del Sprint #2 (listado, alta, likes, baja y Mi Perfil) está escrito pero todavía no tiene su sección de explicación. Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta** cuando un usuario se registra o inicia sesión.
+Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #2** completo: registro y login (Sprint #1), publicaciones, likes, paginación, Mi Perfil y la lectura/alta de comentarios (Sprint #2). Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta**.
 
-> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al estado del Sprint #1; lo que viene en los sprints siguientes se marca como _pendiente_.
+Los temas que más conviene dominar tienen su propia explicación de punta a punta en la sección 5: **login (5.2)**, **paginación (5.4)**, **publicaciones (5.5)** y **comentarios (5.6)**.
+
+> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al estado al cierre del Sprint #2; lo que viene en los sprints siguientes se marca como _pendiente_.
 
 ---
 
@@ -24,11 +26,11 @@ NextPlay es una red social de videojuegos. Son **dos proyectos independientes** 
 |---|---|---|
 | Frontend | Angular 22, TypeScript, CSS propio | Pantallas, formularios, sesión del lado del navegador |
 | Backend | NestJS 12, TypeScript | API REST: validación, lógica de negocio, seguridad |
-| Base de datos | MongoDB (Atlas) + Mongoose | Persistencia de usuarios (y luego publicaciones) |
+| Base de datos | MongoDB (Atlas) + Mongoose | Persistencia de usuarios, publicaciones y comentarios |
 | Imágenes | Supabase Storage (API REST) | Guardar las fotos de perfil y devolver una URL pública |
 | Autenticación | JWT (`@nestjs/jwt`) | Identificar al usuario en cada petición (se usa del lado del servidor a partir del Sprint #3) |
 
-**Qué hace hoy la app (Sprint #1):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver una pantalla de Publicaciones (esqueleto), ver Mi perfil, cerrar sesión. Las rutas privadas están protegidas con guards.
+**Qué hace hoy la app (Sprints #1 y #2):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver el listado de publicaciones (paginado, ordenable por fecha o por me gusta), crear publicaciones con imagen opcional, dar y quitar me gusta, eliminar las propias, ver Mi perfil con las últimas 3 publicaciones y sus comentarios, y cerrar sesión. Las rutas privadas están protegidas con guards. Todavía **no** se puede comentar desde la interfaz (el alta existe en la API; la pantalla llega en el Sprint #3).
 
 ---
 
@@ -48,15 +50,17 @@ TP2PrograIV/
 │       ├── auth/            Registro y login (controller, service, DTOs, hasher)
 │       ├── usuarios/        Esquema de Usuario + CRUD de prueba
 │       ├── publicaciones/   Esquema, controller, service y DTOs (alta, listado, baja lógica, likes)
+│       ├── comentarios/     Esquema, controller, service y DTOs (alta y listado paginado)
 │       └── almacenamiento/  Subida de imágenes a Supabase
 └── Frontend/                Angular
     ├── vercel.json          Configuración de deploy
     └── src/
         ├── environments/    URL de la API según entorno
         └── app/
-            ├── componentes/ login, registro, publicaciones, mi-perfil, navbar, modal
+            ├── componentes/ login, registro, publicaciones, publicacion, nueva-publicacion,
+            │                comentarios, mi-perfil, navbar, modal
             ├── guards/      authGuard, guestGuard
-            ├── services/    AuthService, ModalService
+            ├── services/    AuthService, ModalService, PublicacionesService, ComentariosService
             ├── models/      Interfaces TypeScript
             └── utils/       Validadores propios y helper de errores
 ```
@@ -69,10 +73,10 @@ TP2PrograIV/
 
 | Concepto | Qué es | Dónde está en el proyecto |
 |---|---|---|
-| **Módulo** (`@Module`) | Agrupa controllers y providers de una funcionalidad | `AuthModule`, `UsuariosModule`, `PublicacionesModule`, `AlmacenamientoModule` |
-| **Controller** (`@Controller`) | Recibe la petición HTTP y delega; no tiene lógica de negocio | `AuthController`, `PublicacionesController` |
-| **Provider / Service** (`@Injectable`) | Contiene la lógica; se inyecta por constructor | `AuthService`, `PasswordHasher`, `AlmacenamientoService` |
-| **DTO** | Clase que describe y valida el cuerpo de una petición | `RegistroDto`, `LoginDto` |
+| **Módulo** (`@Module`) | Agrupa controllers y providers de una funcionalidad | `AuthModule`, `UsuariosModule`, `PublicacionesModule`, `ComentariosModule`, `AlmacenamientoModule` |
+| **Controller** (`@Controller`) | Recibe la petición HTTP y delega; no tiene lógica de negocio | `AuthController`, `PublicacionesController`, `ComentariosController` |
+| **Provider / Service** (`@Injectable`) | Contiene la lógica; se inyecta por constructor | `AuthService`, `PasswordHasher`, `AlmacenamientoService`, `PublicacionesService`, `ComentariosService` |
+| **DTO** | Clase que describe y valida el cuerpo o la query de una petición | `RegistroDto`, `LoginDto`, `ListarPublicacionesDto`, `CrearComentarioDto` |
 | **Pipe** | Transforma/valida datos antes de llegar al controller | `ValidationPipe` global en `main.ts` |
 | **Inyección de dependencias** | Nest crea las instancias y las entrega en el constructor | Todos los constructores |
 
@@ -221,7 +225,24 @@ Decisiones:
 - **Baja lógica:** nada se borra; `listar` filtra `eliminada: false` y las demás operaciones responden 404 sobre una publicación eliminada.
 - **Por qué `listar` usa `aggregate` y no `find`:** `find` no puede ordenar por una cantidad calculada. Orden por likes necesita `cantidadLikes = $size: '$likes'`, que no existe como campo en la base, y `$lookup` trae al autor en la misma consulta. El pipeline es `$match` → `$addFields` → `$sort` → `$skip` → `$limit` → `$lookup` → `$unwind`. Ordenar y paginar antes del `$lookup` evita unir autores de publicaciones que se van a descartar.
 
-### 3.12 Variables de entorno (`Backend/.env.example`)
+### 3.12 Comentarios (Sprint #2, versión mínima): `Backend/src/comentarios/`
+
+Se adelantó del Sprint #3 lo mínimo para poder mostrar comentarios en Mi Perfil (la corrección es por sprint). Falta el `PUT` para editar.
+
+| Método y ruta | Qué hace | Respuestas |
+|---|---|---|
+| `POST /publicaciones/:publicacionId/comentarios` | Crea un comentario (`mensaje`, `usuarioId`) | 201, 400, 404 |
+| `GET /publicaciones/:publicacionId/comentarios?offset=&limit=` | Lista los comentarios de la publicación, **más recientes primero**. Responde `{ total, comentarios }` | 200, 400, 404 |
+
+- **Esquema** (`comentario.schema.ts`): `publicacion` (ref), `usuario` (ref), `mensaje`, `fecha`, `modificado` (default `false`, lo usará el `PUT`) y `eliminado` (baja lógica). Tiene un **índice compuesto** `{ publicacion: 1, fecha: -1 }` porque siempre se consulta "los comentarios de una publicación, del más nuevo al más viejo": el índice evita ordenar en memoria.
+- **Validación** (`CrearComentarioDto`): el mensaje se recorta (`@Transform(recortar)`), es obligatorio y llega hasta 500 caracteres. Un mensaje de solo espacios queda vacío tras el recorte y devuelve **400**. `usuarioId` viaja en el body por el mismo motivo que en publicaciones (todavía no hay JWT validado).
+- **Reglas del service**: comentar o listar sobre una publicación inexistente **o dada de baja** devuelve **404**; un `usuarioId` que no existe devuelve **400**. El id de la publicación se valida con `Types.ObjectId.isValid` antes de consultar (si no, Mongoose lanzaría un error de cast y respondería 500).
+- **Listado**: usa `find` + `sort` + `skip` + `limit` + `populate('usuario')`. A diferencia de publicaciones, acá **no hace falta `aggregate`**: se ordena por un campo real (`fecha`), no por uno calculado. El orden es `{ fecha: -1, _id: -1 }`; el `_id` desempata dos comentarios con la misma fecha para que la paginación sea estable. El `total` sale de un `countDocuments` en paralelo (`Promise.all`), igual que en publicaciones.
+- **Respuesta**: cada comentario trae `id`, `publicacionId`, `mensaje`, `fecha`, `modificado` y el `autor` resumido (id, nombre, apellido, nombreUsuario, imagenPerfilUrl). Nunca se expone el hash de la contraseña ni el correo.
+- **`@Controller()` sin prefijo**: las rutas se escriben completas en cada decorador. Así el Sprint #3 puede agregar `PUT /comentarios/:id` en el mismo controller sin mezclar prefijos.
+- **Baja lógica**: el campo `eliminado` existe y el listado ya filtra `eliminado: false`, pero todavía no hay endpoint que lo active (llega con el administrador, Sprint #4).
+
+### 3.13 Variables de entorno (`Backend/.env.example`)
 
 | Variable | Uso |
 |---|---|
@@ -312,10 +333,52 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 ### 4.7 Navbar y pantallas
 
 - **Navbar**: muestra enlaces distintos según `estaAutenticado()` (Ingresar/Crear cuenta vs. Publicaciones/Mi perfil/Cerrar sesión). `routerLinkActive` marca el enlace activo.
-- **Mi perfil**: muestra foto (o iniciales si no hay) y datos del `usuarioActual()`. Se usa `&#64;` para escribir el carácter `@` en el template, porque en Angular moderno `@` inicia un bloque de control flow.
-- **Publicaciones**: esqueleto; el botón "Nueva publicación" está deshabilitado hasta el Sprint #2.
+- **Mi perfil**: muestra foto (o iniciales si no hay) y datos del `usuarioActual()`, y debajo sus últimas 3 publicaciones con los comentarios de cada una (ver 4.11). Se usa `&#64;` para escribir el carácter `@` en el template, porque en Angular moderno `@` inicia un bloque de control flow.
 
-### 4.8 Environments y build
+### 4.8 Página Publicaciones (`componentes/publicaciones/`)
+
+Es el componente "contenedor": guarda el estado, habla con el servicio y decide qué hacer. Los componentes hijos (`app-publicacion`, `app-nueva-publicacion`) solo muestran y avisan.
+
+| Signal | Para qué |
+|---|---|
+| `publicaciones` | Las publicaciones de la **página actual** (no todas) |
+| `total` | Cuántas publicaciones hay en total (lo devuelve el back) |
+| `pagina` | Página actual, empieza en 1 |
+| `orden` | `'fecha'` o `'likes'` |
+| `cargando`, `creando` | Estado de la carga y si el formulario de alta está abierto |
+
+- `totalPaginas` es un `computed`: `Math.max(1, Math.ceil(total / 5))`. Se recalcula solo cuando cambia `total`. El `Math.max(1, …)` evita mostrar "Página 1 de 0" si no hay publicaciones.
+- **Un único método carga los datos**: `cargar()`. Todo lo demás (cambiar de página, de orden, crear, eliminar) cambia un signal y llama a `cargar()`. El detalle de la paginación está en 5.4.
+- **Like (`alternarLike`)**: mira en el array `likes` de la publicación si el usuario ya había dado like. Si sí, llama a `DELETE`; si no, a `POST`. Cuando el back responde, **solo se reemplaza esa publicación** dentro de la lista con `lista.map(...)` y el spread `{ ...p, likes, cantidadLikes }`; no se recarga todo el listado. Si falla (por ejemplo 409 porque dos pestañas dieron like a la vez), se muestra el error en un modal y se recarga para quedar sincronizado.
+- **Eliminar**: pide confirmación con `modalService.confirmar(...)` y solo si el usuario acepta llama al back. Después recarga la misma página; si era la única publicación de la última página, retrocede una (si no, quedaría en "Página 3 de 2" y vacía).
+- `@for (... track publicacion.id)`: el `track` le dice a Angular cómo identificar cada elemento, así al actualizar la lista reutiliza el DOM en vez de recrearlo.
+
+### 4.9 Componente Publicación (`componentes/publicacion/`)
+
+Componente **presentacional** (también llamado "tonto"): no llama al back. Recibe datos y emite eventos.
+
+- **`input.required<Publicacion>()`**: el dato que le pasa el padre; es obligatorio.
+- **`input(true)` → `interactiva`**: en Mi perfil se usa con `[interactiva]="false"` para mostrar la publicación solo para leer (sin botón de like ni de eliminar, solo el contador).
+- **`output<Publicacion>()` → `alternarLike` y `eliminar`**: eventos hacia el padre (`(alternarLike)="alternarLike($event)"`). El hijo no decide qué hacer; solo avisa que el usuario hizo clic.
+- **`computed`**: `leDiMeGusta` (¿mi id está en `likes`?) y `esMia` (¿soy el autor?). El botón "Eliminar" solo se muestra si `esMia()`. Es comodidad de interfaz: la regla real ("solo el autor o un administrador") la hace cumplir el back con un 403.
+- La imagen se muestra completa y centrada (`max-height`), sin recortes, y la fecha usa el pipe `date`.
+
+### 4.10 Nueva publicación (`componentes/nueva-publicacion/`)
+
+- Formulario reactivo con `titulo` (2 a 100) y `mensaje` (hasta 2000): **las mismas reglas que `CrearPublicacionDto`**, más `sinSoloEspaciosValidator` para rechazar textos de solo espacios.
+- La **imagen queda fuera del formulario**, como en el registro: se lee con `FileReader.readAsDataURL` a un signal, validando tipo (JPG/PNG/WEBP) y tamaño (2 MB) antes de aceptarla. Se envía en el JSON como data URL en base64 solo si existe (`...(imagen && { imagen })`).
+- Al publicar con éxito: muestra un modal de éxito y emite `creada`. El padre responde volviendo a la **página 1 ordenada por fecha**, que es donde aparece la publicación nueva.
+
+### 4.11 Comentarios en Mi perfil (`componentes/comentarios/`, `componentes/mi-perfil/`)
+
+- **Mi perfil** (`mi-perfil.ts`) pide `listar({ orden: 'fecha', offset: 0, limit: 3, usuario: miId })`: es el **mismo endpoint** del listado, solo cambia el filtro `usuario` y el `limit`. Tiene tres estados (cargando / falló / vacío) con `@if ... @else if`.
+- Debajo de cada publicación se inserta `<app-comentarios [publicacionId]="publicacion.id" />`. Cada instancia pide **sus propios comentarios** (`GET /publicaciones/:id/comentarios?offset=0&limit=5`). Son 3 pedidos extra por visita a Mi perfil; se aceptó por simplicidad y porque el mismo componente se reutiliza en la página de detalle del Sprint #3.
+- El componente usa **`ngOnInit`** para cargar: los `input()` todavía no tienen valor dentro del constructor, recién están disponibles en `ngOnInit`.
+- Muestra los **5 más recientes** y, si hay más, `Y N comentarios más` (`ocultos = total - mostrados`, un `computed`). El título siempre muestra el total real. Por ahora **no hay botón "cargar más"**: es del Sprint #3.
+- Si un comentario tiene `modificado: true` muestra la leyenda _editado_ (el `PUT` que lo activa llega en el Sprint #3).
+- Para ver comentarios hoy hay que crearlos con Postman (`POST /publicaciones/:id/comentarios`); la caja para escribir llega con la página de detalle.
+
+### 4.12 Environments y build
 
 - `environment.ts` (producción) y `environment.development.ts` (local). En `angular.json`, la configuración **development** reemplaza uno por otro (`fileReplacements`), así que `ng serve` usa `localhost:3000` y `ng build` usa el de producción.
 - `environment.ts` de producción apunta a la URL pública del back (`https://nextplay-delta.vercel.app`). Como `apiUrl` se compila dentro del JS, **cambiarla exige un nuevo build/deploy del front**.
@@ -347,30 +410,151 @@ AuthService: ¿contraseñas iguales? ─► [no] 400
 Modal de éxito + navegar a /publicaciones
 ```
 
-### 5.2 Login
+### 5.2 Login, paso a paso (cómo se armó)
+
+Piezas que participan, de punta a punta:
+
+| Capa | Archivo | Responsabilidad |
+|---|---|---|
+| Pantalla | `Frontend/.../login/login.ts` + `login.html` | Formulario, validaciones, mostrar errores |
+| Servicio | `Frontend/.../services/auth.ts` | Hacer el `POST` y guardar la sesión |
+| Controller | `Backend/src/auth/auth.controller.ts` | Recibir el `POST /auth/login` (responde 200) |
+| DTO | `Backend/src/auth/dto/login.dto.ts` | Validar el body antes de entrar a la lógica |
+| Service | `Backend/src/auth/auth.service.ts` | Buscar el usuario, verificar clave, firmar el JWT |
+| Hash | `Backend/src/auth/password-hasher.ts` | Comparar la contraseña contra el hash guardado |
 
 ```
-Form ─► POST /auth/login { usuarioOCorreo, contrasena }
-        Nest: buscar por correo (minúsculas) o nombreUsuario
-              [no existe / clave mala] ─► 401 mensaje genérico
-              [deshabilitado]          ─► 401 deshabilitado
-        200 { usuario, token } ─► guardar sesión ─► /publicaciones
+1. El usuario escribe "usuarioOCorreo" y "contrasena" en el formulario
+2. Login.enviar(): ¿form inválido? ─► markAllAsTouched() y se corta (no se llama al back)
+3. Se hace trim() del usuarioOCorreo y se llama a AuthService.login(payload)
+4. POST /auth/login { usuarioOCorreo, contrasena }
+5. Nest: ValidationPipe valida LoginDto ─► [falla] 400 con los mensajes
+6. AuthService.login:
+     findOne({ $or: [ { correo: usuarioOCorreo en minúsculas }, { nombreUsuario: usuarioOCorreo } ] })
+     [no existe, o PasswordHasher.verify da false] ─► 401 "Usuario/correo o contraseña incorrectos"
+     [existe y la clave es correcta pero habilitado = false] ─► 401 "El usuario se encuentra deshabilitado"
+7. construirRespuesta: firma el JWT (payload: sub, correo, nombreUsuario, perfil; vence a los 15 min)
+   y devuelve { usuario (sin contraseña), token } con status 200
+8. Front: el operador tap() de AuthService.guardarSesion(respuesta):
+     sesion.set(respuesta)  y  localStorage.setItem('nextplay_sesion', JSON)
+9. Login.next: router.navigateByUrl('/publicaciones')
+   Login.error: modalService.error(mensajeDeError(error, ...))  ─► el usuario ve el mensaje en un modal
 ```
+
+Decisiones clave para explicar:
+- **Un solo campo para correo o usuario**: el back busca con `$or`. El correo se pasa a minúsculas porque así se guarda (`lowercase: true` en el esquema); el nombre de usuario se compara tal cual.
+- **Mismo mensaje y mismo 401** si el usuario no existe o la clave está mal: evita revelar qué cuentas existen.
+- **Deshabilitado se chequea después de la clave**: no se le revela el estado de la cuenta a quien no conoce la contraseña.
+- **200 y no 201**: login no crea ningún recurso; se fuerza con `@HttpCode(HttpStatus.OK)`.
+- **El token se guarda junto al usuario** en una sola clave de `localStorage`. Así la sesión sobrevive a recargar la página. `signal` + `computed` hacen que navbar y guards reaccionen solos al cambiar la sesión.
+- **Hoy el token se guarda pero no se envía**: ninguna petición lo adjunta y el back no lo valida. Por eso las rutas de publicaciones reciben `usuarioId`. Esto se corrige en el Sprint #3 con un interceptor (agrega `Authorization: Bearer`) y un `JwtAuthGuard`.
 
 ### 5.3 Recarga de página con sesión activa
 
 `AuthService` se instancia, lee `localStorage`, el signal queda cargado y `authGuard` deja pasar sin volver a pedir login.
 
-### 5.4 Códigos HTTP usados
+### 5.4 Paginación (offset y limit)
+
+**Idea:** nunca se traen todas las publicaciones; se pide un "trozo" y se avanza de a trozos. El front piensa en **páginas** (1, 2, 3…) y el back en **offset/limit** (cuántas saltear y cuántas traer).
+
+```
+Página 1  ─► offset 0   limit 5  ─► publicaciones 1 a 5
+Página 2  ─► offset 5   limit 5  ─► publicaciones 6 a 10
+Página 3  ─► offset 10  limit 5  ─► publicaciones 11 a 15
+                    offset = (página − 1) × limit
+```
+
+**Front** (`componentes/publicaciones/publicaciones.ts`, `services/publicaciones.ts`):
+1. `PUBLICACIONES_POR_PAGINA = 5` es una constante del componente.
+2. Los signals `pagina` (empieza en 1) y `total` guardan el estado. `totalPaginas = Math.max(1, Math.ceil(total / 5))` es un `computed`.
+3. `cargar()` traduce la página a offset: `offset: (pagina() - 1) * 5, limit: 5`, y el servicio arma `GET /publicaciones?orden=&offset=&limit=` con `HttpParams`.
+4. El template muestra `Página X de Y` y los botones **Anterior** (deshabilitado en la página 1) y **Siguiente** (deshabilitado en la última). Ambos se deshabilitan también mientras `cargando()` para no disparar dos pedidos a la vez.
+5. `irAPagina(n)` hace `pagina.set(n)` y `cargar()`. Cambiar el orden o crear una publicación vuelve a la página 1.
+
+**Back** (`dto/listar-publicaciones.dto.ts`, `publicaciones.service.ts` → `listar`):
+1. El DTO valida los query params: `offset` entero ≥ 0 (por defecto 0) y `limit` entero entre 1 y 50 (por defecto 10). Si no cumplen, **400**. `@Type(() => Number)` convierte el string de la URL (`"5"`) a número antes de validar; sin eso `@IsInt` fallaría siempre porque los query params llegan como texto.
+2. El service hace **dos consultas en paralelo** con `Promise.all`:
+   - `countDocuments(filtro)` → el `total` **sin paginar**, para que el front calcule cuántas páginas hay.
+   - `aggregate([...])` con `$match` → `$addFields` (`cantidadLikes`) → `$sort` → `$skip: offset` → `$limit: limit` → `$lookup` (autor) → `$unwind`.
+3. Responde `{ total, publicaciones }`.
+
+**Por qué en ese orden:** `$sort`, `$skip` y `$limit` van **antes** del `$lookup` para no unir el autor de publicaciones que se van a descartar. Y se ordena antes de saltear: paginar sin un orden definido da resultados inconsistentes.
+
+**Para explicar si preguntan:**
+- *¿Por qué `aggregate` y no `find`?* Para ordenar por cantidad de me gusta hace falta un campo calculado (`$size` de `likes`) que no existe en la base; `find` no puede ordenar por eso.
+- *¿Qué pasa si se borra la última publicación de la última página?* El front retrocede una página, porque si no quedaría en una página vacía.
+- *¿Limitaciones?* `$skip` se vuelve más lento con offsets enormes (recorre y descarta); irrelevante a esta escala. Si alguien publica mientras se navega, una publicación puede repetirse o saltearse entre páginas.
+- *¿Y el "cargar más" del Sprint #3?* Usa el mismo `offset`/`limit`, pero **acumula** los resultados en el array en vez de reemplazarlos.
+- Los comentarios usan la misma mecánica (`ListarComentariosDto`, `{ total, comentarios }`).
+
+### 5.5 Publicaciones de punta a punta
+
+**Crear**
+```
+Nueva publicación (form: título, mensaje, imagen opcional) ─► validaciones (front)
+  ─► POST /publicaciones { titulo, mensaje, imagen?, usuarioId }
+  ─► Nest: ValidationPipe (CrearPublicacionDto)  [falla] 400
+  ─► PublicacionesService.crear: ¿existe el usuario? [no] 400
+        ¿vino imagen? ─► AlmacenamientoService.subirImagen ─► URL pública de Supabase
+        publicacionModel.create(...)
+  ─► 201 { id, titulo, ..., autor }
+  ─► modal de éxito + el padre vuelve a la página 1 por fecha
+```
+
+**Me gusta**
+```
+Clic en el corazón ─► ¿mi id está en publicacion.likes?
+   no ─► POST   /publicaciones/:id/like   { usuarioId }
+   sí ─► DELETE /publicaciones/:id/like?usuarioId=
+Back: findOneAndUpdate con la condición EN EL FILTRO ($ne para agregar, el id para quitar)
+   [la condición no se cumple] ─► 409 (ya diste like / no habías dado like)
+   [ok] ─► 200 { id, likes, cantidadLikes } ─► el front reemplaza solo esa publicación
+```
+Garantizar "un like por usuario" con la condición en el filtro y `$addToSet`/`$pull` hace que sea **atómico**: aun con dos pedidos simultáneos, Mongo aplica el cambio una sola vez.
+
+**Eliminar**
+```
+Botón Eliminar (solo si soy el autor) ─► modal de confirmación
+  ─► DELETE /publicaciones/:id?usuarioId=
+  ─► Back: publicación inexistente o ya eliminada ─► 404
+           ni autor ni administrador ─► 403
+           si no: eliminada = true (baja lógica, no se borra el documento) ─► 200
+  ─► el front recarga la página actual (o retrocede una si quedó vacía)
+```
+
+### 5.6 Comentarios de punta a punta
+
+**Listar (lo que ve Mi perfil)**
+```
+Mi perfil carga mis 3 últimas publicaciones (GET /publicaciones?usuario=&limit=3)
+  ─► por cada una se monta <app-comentarios [publicacionId]>
+  ─► GET /publicaciones/:id/comentarios?offset=0&limit=5
+  ─► Back: id inválido 400 · publicación inexistente/eliminada 404
+           countDocuments + find (sort fecha desc, skip, limit, populate autor)
+  ─► 200 { total, comentarios }
+  ─► el front muestra los 5 más recientes y "Y N comentarios más" si total > 5
+```
+
+**Crear (hoy solo por API)**
+```
+POST /publicaciones/:id/comentarios { mensaje, usuarioId }
+  ─► 400 mensaje vacío o > 500 caracteres / usuario inexistente
+  ─► 404 publicación inexistente o eliminada
+  ─► 201 { id, publicacionId, mensaje, fecha, modificado: false, autor }
+```
+
+**Pendiente (Sprint #3):** pantalla de detalle con caja para comentar, botón "cargar más", `PUT` para editar con `modificado: true` y la leyenda "editado".
+
+### 5.7 Códigos HTTP usados
 
 | Código | Cuándo |
 |---|---|
-| 200 | Login correcto |
-| 201 | Registro correcto |
-| 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas |
+| 200 | Login correcto; listados; like y quitar like; baja lógica de una publicación |
+| 201 | Registro, publicación o comentario creados |
+| 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas, `offset`/`limit` inválidos |
 | 401 | Credenciales incorrectas o usuario deshabilitado |
 | 403 | Eliminar la publicación de otro usuario sin ser administrador |
-| 404 | Publicación inexistente o dada de baja |
+| 404 | Publicación inexistente o dada de baja (también al comentarla o listar sus comentarios) |
 | 409 | Correo o nombre de usuario ya registrado; like repetido o quitar un like inexistente |
 | 500 | Falla al subir la imagen a Supabase |
 
@@ -378,7 +562,7 @@ Form ─► POST /auth/login { usuarioOCorreo, contrasena }
 
 ## 6. Pruebas y calidad
 
-- **Postman** (`Backend/postman/NextPlay.postman_collection.json`): 6 casos de Auth (registro 201, correo duplicado 409, contraseña débil 400, login por correo 200, login por usuario 200, contraseña incorrecta 401) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, baja lógica propia y ajena).
+- **Postman** (`Backend/postman/NextPlay.postman_collection.json`): 6 casos de Auth (registro 201, correo duplicado 409, contraseña débil 400, login por correo 200, login por usuario 200, contraseña incorrecta 401) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, comentar con sus 201/400/404, listar comentarios, baja lógica propia y ajena). Los pasos "Setup" registran dos usuarios y guardan sus ids en variables de la colección, así que la carpeta se corre entera con "Run folder" sin copiar nada. Ojo: apunta a `localhost:3000` y, si el `.env` usa Atlas, crea datos reales.
 - **Tests unitarios:** back 5 (Jest), front 2 (Vitest). Son básicos (creación de controller/service/app). La cobertura real se probó manualmente y con requests directos (ver README). Es un punto a ampliar.
 - **Lint** del back con `oxlint`. **Build** de ambos proyectos en verde.
 
@@ -403,7 +587,9 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 |---|---|---|
 | `UsuariosController` desactivado | Era un CRUD de prueba sin protección (`GET /usuarios` devolvía el hash de las contraseñas y `PATCH` permitía cambiar el `perfil`). Se quitó de `UsuariosModule` antes del deploy; el servicio y el esquema siguen | Sprint #4: se reactiva con guard JWT + rol administrador |
 | El back no valida el token | Se emite pero ninguna ruta lo exige | Sprint #3: `JwtAuthGuard`, `/auth/autorizar`, `/auth/refrescar` |
-| Publicaciones confían en `usuarioId` | Cualquiera puede publicar, dar like o borrar como otro usuario, y hacerse pasar por administrador si conoce su id | Sprint #3: tomar el id del token validado en el guard |
+| Publicaciones y comentarios confían en `usuarioId` | Cualquiera puede publicar, comentar, dar like o borrar como otro usuario, y hacerse pasar por administrador si conoce su id | Sprint #3: tomar el id del token validado en el guard |
+| Comentarios sin interfaz para escribir | El alta existe solo en la API (Postman); Mi perfil muestra los 5 más recientes sin "cargar más" | Sprint #3: página de detalle con caja de comentario, "cargar más" y edición (`PUT`) |
+| Paginación por `offset` | `$skip` es lento con offsets muy grandes y, si alguien publica mientras se navega, puede repetir o saltear una publicación entre páginas | Aceptable a esta escala; la alternativa es paginar por cursor (por ejemplo, "las anteriores a esta fecha") |
 | Likes atómicos (resuelto) | `darLike`/`quitarLike` usan `findOneAndUpdate` con `$addToSet` / `$pull` y la condición en el filtro (`likes: { $ne: id }` / `likes: id`); si no matchea, responde 409 | — |
 | `authGuard` solo mira `localStorage` | Un token vencido sigue habilitando las pantallas | Sprint #3: pantalla "Cargando" que valida el token + interceptor que ante un 401 redirige al login |
 | Token en `localStorage` | Es simple y suficiente para el TP; es vulnerable si hay XSS (Angular escapa el HTML por defecto, lo que mitiga el riesgo) | Alternativa: cookie `HttpOnly` |
@@ -450,7 +636,23 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Por qué la clave de Supabase no está en el front?** Porque todo lo que está en el front es público. La subida pasa por el back, que sí guarda el secreto.
 
-**¿Qué falta para cerrar el Sprint #1?** El deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Queda opcional definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
+**¿Cómo funciona la paginación?** El front manda `offset = (página − 1) × 5` y `limit = 5`; el back valida los parámetros, cuenta el total con `countDocuments` y devuelve el trozo con `$skip` y `$limit`. Con `total` el front calcula `Math.ceil(total / 5)` páginas. Ver 5.4.
+
+**¿Por qué dos consultas en `listar`?** Una trae las publicaciones de la página y la otra cuenta todas las que cumplen el filtro; sin el total no se sabría cuántas páginas hay. Se lanzan juntas con `Promise.all`.
+
+**¿Cómo se evita que un usuario dé dos me gusta?** La condición está en el filtro de la operación de Mongo (`likes: { $ne: id }` con `$addToSet`), así que es atómica; si no se cumple, se responde 409.
+
+**¿Por qué el componente Publicación no llama al back?** Es presentacional: recibe la publicación por `input` y avisa por `output` lo que el usuario hizo. El contenedor (Publicaciones) decide qué hacer. Así se reutiliza en Mi perfil con `interactiva = false`.
+
+**¿Qué diferencia hay entre `find` y `aggregate` en el proyecto?** Publicaciones usa `aggregate` porque ordena por un campo calculado (cantidad de likes) y une al autor; comentarios usa `find` + `populate` porque ordena por un campo real (`fecha`).
+
+**¿Por qué el listado de comentarios ordena también por `_id`?** Para desempatar comentarios con la misma fecha y que la paginación sea estable.
+
+**¿Cómo se guarda y se usa el token hoy?** Se guarda en `localStorage` junto al usuario, pero todavía no se envía ni se valida. Eso es el Sprint #3 (interceptor, `JwtAuthGuard`, `autorizar` y `refrescar`).
+
+**¿Qué falta de comentarios?** La interfaz para escribirlos, el "cargar más" y la edición. Entra en el Sprint #3.
+
+**¿Qué falta para cerrar el Sprint #1?** Nada: el deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Queda opcional definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
 
 ---
 
@@ -464,6 +666,13 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Hash de contraseñas | `Backend/src/auth/password-hasher.ts` |
 | Subida de imágenes | `Backend/src/almacenamiento/almacenamiento.service.ts` |
 | Listado, baja lógica y likes | `Backend/src/publicaciones/publicaciones.service.ts` |
+| Validación de `offset` y `limit` | `Backend/src/publicaciones/dto/listar-publicaciones.dto.ts` |
+| Comentarios (alta y listado) | `Backend/src/comentarios/comentarios.service.ts` |
+| Paginación en el front | `Frontend/src/app/componentes/publicaciones/publicaciones.ts` |
+| Publicación (presentacional) | `Frontend/src/app/componentes/publicacion/publicacion.ts` |
+| Alta de publicación | `Frontend/src/app/componentes/nueva-publicacion/nueva-publicacion.ts` |
+| Comentarios y Mi perfil | `Frontend/src/app/componentes/comentarios/` y `componentes/mi-perfil/` |
+| Login (pantalla) | `Frontend/src/app/componentes/login/login.ts` |
 | Modelo de usuario | `Backend/src/usuarios/usuario.schema.ts` |
 | Sesión del lado del cliente | `Frontend/src/app/services/auth.ts` |
 | Formulario de registro | `Frontend/src/app/componentes/registro/registro.ts` |

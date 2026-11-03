@@ -12,20 +12,20 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-02
-**Sprint en curso:** #2 – Publicaciones y Mi Perfil (probado en el navegador; falta solo mostrar los comentarios en Mi Perfil)
+**Última actualización:** 2026-11-03
+**Sprint en curso:** #3 – Comentarios, JWT y sesión (por iniciar). Sprint #2 cerrado y probado en local.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
-| #2 Publicaciones y Mi Perfil | [x] | [x] | Probado. Pendiente: comentarios en Mi Perfil (requiere el back de comentarios) |
-| #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar |
+| #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y probado en local; falta subirlo a `master` para producción |
+| #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar (adelantado: `POST` y `GET` de comentarios) |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Cerrar el Sprint #2 con el mínimo de comentarios: back (esquema, `POST` y `GET /publicaciones/:id/comentarios`, más recientes primero, paginado) y mostrarlos en Mi Perfil. La corrección es por sprint, por eso se adelanta esto. Después seguir con el Sprint #3 (editar comentarios, JWT, `autorizar`/`refrescar`, página de detalle).
+Empezar el Sprint #3 (editar comentarios con `PUT`, JWT, `autorizar`/`refrescar`, página de detalle con "cargar más").
 
 ### Pendientes y límites conocidos
 - Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId` (body o query); se reemplaza por el id del token validado.
@@ -34,7 +34,7 @@ Cerrar el Sprint #2 con el mínimo de comentarios: back (esquema, `POST` y `GET 
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día hasta el Sprint #2).
 
 ---
 
@@ -43,9 +43,9 @@ Cerrar el Sprint #2 con el mínimo de comentarios: back (esquema, `POST` y `GET 
 ```
 TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
-└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones
+└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios
     ├── Funcional.md   Descripción funcional de NextPlay
-    └── postman/       Colección de pruebas de Auth (Sprint #1) y Publicaciones (Sprint #2)
+    └── postman/       Colección de pruebas de Auth (Sprint #1), Publicaciones y Comentarios (Sprint #2)
 ```
 
 **Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):
@@ -161,7 +161,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Crear publicación (título, mensaje, imagen opcional).
 - [x] **Componente Mi Perfil**
   - [x] Mostrar todos los datos del usuario y su foto de perfil.
-  - [ ] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Las 3 publicaciones están; los comentarios llegan con el back del Sprint #3.)_
+  - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 5 comentarios más recientes de cada una y cuántos más hay.)_
 
 **Back – Publicaciones controller**
 - [x] Alta, listado y baja lógica de publicaciones.
@@ -205,10 +205,10 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Si una petición devuelve **401**, redirigir al login para rehacer el token (interceptor HTTP).
 
 **Back – Comentarios controller**
-- [ ] Traer comentarios de una publicación, agregar y modificar.
-- [ ] **POST**: agrega comentario a una publicación con el usuario y la fecha.
+- [ ] Traer comentarios de una publicación, agregar y modificar. _(Adelantados en el Sprint #2: traer y agregar.)_
+- [x] **POST**: agrega comentario a una publicación con el usuario y la fecha. _(Adelantado; `usuarioId` en el body hasta tener JWT.)_
 - [ ] **PUT**: modifica el mensaje y agrega `modificado: true`.
-- [ ] **GET**: comentarios de una publicación, paginados, **más recientes primero**.
+- [x] **GET**: comentarios de una publicación, paginados, **más recientes primero**. _(Adelantado; responde `{ total, comentarios }`.)_
 
 **Back – Módulo Autenticación**
 - [ ] Login y registro generan **token JWT** con identidad del usuario (uuid/correo/nombre de usuario) y su **rol**.

@@ -37,7 +37,10 @@
     } @else {
       <div class="perfil-publicaciones">
         @for (publicacion of ultimas(); track publicacion.id) {
-          <app-publicacion [publicacion]="publicacion" [interactiva]="false" />
+          <div class="perfil-publicacion">
+            <app-publicacion [publicacion]="publicacion" [interactiva]="false" />
+            <app-comentarios [publicacionId]="publicacion.id" />
+          </div>
         }
       </div>
     }

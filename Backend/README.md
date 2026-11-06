@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-03
-**Sprint en curso:** #3 – Comentarios, JWT y sesión (por iniciar). Sprint #2 cerrado y probado en local.
+**Última actualización:** 2026-11-05
+**Sprint en curso:** #3 – Comentarios, JWT y sesión (por iniciar; revisión previa hecha, sin código tocado todavía). Sprint #2 cerrado y probado en local.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
@@ -25,12 +25,24 @@
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Empezar el Sprint #3 (editar comentarios con `PUT`, JWT, `autorizar`/`refrescar`, página de detalle con "cargar más").
+Empezar el Sprint #3 por el **paso 1 (backend)**, cuando el usuario diga "dale":
+1. `JwtAuthGuard` global (`APP_GUARD`) con decorador `@Public()` para `auth/registro`, `auth/login` y `GET /`; decorador `@UsuarioActual()` para leer el id del token.
+2. `POST /auth/autorizar` (devuelve `{ usuario }`) y `POST /auth/refrescar` (devuelve `{ usuario, token }`); ambos 200, 401 si el token es inválido/vencido o el usuario no existe/está deshabilitado.
+3. Publicaciones y comentarios: quitar `usuarioId` de DTOs/query y tomarlo del token (`UsuarioAccionDto` desaparece). Actualizar los `.spec.ts`.
+4. `PUT /comentarios/:id` (solo el autor, 403 si no; 404 si no existe o está eliminado; marca `modificado: true`) con `ActualizarComentarioDto`.
+5. Actualizar la colección de Postman (con token).
+
+Después: front (interceptor con `Bearer` y 401 → login, pantalla "Cargando", contador de sesión con modal, servicio de comentarios `crear`/`editar`) y luego la página de detalle con "cargar más" y edición.
+
+### Decisiones tomadas para el Sprint #3
+- **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). Reemplazar `JWT_EXPIRES_IN_MINUTOS` por `JWT_EXPIRES_IN_SEGUNDOS` (default 900; 30 en el `.env` local y, si se prueba en producción, en Vercel). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.**
+- Al aplicar el paso 1, el front deja de funcionar contra el back hasta tener el interceptor (los DTOs dejan de aceptar `usuarioId`).
 
 ### Pendientes y límites conocidos
 - Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId` (body o query); se reemplaza por el id del token validado.
 - `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
 - `authGuard` del front solo mira `localStorage`: un token vencido sigue habilitando rutas. Se resuelve en el Sprint #3.
+- Menor, sin urgencia: en `darLike`/`quitarLike`, si la publicación se elimina entre la comprobación y el `findOneAndUpdate`, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.

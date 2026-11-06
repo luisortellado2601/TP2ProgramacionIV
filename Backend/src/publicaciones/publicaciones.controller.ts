@@ -12,15 +12,17 @@ import {
 import { PublicacionesService } from './publicaciones.service.js';
 import { CrearPublicacionDto } from './dto/crear-publicacion.dto.js';
 import { ListarPublicacionesDto } from './dto/listar-publicaciones.dto.js';
-import { UsuarioAccionDto } from './dto/usuario-accion.dto.js';
+import { UsuarioActual } from '../auth/decoradores/usuario-actual.decorator.js';
 
+// El actor (autor, quien da like o elimina) sale siempre del token validado
+// por el JwtAuthGuard global, nunca del body ni de la query.
 @Controller('publicaciones')
 export class PublicacionesController {
   constructor(private readonly publicacionesService: PublicacionesService) {}
 
   @Post()
-  crear(@Body() dto: CrearPublicacionDto) {
-    return this.publicacionesService.crear(dto);
+  crear(@UsuarioActual() usuarioId: string, @Body() dto: CrearPublicacionDto) {
+    return this.publicacionesService.crear(usuarioId, dto);
   }
 
   @Get()
@@ -29,18 +31,18 @@ export class PublicacionesController {
   }
 
   @Delete(':id')
-  eliminar(@Param('id') id: string, @Query() dto: UsuarioAccionDto) {
-    return this.publicacionesService.eliminar(id, dto.usuarioId);
+  eliminar(@Param('id') id: string, @UsuarioActual() usuarioId: string) {
+    return this.publicacionesService.eliminar(id, usuarioId);
   }
 
   @Post(':id/like')
   @HttpCode(HttpStatus.OK)
-  darLike(@Param('id') id: string, @Body() dto: UsuarioAccionDto) {
-    return this.publicacionesService.darLike(id, dto.usuarioId);
+  darLike(@Param('id') id: string, @UsuarioActual() usuarioId: string) {
+    return this.publicacionesService.darLike(id, usuarioId);
   }
 
   @Delete(':id/like')
-  quitarLike(@Param('id') id: string, @Query() dto: UsuarioAccionDto) {
-    return this.publicacionesService.quitarLike(id, dto.usuarioId);
+  quitarLike(@Param('id') id: string, @UsuarioActual() usuarioId: string) {
+    return this.publicacionesService.quitarLike(id, usuarioId);
   }
 }

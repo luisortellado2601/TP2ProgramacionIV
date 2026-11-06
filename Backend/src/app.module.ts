@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { createObserveModule } from '@nestjs/observe';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller.js';
@@ -8,6 +9,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { PublicacionesModule } from './publicaciones/publicaciones.module.js';
 import { ComentariosModule } from './comentarios/comentarios.module.js';
 import { MongooseModule } from '@nestjs/mongoose';
+import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -23,6 +25,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ComentariosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Guard global: toda ruta exige JWT salvo las marcadas con @Public().
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
 })
 export class AppModule {}

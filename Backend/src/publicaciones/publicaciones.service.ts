@@ -27,8 +27,8 @@ export class PublicacionesService {
     private readonly almacenamientoService: AlmacenamientoService,
   ) {}
 
-  async crear(dto: CrearPublicacionDto) {
-    const autor = await this.obtenerUsuarioOFallar(dto.usuarioId);
+  async crear(usuarioId: string, dto: CrearPublicacionDto) {
+    const autor = await this.obtenerUsuarioOFallar(usuarioId);
 
     const imagenUrl = dto.imagen
       ? await this.almacenamientoService.subirImagen(

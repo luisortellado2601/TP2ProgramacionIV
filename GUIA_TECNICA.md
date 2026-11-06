@@ -1,10 +1,10 @@
 # NextPlay – Guía técnica para estudiar y explicar el código
 
-Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #2** completo: registro y login (Sprint #1), publicaciones, likes, paginación, Mi Perfil y la lectura/alta de comentarios (Sprint #2). Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta**.
+Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #2** completo (registro y login, publicaciones, likes, paginación, Mi Perfil y la lectura/alta de comentarios) más el **backend del Sprint #3**: JWT validado en todas las rutas con un guard global, `autorizar`, `refrescar` y edición de comentarios. Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta**.
 
-Los temas que más conviene dominar tienen su propia explicación de punta a punta en la sección 5: **login (5.2)**, **paginación (5.4)**, **publicaciones (5.5)** y **comentarios (5.6)**.
+Los temas que más conviene dominar tienen su propia explicación de punta a punta en la sección 5: **login (5.2)**, **paginación (5.4)**, **publicaciones (5.5)**, **comentarios (5.6)** y **token, guard, `autorizar` y `refrescar` (5.8)**.
 
-> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al estado al cierre del Sprint #2; lo que viene en los sprints siguientes se marca como _pendiente_.
+> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al **backend** al cierre del Sprint #3 y al **frontend** al cierre del Sprint #2; lo que viene después se marca como _pendiente_. **Ojo:** el front todavía no envía el token ni deja de mandar `usuarioId`, así que hoy no funciona contra el back nuevo hasta que se haga la parte de front del Sprint #3.
 
 ---
 
@@ -28,9 +28,11 @@ NextPlay es una red social de videojuegos. Son **dos proyectos independientes** 
 | Backend | NestJS 12, TypeScript | API REST: validación, lógica de negocio, seguridad |
 | Base de datos | MongoDB (Atlas) + Mongoose | Persistencia de usuarios, publicaciones y comentarios |
 | Imágenes | Supabase Storage (API REST) | Guardar las fotos de perfil y devolver una URL pública |
-| Autenticación | JWT (`@nestjs/jwt`) | Identificar al usuario en cada petición (se usa del lado del servidor a partir del Sprint #3) |
+| Autenticación | JWT (`@nestjs/jwt`) | Identificar al usuario en cada petición: el back lo valida con un guard global (Sprint #3) |
 
-**Qué hace hoy la app (Sprints #1 y #2):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver el listado de publicaciones (paginado, ordenable por fecha o por me gusta), crear publicaciones con imagen opcional, dar y quitar me gusta, eliminar las propias, ver Mi perfil con las últimas 3 publicaciones y sus comentarios, y cerrar sesión. Las rutas privadas están protegidas con guards. Todavía **no** se puede comentar desde la interfaz (el alta existe en la API; la pantalla llega en el Sprint #3).
+**Qué hace hoy la app (Sprints #1 y #2):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver el listado de publicaciones (paginado, ordenable por fecha o por me gusta), crear publicaciones con imagen opcional, dar y quitar me gusta, eliminar las propias, ver Mi perfil con las últimas 3 publicaciones y sus comentarios, y cerrar sesión. Las rutas privadas están protegidas con guards. Todavía **no** se puede comentar desde la interfaz (el alta y la edición existen en la API; la pantalla llega en el Sprint #3).
+
+**Qué suma el backend del Sprint #3:** todas las rutas salvo registro, login y `GET /` exigen `Authorization: Bearer <token>`; el usuario que actúa sale del token (ya no viaja `usuarioId`); `POST /auth/autorizar` y `POST /auth/refrescar`; y `PUT /comentarios/:id` para editar el propio comentario.
 
 ---
 
@@ -42,15 +44,15 @@ TP2PrograIV/
 ├── Backend/                 NestJS
 │   ├── README.md            Fuente de verdad del proyecto: enunciado, sprints y estado
 │   ├── Funcional.md         Descripción funcional / "pitch" de NextPlay
-│   ├── postman/             Colección con los casos de Auth probados
+│   ├── postman/             Colección de Postman: Auth, Publicaciones y Comentarios (con tokens)
 │   ├── .env.example         Variables de entorno necesarias
 │   └── src/
 │       ├── main.ts          Arranque: CORS, límite del body, ValidationPipe global
-│       ├── app.module.ts    Módulo raíz: Config, Mongo y módulos de la app
-│       ├── auth/            Registro y login (controller, service, DTOs, hasher)
+│       ├── app.module.ts    Módulo raíz: Config, Mongo, módulos de la app y guard JWT global
+│       ├── auth/            Registro, login, autorizar, refrescar, JwtAuthGuard y decoradores (@Public, @UsuarioActual)
 │       ├── usuarios/        Esquema de Usuario + CRUD de prueba
 │       ├── publicaciones/   Esquema, controller, service y DTOs (alta, listado, baja lógica, likes)
-│       ├── comentarios/     Esquema, controller, service y DTOs (alta y listado paginado)
+│       ├── comentarios/     Esquema, controller, service y DTOs (alta, listado paginado y edición)
 │       └── almacenamiento/  Subida de imágenes a Supabase
 └── Frontend/                Angular
     ├── vercel.json          Configuración de deploy
@@ -78,6 +80,9 @@ TP2PrograIV/
 | **Provider / Service** (`@Injectable`) | Contiene la lógica; se inyecta por constructor | `AuthService`, `PasswordHasher`, `AlmacenamientoService`, `PublicacionesService`, `ComentariosService` |
 | **DTO** | Clase que describe y valida el cuerpo o la query de una petición | `RegistroDto`, `LoginDto`, `ListarPublicacionesDto`, `CrearComentarioDto` |
 | **Pipe** | Transforma/valida datos antes de llegar al controller | `ValidationPipe` global en `main.ts` |
+| **Guard** (`CanActivate`) | Decide si una petición puede llegar al controller; si lanza una excepción, la petición se corta con ese status | `JwtAuthGuard`, registrado como global con `APP_GUARD` |
+| **Decorador de metadatos** (`SetMetadata`) + `Reflector` | Marca una ruta con un dato que el guard lee después | `@Public()` |
+| **Decorador de parámetro** (`createParamDecorator`) | Extrae un dato de la petición y lo entrega como argumento del método del controller | `@UsuarioActual()` |
 | **Inyección de dependencias** | Nest crea las instancias y las entrega en el constructor | Todos los constructores |
 
 ### 3.2 Arranque: `Backend/src/main.ts`
@@ -95,6 +100,7 @@ TP2PrograIV/
 - `ConfigModule.forRoot({ isGlobal: true })` carga el `.env` y deja `ConfigService` disponible en toda la app.
 - `MongooseModule.forRoot(MONGODB_URI)` abre la conexión. Si no hay variable, cae a una base local.
 - Importa los módulos de la app.
+- Registra `JwtAuthGuard` como **guard global** con `{ provide: APP_GUARD, useClass: JwtAuthGuard }`: se aplica a todas las rutas de todos los módulos sin tener que decorar cada controller (ver 3.8). Funciona porque `JwtModule` se declaró `global: true` y el guard puede inyectar `JwtService`.
 - Se exporta `createObserveModule()` de `@nestjs/observe` y se pasa `ObserveInstrument` en `main.ts`: es instrumentación de observabilidad de Nest; no interviene en la lógica del TP.
 
 ### 3.4 Modelo de datos: `Backend/src/usuarios/usuario.schema.ts`
@@ -172,13 +178,29 @@ Por qué así:
 - **`timingSafeEqual`** compara en tiempo constante, para que el tiempo de respuesta no filtre cuántos caracteres coinciden.
 - `scryptSync` bloquea el hilo mientras calcula (unos milisegundos). Aceptable acá; en un sistema de mucho tráfico se usaría la versión asíncrona.
 
-### 3.8 JWT: dentro de `AuthService.construirRespuesta` y `AuthModule`
+### 3.8 JWT: emisión, guard global, `autorizar` y `refrescar`
 
-- `JwtModule.registerAsync` firma con `JWT_SECRET` y define el vencimiento: `JWT_EXPIRES_IN_MINUTOS * 60` (la librería espera segundos). Por defecto **15 minutos**, como pide el enunciado.
+**Emisión** (`AuthService.construirRespuesta` y `AuthModule`):
+
+- `JwtModule.registerAsync` firma con `JWT_SECRET` y define el vencimiento con `JWT_EXPIRES_IN_SEGUNDOS` (por defecto **900 s = 15 minutos**, como pide el enunciado). Las variables de entorno llegan como **texto**, así que se convierte con `Number(...)`: `jsonwebtoken` interpreta un string sin unidad (`"30"`) como **milisegundos**, y el token duraría 30 ms en vez de 30 s. Mientras dure la exposición el `.env` local usa 30 s para poder probar el vencimiento; antes de entregar hay que volver a 900.
 - `global: true` permite inyectar `JwtService` en cualquier módulo sin reimportar.
 - **Payload** del token: `sub` (id del usuario), `correo`, `nombreUsuario`, `perfil` (el rol). `sub` es el nombre estándar de JWT para el "sujeto".
 - Un JWT son tres partes en base64url: `header.payload.firmaHMAC`. El payload **se puede leer** (no es secreto); lo que no se puede es **modificarlo sin la clave** porque la firma dejaría de coincidir. Por eso nunca se guardan datos sensibles en el payload.
-- **Estado actual:** el back **emite** el token, pero todavía no lo **valida** en ninguna ruta. Eso llega en el Sprint #3 (`JwtAuthGuard`, `/auth/autorizar`, `/auth/refrescar`).
+**Validación en cada pedido** (`auth/jwt-auth.guard.ts`):
+
+- `JwtAuthGuard` implementa `CanActivate` y está registrado como **guard global** (`APP_GUARD` en `app.module.ts`): **toda ruta exige token salvo las marcadas con `@Public()`**. Es el enfoque "seguro por defecto": si mañana alguien agrega una ruta nueva y se olvida de protegerla, queda protegida igual.
+- `@Public()` (`auth/decoradores/public.decorator.ts`) es un `SetMetadata('esPublica', true)`. El guard la detecta con `Reflector.getAllAndOverride`, que mira primero el método y después la clase. Está puesta en `POST /auth/registro`, `POST /auth/login` y `GET /`.
+- Pasos del guard: (1) si la ruta es pública, deja pasar; (2) lee el encabezado `Authorization: Bearer <token>`; si falta o el esquema no es `Bearer` → **401** "Falta el token de autenticación"; (3) `jwtService.verifyAsync(token)` comprueba **firma y vencimiento**; si falla (token alterado, firmado con otra clave o vencido) → **401** "El token es inválido o está vencido"; (4) si está bien, guarda el payload en `request.usuario` y deja pasar.
+- `@UsuarioActual()` (`auth/decoradores/usuario-actual.decorator.ts`) es un decorador de parámetro (`createParamDecorator`): devuelve `request.usuario.sub`, el id del dueño del token. Así los controllers escriben `crear(@UsuarioActual() usuarioId: string, ...)`. **El actor nunca se toma del body ni de la query**, porque eso lo controla el cliente: con `usuarioId` en el body cualquiera podía actuar como otro.
+- `payload-token.ts` define el tipo `PayloadToken` (`sub`, `correo`, `nombreUsuario`, `perfil`, `iat`, `exp`) y `RequestAutenticada`, la `Request` de Express con el campo `usuario`.
+- **Qué NO hace el guard:** no consulta la base. Confirma que el token lo firmó el servidor y no venció, pero no que el usuario siga existiendo o habilitado (hacerlo en cada pedido sería una consulta extra por request). Esa comprobación la hacen `autorizar` y `refrescar`, y se completa en el Sprint #4. Consecuencia conocida: un usuario deshabilitado conserva acceso hasta que venza su token.
+
+**`POST /auth/autorizar` → 200** `{ usuario }` y **`POST /auth/refrescar` → 200** `{ usuario, token }`:
+
+- Ambas pasan por el guard (sin token válido ya responden 401) y además llaman a `AuthService.obtenerVigenteOFallar(id)`: busca el usuario y, si **no existe o está deshabilitado**, responde **401** "La sesión ya no es válida". El id se valida con `Types.ObjectId.isValid` antes de consultar, para que un `sub` raro dé 401 y no un 500 por error de cast de Mongoose.
+- `autorizar` sirve para que el front, al arrancar, sepa si el token guardado sigue valendo y recupere los datos del usuario. `refrescar` emite un **token nuevo con la misma payload y el vencimiento renovado**; el front lo usará para extender la sesión.
+- Se devuelve 200 y no 201 porque no se crea ningún recurso (mismo criterio que el login).
+- `aRespuestaUsuario` es el único lugar que arma el objeto de usuario sin contraseña; lo usan registro, login, `autorizar` y `refrescar`, así nunca se filtra el hash.
 
 ### 3.9 Imágenes: `Backend/src/almacenamiento/almacenamiento.service.ts`
 
@@ -213,33 +235,36 @@ Decisiones:
 
 | Método y ruta | Qué hace | Respuestas |
 |---|---|---|
-| `POST /publicaciones` | Crea una publicación (título, mensaje, imagen opcional en base64, `usuarioId`) | 201, 400 |
+| `POST /publicaciones` | Crea una publicación (título, mensaje, imagen opcional en base64); el autor es el dueño del token | 201, 400 |
 | `GET /publicaciones?orden=&usuario=&offset=&limit=` | Lista publicaciones activas con el autor incluido. Responde `{ total, publicaciones }`; `total` cuenta todas las que cumplen el filtro (sin paginar) para armar "Página X de Y" | 200, 400 |
-| `DELETE /publicaciones/:id?usuarioId=` | Baja lógica (`eliminada: true`), solo el autor o un administrador | 200, 403, 404 |
+| `DELETE /publicaciones/:id` | Baja lógica (`eliminada: true`), solo el autor o un administrador | 200, 403, 404 |
 | `POST /publicaciones/:id/like` | Da me gusta (uno por usuario) | 200, 409 si ya lo dio |
-| `DELETE /publicaciones/:id/like?usuarioId=` | Quita el me gusta | 200, 409 si no lo había dado |
+| `DELETE /publicaciones/:id/like` | Quita el me gusta | 200, 409 si no lo había dado |
 
-- **`usuarioId` explícito:** hasta que llegue el `JwtAuthGuard` (Sprint #3) no hay forma confiable de saber quién llama, así que el actor viaja en el body o la query. Es un límite temporal conocido: hoy cualquiera puede actuar como otro usuario (ver sección 7).
+- **El actor sale del token:** todas estas rutas pasan por el `JwtAuthGuard` global (sin token válido → 401) y el controller recibe el id con `@UsuarioActual()`. Los DTOs ya no tienen `usuarioId` (si el cliente lo manda, el `ValidationPipe` responde **400** por propiedad no permitida) y `UsuarioAccionDto` se eliminó. Hasta el Sprint #2 el actor viajaba en el body o la query y cualquiera podía actuar como otro usuario.
 - **Imagen:** reutiliza `AlmacenamientoService.subirImagen(dto.imagen, 'publicaciones')`, igual que la foto de perfil.
 - **Likes:** array de ids de usuario dentro de la publicación; la regla "un like por usuario" se garantiza de forma atómica en Mongo: `$addToSet` con filtro `likes: { $ne: usuarioId }` para agregar y `$pull` con filtro `likes: usuarioId` para quitar. Si el filtro no matchea, se responde 409.
 - **Baja lógica:** nada se borra; `listar` filtra `eliminada: false` y las demás operaciones responden 404 sobre una publicación eliminada.
 - **Por qué `listar` usa `aggregate` y no `find`:** `find` no puede ordenar por una cantidad calculada. Orden por likes necesita `cantidadLikes = $size: '$likes'`, que no existe como campo en la base, y `$lookup` trae al autor en la misma consulta. El pipeline es `$match` → `$addFields` → `$sort` → `$skip` → `$limit` → `$lookup` → `$unwind`. Ordenar y paginar antes del `$lookup` evita unir autores de publicaciones que se van a descartar.
 
-### 3.12 Comentarios (Sprint #2, versión mínima): `Backend/src/comentarios/`
+### 3.12 Comentarios (alta y listado: Sprint #2; edición: Sprint #3): `Backend/src/comentarios/`
 
-Se adelantó del Sprint #3 lo mínimo para poder mostrar comentarios en Mi Perfil (la corrección es por sprint). Falta el `PUT` para editar.
+El alta y el listado se adelantaron del Sprint #3 para poder mostrar comentarios en Mi Perfil (la corrección es por sprint). El `PUT` para editar se sumó con el backend del Sprint #3.
 
 | Método y ruta | Qué hace | Respuestas |
 |---|---|---|
-| `POST /publicaciones/:publicacionId/comentarios` | Crea un comentario (`mensaje`, `usuarioId`) | 201, 400, 404 |
+| `POST /publicaciones/:publicacionId/comentarios` | Crea un comentario (`mensaje`; el autor es el dueño del token) | 201, 400, 404 |
 | `GET /publicaciones/:publicacionId/comentarios?offset=&limit=` | Lista los comentarios de la publicación, **más recientes primero**. Responde `{ total, comentarios }` | 200, 400, 404 |
+| `PUT /comentarios/:id` | Edita el mensaje del comentario y lo marca `modificado: true`. Solo el autor | 200, 400, 403, 404 |
 
-- **Esquema** (`comentario.schema.ts`): `publicacion` (ref), `usuario` (ref), `mensaje`, `fecha`, `modificado` (default `false`, lo usará el `PUT`) y `eliminado` (baja lógica). Tiene un **índice compuesto** `{ publicacion: 1, fecha: -1 }` porque siempre se consulta "los comentarios de una publicación, del más nuevo al más viejo": el índice evita ordenar en memoria.
-- **Validación** (`CrearComentarioDto`): el mensaje se recorta (`@Transform(recortar)`), es obligatorio y llega hasta 500 caracteres. Un mensaje de solo espacios queda vacío tras el recorte y devuelve **400**. `usuarioId` viaja en el body por el mismo motivo que en publicaciones (todavía no hay JWT validado).
-- **Reglas del service**: comentar o listar sobre una publicación inexistente **o dada de baja** devuelve **404**; un `usuarioId` que no existe devuelve **400**. El id de la publicación se valida con `Types.ObjectId.isValid` antes de consultar (si no, Mongoose lanzaría un error de cast y respondería 500).
+- **Esquema** (`comentario.schema.ts`): `publicacion` (ref), `usuario` (ref), `mensaje`, `fecha`, `modificado` (default `false`, lo activa el `PUT`) y `eliminado` (baja lógica). Tiene un **índice compuesto** `{ publicacion: 1, fecha: -1 }` porque siempre se consulta "los comentarios de una publicación, del más nuevo al más viejo": el índice evita ordenar en memoria.
+- **Validación** (`CrearComentarioDto`): el mensaje se recorta (`@Transform(recortar)`), es obligatorio y llega hasta 500 caracteres. Un mensaje de solo espacios queda vacío tras el recorte y devuelve **400**. El DTO solo tiene `mensaje`: el autor sale del token (`@UsuarioActual()`), no del body.
+- **Reglas del service**: comentar o listar sobre una publicación inexistente **o dada de baja** devuelve **404**; un usuario del token que ya no existe devuelve **400**. El id de la publicación se valida con `Types.ObjectId.isValid` antes de consultar (si no, Mongoose lanzaría un error de cast y respondería 500).
 - **Listado**: usa `find` + `sort` + `skip` + `limit` + `populate('usuario')`. A diferencia de publicaciones, acá **no hace falta `aggregate`**: se ordena por un campo real (`fecha`), no por uno calculado. El orden es `{ fecha: -1, _id: -1 }`; el `_id` desempata dos comentarios con la misma fecha para que la paginación sea estable. El `total` sale de un `countDocuments` en paralelo (`Promise.all`), igual que en publicaciones.
 - **Respuesta**: cada comentario trae `id`, `publicacionId`, `mensaje`, `fecha`, `modificado` y el `autor` resumido (id, nombre, apellido, nombreUsuario, imagenPerfilUrl). Nunca se expone el hash de la contraseña ni el correo.
-- **`@Controller()` sin prefijo**: las rutas se escriben completas en cada decorador. Así el Sprint #3 puede agregar `PUT /comentarios/:id` en el mismo controller sin mezclar prefijos.
+- **`@Controller()` sin prefijo**: las rutas se escriben completas en cada decorador. Es necesario porque el mismo controller mezcla `publicaciones/:publicacionId/comentarios` (alta y listado) con `comentarios/:id` (edición).
+- **Edición (`ComentariosService.actualizar`)**: el orden de las comprobaciones importa y define el status. (1) `Types.ObjectId.isValid(id)`, si no → **400**; (2) el comentario debe existir y no estar eliminado, si no → **404**; (3) su publicación debe seguir activa, si no → **404** (cuando una publicación se da de baja, sus comentarios dejan de estar disponibles); (4) recién ahí se compara el autor con el dueño del token, si no coincide → **403**. Se responde 404 antes que 403 para no confirmar la existencia de comentarios que el usuario no puede ver. Después se cambia `mensaje`, se pone `modificado: true`, se guarda y se responde con el mismo formato que el alta. La `fecha` original **no** cambia; la leyenda "editado" del front sale de `modificado`.
+- **`ActualizarComentarioDto`** extiende `CrearComentarioDto`: editar tiene las mismas reglas que crear (recortar, no vacío, hasta 500). class-validator hereda los decoradores de la clase padre.
 - **Baja lógica**: el campo `eliminado` existe y el listado ya filtra `eliminado: false`, pero todavía no hay endpoint que lo active (llega con el administrador, Sprint #4).
 
 ### 3.13 Variables de entorno (`Backend/.env.example`)
@@ -249,7 +274,7 @@ Se adelantó del Sprint #3 lo mínimo para poder mostrar comentarios en Mi Perfi
 | `MONGODB_URI` | Cadena de conexión a Atlas |
 | `PORT` | Puerto del servidor (el hosting suele asignarlo) |
 | `JWT_SECRET` | Clave con que se firman los tokens. Si se filtra, cualquiera puede fabricar tokens válidos |
-| `JWT_EXPIRES_IN_MINUTOS` | Vida del token (15) |
+| `JWT_EXPIRES_IN_SEGUNDOS` | Vida del token en segundos (900 = 15 min; 30 en el `.env` local mientras dure la exposición). Si falta, usa 900 |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET` | Almacenamiento de imágenes |
 | `CORS_ORIGIN` | Dominio(s) del front permitidos |
 
@@ -258,6 +283,8 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 ---
 
 ## 4. Frontend (Angular 22)
+
+> Esta sección describe el front **al cierre del Sprint #2**. El backend ya exige JWT (sección 3.8) y el front todavía no lo envía: la adaptación (interceptor, pantalla "Cargando", contador de sesión, detalle de publicación con comentarios) es la parte de front del Sprint #3 y se documentará acá al hacerla.
 
 ### 4.1 Conceptos de Angular que se usan
 
@@ -375,7 +402,7 @@ Componente **presentacional** (también llamado "tonto"): no llama al back. Reci
 - Debajo de cada publicación se inserta `<app-comentarios [publicacionId]="publicacion.id" />`. Cada instancia pide **sus propios comentarios** (`GET /publicaciones/:id/comentarios?offset=0&limit=5`). Son 3 pedidos extra por visita a Mi perfil; se aceptó por simplicidad y porque el mismo componente se reutiliza en la página de detalle del Sprint #3.
 - El componente usa **`ngOnInit`** para cargar: los `input()` todavía no tienen valor dentro del constructor, recién están disponibles en `ngOnInit`.
 - Muestra los **5 más recientes** y, si hay más, `Y N comentarios más` (`ocultos = total - mostrados`, un `computed`). El título siempre muestra el total real. Por ahora **no hay botón "cargar más"**: es del Sprint #3.
-- Si un comentario tiene `modificado: true` muestra la leyenda _editado_ (el `PUT` que lo activa llega en el Sprint #3).
+- Si un comentario tiene `modificado: true` muestra la leyenda _editado_ (el `PUT` que lo activa ya existe en el back; falta la interfaz para editar, Sprint #3 front).
 - Para ver comentarios hoy hay que crearlos con Postman (`POST /publicaciones/:id/comentarios`); la caja para escribir llega con la página de detalle.
 
 ### 4.12 Environments y build
@@ -447,7 +474,7 @@ Decisiones clave para explicar:
 - **Deshabilitado se chequea después de la clave**: no se le revela el estado de la cuenta a quien no conoce la contraseña.
 - **200 y no 201**: login no crea ningún recurso; se fuerza con `@HttpCode(HttpStatus.OK)`.
 - **El token se guarda junto al usuario** en una sola clave de `localStorage`. Así la sesión sobrevive a recargar la página. `signal` + `computed` hacen que navbar y guards reaccionen solos al cambiar la sesión.
-- **Hoy el token se guarda pero no se envía**: ninguna petición lo adjunta y el back no lo valida. Por eso las rutas de publicaciones reciben `usuarioId`. Esto se corrige en el Sprint #3 con un interceptor (agrega `Authorization: Bearer`) y un `JwtAuthGuard`.
+- **El token se guarda pero el front todavía no lo envía.** El back ya lo exige y lo valida (`JwtAuthGuard`, ver 3.8 y 5.8). Falta el lado del front (Sprint #3): un interceptor que agregue `Authorization: Bearer` y quite `usuarioId` de los pedidos.
 
 ### 5.3 Recarga de página con sesión activa
 
@@ -492,7 +519,7 @@ Página 3  ─► offset 10  limit 5  ─► publicaciones 11 a 15
 **Crear**
 ```
 Nueva publicación (form: título, mensaje, imagen opcional) ─► validaciones (front)
-  ─► POST /publicaciones { titulo, mensaje, imagen?, usuarioId }
+  ─► POST /publicaciones { titulo, mensaje, imagen? }   (el autor sale del token Bearer)
   ─► Nest: ValidationPipe (CrearPublicacionDto)  [falla] 400
   ─► PublicacionesService.crear: ¿existe el usuario? [no] 400
         ¿vino imagen? ─► AlmacenamientoService.subirImagen ─► URL pública de Supabase
@@ -504,8 +531,9 @@ Nueva publicación (form: título, mensaje, imagen opcional) ─► validaciones
 **Me gusta**
 ```
 Clic en el corazón ─► ¿mi id está en publicacion.likes?
-   no ─► POST   /publicaciones/:id/like   { usuarioId }
-   sí ─► DELETE /publicaciones/:id/like?usuarioId=
+   no ─► POST   /publicaciones/:id/like
+   sí ─► DELETE /publicaciones/:id/like
+   (quién da el like sale del token Bearer, no del body ni de la query)
 Back: findOneAndUpdate con la condición EN EL FILTRO ($ne para agregar, el id para quitar)
    [la condición no se cumple] ─► 409 (ya diste like / no habías dado like)
    [ok] ─► 200 { id, likes, cantidadLikes } ─► el front reemplaza solo esa publicación
@@ -515,7 +543,7 @@ Garantizar "un like por usuario" con la condición en el filtro y `$addToSet`/`$
 **Eliminar**
 ```
 Botón Eliminar (solo si soy el autor) ─► modal de confirmación
-  ─► DELETE /publicaciones/:id?usuarioId=
+  ─► DELETE /publicaciones/:id   (quién elimina sale del token Bearer)
   ─► Back: publicación inexistente o ya eliminada ─► 404
            ni autor ni administrador ─► 403
            si no: eliminada = true (baja lógica, no se borra el documento) ─► 200
@@ -537,33 +565,83 @@ Mi perfil carga mis 3 últimas publicaciones (GET /publicaciones?usuario=&limit=
 
 **Crear (hoy solo por API)**
 ```
-POST /publicaciones/:id/comentarios { mensaje, usuarioId }
-  ─► 400 mensaje vacío o > 500 caracteres / usuario inexistente
+POST /publicaciones/:id/comentarios { mensaje }   (el autor sale del token Bearer)
+  ─► 401 sin token válido
+  ─► 400 mensaje vacío o > 500 caracteres / usuario del token inexistente / usuarioId en el body
   ─► 404 publicación inexistente o eliminada
   ─► 201 { id, publicacionId, mensaje, fecha, modificado: false, autor }
 ```
 
-**Pendiente (Sprint #3):** pantalla de detalle con caja para comentar, botón "cargar más", `PUT` para editar con `modificado: true` y la leyenda "editado".
+**Editar (hoy solo por API)**
+```
+PUT /comentarios/:id { mensaje }   (Bearer)
+  ─► 401 sin token válido
+  ─► 400 id inválido / mensaje vacío o > 500 caracteres
+  ─► 404 comentario inexistente o eliminado, o su publicación dada de baja
+  ─► 403 el dueño del token no es el autor del comentario
+  ─► 200 { id, ..., mensaje nuevo, modificado: true, autor }   (la fecha original no cambia)
+```
+
+**Pendiente (Sprint #3, front):** pantalla de detalle con caja para comentar, botón "cargar más" y edición del propio comentario con la leyenda "editado".
 
 ### 5.7 Códigos HTTP usados
 
 | Código | Cuándo |
 |---|---|
-| 200 | Login correcto; listados; like y quitar like; baja lógica de una publicación |
+| 200 | Login correcto; `autorizar` y `refrescar`; listados; like y quitar like; baja lógica de una publicación; edición de un comentario |
 | 201 | Registro, publicación o comentario creados |
-| 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas, `offset`/`limit` inválidos |
-| 401 | Credenciales incorrectas o usuario deshabilitado |
-| 403 | Eliminar la publicación de otro usuario sin ser administrador |
-| 404 | Publicación inexistente o dada de baja (también al comentarla o listar sus comentarios) |
+| 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas (por ejemplo `usuarioId`), `offset`/`limit` inválidos |
+| 401 | Credenciales incorrectas o usuario deshabilitado (login); falta el token, es inválido o venció (cualquier ruta protegida); en `autorizar`/`refrescar`, el usuario ya no existe o está deshabilitado |
+| 403 | Eliminar la publicación de otro usuario sin ser administrador; editar el comentario de otro usuario |
+| 404 | Publicación inexistente o dada de baja (también al comentarla o listar sus comentarios); comentario inexistente, eliminado o de una publicación dada de baja (al editarlo) |
 | 409 | Correo o nombre de usuario ya registrado; like repetido o quitar un like inexistente |
 | 500 | Falla al subir la imagen a Supabase |
+
+### 5.8 Token: validación en cada pedido, `autorizar` y `refrescar` (backend del Sprint #3)
+
+**Cada pedido a una ruta protegida**
+```
+Cliente ── Authorization: Bearer <jwt> ──► JwtAuthGuard (global, antes del controller)
+   ¿la ruta tiene @Public()?                      ─► sí: pasa sin mirar el token
+   ¿hay encabezado "Bearer <token>"?              ─► no: 401 "Falta el token de autenticación"
+   jwtService.verifyAsync(token)
+      firma que no coincide / token alterado / vencido ─► 401 "El token es inválido o está vencido"
+      ok ─► request.usuario = payload { sub, correo, nombreUsuario, perfil, iat, exp }
+   ValidationPipe valida el body/query ─► Controller
+      @UsuarioActual() entrega payload.sub ─► Service (usa ese id como actor)
+```
+
+**`autorizar` (lo usará el front al arrancar la app)**
+```
+POST /auth/autorizar  (Bearer)
+  ─► guard: token válido
+  ─► AuthService.autorizar: ¿id válido? ¿el usuario existe? ¿habilitado?   [no] 401 "La sesión ya no es válida"
+  ─► 200 { usuario }        (sin contraseña y sin token nuevo)
+```
+
+**`refrescar` (lo usará el front cuando el usuario acepte extender la sesión)**
+```
+POST /auth/refrescar  (Bearer, todavía vigente)
+  ─► guard: token válido            [vencido] 401 → el front manda al login
+  ─► mismas comprobaciones de usuario vigente
+  ─► firma un token NUEVO con la misma payload y el vencimiento renovado
+  ─► 200 { usuario, token }
+```
+
+Decisiones clave para explicar:
+- **Guard global + `@Public()`** en vez de decorar cada controller con `@UseGuards`: es seguro por defecto. Lo que se marca es la excepción (registro, login, `GET /`), no la regla.
+- **Dos niveles de comprobación:** el guard solo verifica la firma y el vencimiento (barato, sin base de datos); `autorizar` y `refrescar` además consultan al usuario. Así las rutas comunes no pagan una consulta extra por pedido, y las dos rutas que deciden "¿sigo logueado?" sí detectan un usuario borrado o deshabilitado.
+- **Por qué se refresca antes de que venza:** `refrescar` exige un token todavía válido. Un token vencido da 401 y el usuario tiene que volver a loguearse; por eso el front va a avisar con tiempo (a los 10 de los 15 minutos).
+- **El actor sale del token, no del cliente:** el JWT está firmado, así que su `sub` no se puede falsificar sin conocer `JWT_SECRET`. El `usuarioId` del body sí se podía falsificar.
+- **Por qué 401 y no 403:** 401 es "no estoy seguro de quién sos" (sin token, inválido, vencido); 403 es "sé quién sos, pero no podés hacer esto" (editar el comentario de otro, eliminar la publicación de otro).
+- **Qué se puede probar sin front:** el servidor real responde 401 sin token, con token vencido o firmado con otra clave; con un token válido firmado a mano para un usuario inexistente pasa el guard y `autorizar` responde 401 "La sesión ya no es válida".
 
 ---
 
 ## 6. Pruebas y calidad
 
-- **Postman** (`Backend/postman/NextPlay.postman_collection.json`): 6 casos de Auth (registro 201, correo duplicado 409, contraseña débil 400, login por correo 200, login por usuario 200, contraseña incorrecta 401) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, comentar con sus 201/400/404, listar comentarios, baja lógica propia y ajena). Los pasos "Setup" registran dos usuarios y guardan sus ids en variables de la colección, así que la carpeta se corre entera con "Run folder" sin copiar nada. Ojo: apunta a `localhost:3000` y, si el `.env` usa Atlas, crea datos reales.
-- **Tests unitarios:** back 5 (Jest), front 2 (Vitest). Son básicos (creación de controller/service/app). La cobertura real se probó manualmente y con requests directos (ver README). Es un punto a ampliar.
+- **Postman** (`Backend/postman/NextPlay.postman_collection.json`, 41 requests): una carpeta "Auth" (registro 201/409/400, login 200/401, `autorizar` y `refrescar` con token válido, sin token y con token inválido) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, comentar, **editar comentario** con sus 200/400/403/404, listar comentarios, baja lógica propia y ajena, y un caso 401 "sin token" por cada tipo de ruta). Los pasos "Setup" registran dos usuarios y guardan en variables de la colección sus ids y sus **tokens** (`autorToken`, `otroToken`); la colección usa auth Bearer con `{{autorToken}}` por defecto y las requests del "otro" usuario lo reemplazan con `{{otroToken}}`; las rutas públicas y los casos 401 usan "No Auth". Se corre entera con "Run folder" sin copiar nada. Ojo: apunta a `localhost:3000` y, si el `.env` usa Atlas, crea datos reales; con el token de 30 s del `.env` local, una corrida muy lenta puede recibir 401.
+- **Tests unitarios:** back 20 en 8 suites (Jest), front 2 (Vitest). Los de creación de controller/service/app son básicos; los nuevos del Sprint #3 sí verifican comportamiento: `JwtAuthGuard` (ruta pública, sin token, esquema distinto de Bearer, token inválido/vencido, token válido que deja el payload en la request), `AuthService.autorizar`/`refrescar` (401 si el usuario no existe, está deshabilitado o el id no es un ObjectId) y `ComentariosService.actualizar` (éxito, 403, 404 en sus dos variantes, 400). Los servicios se prueban con modelos de Mongoose simulados, sin base de datos. El resto de la cobertura se probó con requests directos al servidor real (ver README).
 - **Lint** del back con `oxlint`. **Build** de ambos proyectos en verde.
 
 Comandos:
@@ -586,9 +664,12 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Tema | Estado hoy | Cómo se resuelve |
 |---|---|---|
 | `UsuariosController` desactivado | Era un CRUD de prueba sin protección (`GET /usuarios` devolvía el hash de las contraseñas y `PATCH` permitía cambiar el `perfil`). Se quitó de `UsuariosModule` antes del deploy; el servicio y el esquema siguen | Sprint #4: se reactiva con guard JWT + rol administrador |
-| El back no valida el token | Se emite pero ninguna ruta lo exige | Sprint #3: `JwtAuthGuard`, `/auth/autorizar`, `/auth/refrescar` |
-| Publicaciones y comentarios confían en `usuarioId` | Cualquiera puede publicar, comentar, dar like o borrar como otro usuario, y hacerse pasar por administrador si conoce su id | Sprint #3: tomar el id del token validado en el guard |
-| Comentarios sin interfaz para escribir | El alta existe solo en la API (Postman); Mi perfil muestra los 5 más recientes sin "cargar más" | Sprint #3: página de detalle con caja de comentario, "cargar más" y edición (`PUT`) |
+| Validación del token en el back (resuelto) | `JwtAuthGuard` global: toda ruta exige token salvo `@Public()` (registro, login y `GET /`); `autorizar` y `refrescar` agregan la comprobación contra la base | — |
+| Actor tomado del token (resuelto) | Publicaciones y comentarios usan `@UsuarioActual()`; `usuarioId` ya no se acepta (400). Ya no se puede actuar ni hacerse pasar por administrador conociendo un id | — |
+| El guard no consulta la base | Verifica firma y vencimiento, pero un usuario deshabilitado (o eliminado) conserva acceso hasta que su token venza (hoy 15 min) | Sprint #4: al implementar la baja de usuarios, el login ya lo bloquea y `autorizar`/`refrescar` también; si hiciera falta cortar de inmediato, el guard podría consultar la base |
+| Front sin adaptar | El front actual no envía el token ni deja de mandar `usuarioId`: contra el back nuevo no puede publicar, dar like ni eliminar | Sprint #3 (front): interceptor con `Bearer` y 401 → login |
+| Token de 30 s en local | Solo para poder probar el vencimiento durante el desarrollo | Volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 (o borrar la variable) antes de entregar |
+| Comentarios sin interfaz para escribir ni editar | El alta y la edición existen en la API (Postman); Mi perfil muestra los 5 más recientes sin "cargar más" | Sprint #3 (front): página de detalle con caja de comentario, "cargar más" y edición |
 | Paginación por `offset` | `$skip` es lento con offsets muy grandes y, si alguien publica mientras se navega, puede repetir o saltear una publicación entre páginas | Aceptable a esta escala; la alternativa es paginar por cursor (por ejemplo, "las anteriores a esta fecha") |
 | Likes atómicos (resuelto) | `darLike`/`quitarLike` usan `findOneAndUpdate` con `$addToSet` / `$pull` y la condición en el filtro (`likes: { $ne: id }` / `likes: id`); si no matchea, responde 409 | — |
 | `authGuard` solo mira `localStorage` | Un token vencido sigue habilitando las pantallas | Sprint #3: pantalla "Cargando" que valida el token + interceptor que ante un 401 redirige al login |
@@ -648,9 +729,23 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Por qué el listado de comentarios ordena también por `_id`?** Para desempatar comentarios con la misma fecha y que la paginación sea estable.
 
-**¿Cómo se guarda y se usa el token hoy?** Se guarda en `localStorage` junto al usuario, pero todavía no se envía ni se valida. Eso es el Sprint #3 (interceptor, `JwtAuthGuard`, `autorizar` y `refrescar`).
+**¿Cómo se guarda y se usa el token hoy?** El front lo guarda en `localStorage` junto al usuario, pero todavía no lo envía (falta el interceptor del Sprint #3). El back ya lo exige: un `JwtAuthGuard` global verifica firma y vencimiento en cada pedido y deja el id del usuario disponible con `@UsuarioActual()`.
 
-**¿Qué falta de comentarios?** La interfaz para escribirlos, el "cargar más" y la edición. Entra en el Sprint #3.
+**¿Qué es un guard en Nest y en qué se diferencia del guard de Angular?** Es una clase con `canActivate` que decide si la petición llega al controller; si lanza una excepción, la petición se corta con ese status. Es el equivalente en el servidor de lo que `authGuard` hace con las rutas del front, pero el del back es el que de verdad protege: el del front solo mejora la experiencia.
+
+**¿Qué hace `@Public()`?** Marca una ruta como excepción al guard global (registro, login y `GET /`). El guard lee esa marca con `Reflector`. Todo lo demás exige token.
+
+**¿Qué diferencia hay entre el guard, `autorizar` y `refrescar`?** El guard verifica firma y vencimiento en cada pedido. `autorizar` confirma además que el usuario siga existiendo y habilitado, y devuelve sus datos. `refrescar` hace lo mismo y entrega un token nuevo con el vencimiento renovado.
+
+**¿Qué pasa si el token venció?** Cualquier ruta protegida responde 401 "El token es inválido o está vencido". `refrescar` también, porque exige un token vigente: hay que volver a loguearse.
+
+**¿Por qué el actor ya no viaja en el body?** Porque lo controla el cliente: cualquiera podía mandar el `usuarioId` de otro. El id del token está firmado y no se puede falsificar sin la clave. Si el cliente igual manda `usuarioId`, responde 400 por el `ValidationPipe`.
+
+**¿Por qué el token dura 30 segundos en local?** Para poder probar el vencimiento sin esperar 15 minutos. Es una variable de entorno (`JWT_EXPIRES_IN_SEGUNDOS`); la entrega vuelve a 900.
+
+**¿Qué pasa si se edita un comentario?** `PUT /comentarios/:id` cambia el mensaje y marca `modificado: true`. Solo lo puede hacer el autor (403 si no); la fecha original no cambia y la leyenda "editado" sale de ese campo.
+
+**¿Qué falta de comentarios?** El backend está completo (alta, listado y edición). Falta la interfaz: caja para escribirlos, "cargar más" y edición del propio comentario. Entra en el Sprint #3 (front).
 
 **¿Qué falta para cerrar el Sprint #1?** Nada: el deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Queda opcional definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
 
@@ -662,12 +757,14 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 |---|---|
 | Arranque, CORS y validación global | `Backend/src/main.ts` |
 | Reglas de validación del registro | `Backend/src/auth/dto/registro.dto.ts` |
-| Lógica de registro/login y JWT | `Backend/src/auth/auth.service.ts` |
+| Lógica de registro/login, `autorizar`, `refrescar` y emisión del JWT | `Backend/src/auth/auth.service.ts` |
+| Guard JWT global | `Backend/src/auth/jwt-auth.guard.ts` (se registra en `Backend/src/app.module.ts`) |
+| `@Public()` y `@UsuarioActual()` | `Backend/src/auth/decoradores/` |
 | Hash de contraseñas | `Backend/src/auth/password-hasher.ts` |
 | Subida de imágenes | `Backend/src/almacenamiento/almacenamiento.service.ts` |
 | Listado, baja lógica y likes | `Backend/src/publicaciones/publicaciones.service.ts` |
 | Validación de `offset` y `limit` | `Backend/src/publicaciones/dto/listar-publicaciones.dto.ts` |
-| Comentarios (alta y listado) | `Backend/src/comentarios/comentarios.service.ts` |
+| Comentarios (alta, listado y edición) | `Backend/src/comentarios/comentarios.service.ts` |
 | Paginación en el front | `Frontend/src/app/componentes/publicaciones/publicaciones.ts` |
 | Publicación (presentacional) | `Frontend/src/app/componentes/publicacion/publicacion.ts` |
 | Alta de publicación | `Frontend/src/app/componentes/nueva-publicacion/nueva-publicacion.ts` |

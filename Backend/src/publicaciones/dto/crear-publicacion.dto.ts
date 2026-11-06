@@ -1,5 +1,4 @@
 import {
-  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -33,10 +32,4 @@ export class CrearPublicacionDto {
     message: 'La imagen debe ser un archivo JPG, PNG o WEBP',
   })
   imagen?: string;
-
-  // Hasta el Sprint #3 (JwtAuthGuard) no hay forma de saber quién llama sin
-  // confiar en lo que manda el front: lo autentica recién la validación del
-  // token. Por eso el autor viaja explícito en el body.
-  @IsMongoId({ message: 'El usuario no es válido' })
-  usuarioId: string;
 }

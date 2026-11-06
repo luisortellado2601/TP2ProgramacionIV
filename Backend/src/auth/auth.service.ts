@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema.js';
 import { RegistroDto } from './dto/registro.dto.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -91,6 +91,30 @@ export class AuthService {
     return this.construirRespuesta(usuario);
   }
 
+  // Confirma que el dueño del token siga existiendo y habilitado; devuelve sus datos.
+  async autorizar(usuarioId: string) {
+    const usuario = await this.obtenerVigenteOFallar(usuarioId);
+    return { usuario: this.aRespuestaUsuario(usuario) };
+  }
+
+  // Emite un token nuevo (misma payload, vencimiento renovado) para el usuario vigente.
+  async refrescar(usuarioId: string) {
+    const usuario = await this.obtenerVigenteOFallar(usuarioId);
+    return this.construirRespuesta(usuario);
+  }
+
+  private async obtenerVigenteOFallar(
+    usuarioId: string,
+  ): Promise<UsuarioDocument> {
+    const usuario = Types.ObjectId.isValid(usuarioId)
+      ? await this.usuarioModel.findById(usuarioId).exec()
+      : null;
+    if (!usuario || !usuario.habilitado) {
+      throw new UnauthorizedException('La sesión ya no es válida');
+    }
+    return usuario;
+  }
+
   private async construirRespuesta(usuario: UsuarioDocument) {
     const payload = {
       sub: usuario._id.toString(),
@@ -100,21 +124,22 @@ export class AuthService {
     };
     const token = await this.jwtService.signAsync(payload);
 
+    return { usuario: this.aRespuestaUsuario(usuario), token };
+  }
+
+  private aRespuestaUsuario(usuario: UsuarioDocument) {
     return {
-      usuario: {
-        id: usuario._id.toString(),
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        correo: usuario.correo,
-        nombreUsuario: usuario.nombreUsuario,
-        fechaNacimiento: usuario.fechaNacimiento,
-        descripcion: usuario.descripcion,
-        imagenPerfilUrl: usuario.imagenPerfilUrl,
-        perfil: usuario.perfil,
-        habilitado: usuario.habilitado,
-        fechaAlta: usuario.fechaAlta,
-      },
-      token,
+      id: usuario._id.toString(),
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      correo: usuario.correo,
+      nombreUsuario: usuario.nombreUsuario,
+      fechaNacimiento: usuario.fechaNacimiento,
+      descripcion: usuario.descripcion,
+      imagenPerfilUrl: usuario.imagenPerfilUrl,
+      perfil: usuario.perfil,
+      habilitado: usuario.habilitado,
+      fechaAlta: usuario.fechaAlta,
     };
   }
 }

@@ -19,9 +19,12 @@ import { AlmacenamientoModule } from '../almacenamiento/almacenamiento.module.js
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          // jsonwebtoken espera segundos; en el .env guardamos minutos.
-          expiresIn:
-            configService.get<number>('JWT_EXPIRES_IN_MINUTOS', 15) * 60,
+          // En segundos (900 = 15 min, lo que pide el enunciado). Las variables
+          // de entorno llegan como texto: hay que convertir a número, porque
+          // jsonwebtoken interpreta un string sin unidad como milisegundos.
+          expiresIn: Number(
+            configService.get<string>('JWT_EXPIRES_IN_SEGUNDOS', '900'),
+          ),
         },
       }),
     }),

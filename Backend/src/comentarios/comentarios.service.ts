@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
 } from '../publicaciones/publicacion.schema.js';
 import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema.js';
 import { CrearComentarioDto } from './dto/crear-comentario.dto.js';
+import { ActualizarComentarioDto } from './dto/actualizar-comentario.dto.js';
 import { ListarComentariosDto } from './dto/listar-comentarios.dto.js';
 
 @Injectable()
@@ -25,11 +27,15 @@ export class ComentariosService {
     private readonly usuarioModel: Model<UsuarioDocument>,
   ) {}
 
-  async crear(publicacionId: string, dto: CrearComentarioDto) {
+  async crear(
+    publicacionId: string,
+    usuarioId: string,
+    dto: CrearComentarioDto,
+  ) {
     const publicacion = await this.obtenerPublicacionActivaOFallar(
       publicacionId,
     );
-    const autor = await this.obtenerUsuarioOFallar(dto.usuarioId);
+    const autor = await this.obtenerUsuarioOFallar(usuarioId);
 
     const comentario = await this.comentarioModel.create({
       publicacion: publicacion._id,
@@ -63,6 +69,36 @@ export class ComentariosService {
         this.aRespuesta(comentario, comentario.usuario),
       ),
     };
+  }
+
+  async actualizar(
+    id: string,
+    usuarioId: string,
+    dto: ActualizarComentarioDto,
+  ) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('El id del comentario no es válido');
+    }
+
+    const comentario = await this.comentarioModel.findById(id).exec();
+    if (!comentario || comentario.eliminado) {
+      throw new NotFoundException('Comentario no encontrado');
+    }
+    // Si la publicación fue dada de baja, sus comentarios dejan de estar disponibles.
+    await this.obtenerPublicacionActivaOFallar(comentario.publicacion.toString());
+
+    if (comentario.usuario.toString() !== usuarioId) {
+      throw new ForbiddenException(
+        'No podés editar un comentario de otro usuario',
+      );
+    }
+
+    comentario.mensaje = dto.mensaje;
+    comentario.modificado = true;
+    await comentario.save();
+
+    const autor = await this.obtenerUsuarioOFallar(usuarioId);
+    return this.aRespuesta(comentario, autor);
   }
 
   private async obtenerPublicacionActivaOFallar(

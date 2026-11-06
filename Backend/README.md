@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-05
-**Sprint en curso:** #3 – Comentarios, JWT y sesión (por iniciar; revisión previa hecha, sin código tocado todavía). Sprint #2 cerrado y probado en local.
+**Última actualización:** 2026-11-06
+**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde; guard probado con el servidor real). Falta todo el front. Sprint #2 cerrado y probado en local.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
@@ -21,25 +21,23 @@
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y probado en local; falta subirlo a `master` para producción |
-| #3 Comentarios, JWT y sesión | [ ] | [ ] | Sin iniciar (adelantado: `POST` y `GET` de comentarios) |
+| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front sin iniciar |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Empezar el Sprint #3 por el **paso 1 (backend)**, cuando el usuario diga "dale":
-1. `JwtAuthGuard` global (`APP_GUARD`) con decorador `@Public()` para `auth/registro`, `auth/login` y `GET /`; decorador `@UsuarioActual()` para leer el id del token.
-2. `POST /auth/autorizar` (devuelve `{ usuario }`) y `POST /auth/refrescar` (devuelve `{ usuario, token }`); ambos 200, 401 si el token es inválido/vencido o el usuario no existe/está deshabilitado.
-3. Publicaciones y comentarios: quitar `usuarioId` de DTOs/query y tomarlo del token (`UsuarioAccionDto` desaparece). Actualizar los `.spec.ts`.
-4. `PUT /comentarios/:id` (solo el autor, 403 si no; 404 si no existe o está eliminado; marca `modificado: true`) con `ActualizarComentarioDto`.
-5. Actualizar la colección de Postman (con token).
-
-Después: front (interceptor con `Bearer` y 401 → login, pantalla "Cargando", contador de sesión con modal, servicio de comentarios `crear`/`editar`) y luego la página de detalle con "cargar más" y edición.
+Sprint #3, **front**, cuando el usuario diga "dale":
+1. Interceptor HTTP: agrega `Authorization: Bearer <token>` y ante un 401 hace logout y redirige a `/login`. Quitar `usuarioId` de los payloads y de las URLs de publicaciones (like, eliminar, crear); el back ya lo rechaza con 400.
+2. `AuthService`: métodos `autorizar()` y `refrescar()`. Pantalla "Cargando" con spinner que valida el token al iniciar (válido → Publicaciones, si no → Login); `authGuard` pasa a depender de eso.
+3. Contador de sesión con modal "¿extender la sesión?" que llama a `refrescar`.
+4. `ComentariosService.crear`/`editar` y página de detalle de publicación: caja para comentar, "cargar más" acumulando, edición del propio comentario con leyenda "editado".
 
 ### Decisiones tomadas para el Sprint #3
-- **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). Reemplazar `JWT_EXPIRES_IN_MINUTOS` por `JWT_EXPIRES_IN_SEGUNDOS` (default 900; 30 en el `.env` local y, si se prueba en producción, en Vercel). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.**
-- Al aplicar el paso 1, el front deja de funcionar contra el back hasta tener el interceptor (los DTOs dejan de aceptar `usuarioId`).
+- **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
+- **No pushear a `master` hasta tener el front del paso 1:** el back ya exige JWT y rechaza `usuarioId`, así que el front actual (local y en Vercel) no puede publicar, dar like ni eliminar contra él.
 
 ### Pendientes y límites conocidos
-- Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId` (body o query); se reemplaza por el id del token validado.
+- `JwtAuthGuard` solo verifica firma y vencimiento: un usuario deshabilitado conserva acceso hasta que venza su token. `autorizar`/`refrescar` sí consultan la base (401 si no existe o está deshabilitado). Se completa con el login/rol del Sprint #4.
+- En Vercel quedó la variable vieja `JWT_EXPIRES_IN_MINUTOS` (si se cargó): el back ya no la lee; sin `JWT_EXPIRES_IN_SEGUNDOS` usa 900 s.
 - `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
 - `authGuard` del front solo mira `localStorage`: un token vencido sigue habilitando rutas. Se resuelve en el Sprint #3.
 - Menor, sin urgencia: en `darLike`/`quitarLike`, si la publicación se elimina entre la comprobación y el `findOneAndUpdate`, responde 409 en vez de 404.
@@ -57,10 +55,10 @@ TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
 └── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios
     ├── Funcional.md   Descripción funcional de NextPlay
-    └── postman/       Colección de pruebas de Auth (Sprint #1), Publicaciones y Comentarios (Sprint #2)
+    └── postman/       Colección de pruebas de Auth, Publicaciones y Comentarios (con tokens, Sprint #3)
 ```
 
-**Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_MINUTOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):
+**Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_SEGUNDOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):
 ```bash
 cd Backend && npm install && npm run start:dev   # http://localhost:3000
 ```
@@ -186,7 +184,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] **POST** (like): un usuario da me gusta a una publicación; **un solo me gusta por usuario por publicación**.
 - [x] **DELETE** (like): eliminar me gusta, solo si el usuario lo había dado antes.
 
-> **Nota de implementación:** como el `JwtAuthGuard` llega en el Sprint #3, estas rutas todavía no pueden identificar "quién llama" de forma confiable. Mientras tanto, el autor/actor viaja explícito como `usuarioId` (en el body de `POST /publicaciones` y `POST /publicaciones/:id/like`, y como query param en los `DELETE`). Queda pendiente para el Sprint #3 reemplazarlo por el id que viene del token validado.
+> **Nota:** en este sprint el actor viajaba como `usuarioId` (body/query) por falta de JWT. Desde el Sprint #3 sale del token validado y `usuarioId` ya no se acepta (400).
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |
@@ -217,18 +215,18 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Si una petición devuelve **401**, redirigir al login para rehacer el token (interceptor HTTP).
 
 **Back – Comentarios controller**
-- [ ] Traer comentarios de una publicación, agregar y modificar. _(Adelantados en el Sprint #2: traer y agregar.)_
-- [x] **POST**: agrega comentario a una publicación con el usuario y la fecha. _(Adelantado; `usuarioId` en el body hasta tener JWT.)_
-- [ ] **PUT**: modifica el mensaje y agrega `modificado: true`.
-- [x] **GET**: comentarios de una publicación, paginados, **más recientes primero**. _(Adelantado; responde `{ total, comentarios }`.)_
+- [x] Traer comentarios de una publicación, agregar y modificar.
+- [x] **POST**: agrega comentario a una publicación con el usuario (del token) y la fecha.
+- [x] **PUT** `/comentarios/:id`: modifica el mensaje y agrega `modificado: true`. Solo el autor (403 si no); 404 si no existe, está eliminado o su publicación fue dada de baja.
+- [x] **GET**: comentarios de una publicación, paginados, **más recientes primero** (responde `{ total, comentarios }`).
 
 **Back – Módulo Autenticación**
-- [ ] Login y registro generan **token JWT** con identidad del usuario (uuid/correo/nombre de usuario) y su **rol**.
-- [ ] Token devuelto en la respuesta o por cookies.
-- [ ] Token vence a los **15 minutos**.
-- [ ] **POST `autorizar`**: valida que el token sea válido y no esté vencido. Devuelve **401** si hay error; si es válido, devuelve los datos del usuario.
-- [ ] **POST `refrescar`**: valida token; devuelve nuevo token con la misma payload y vencimiento de 15 min.
-- [ ] Proteger todas las rutas con guard JWT.
+- [x] Login y registro generan **token JWT** con identidad del usuario (id/correo/nombre de usuario) y su **rol**.
+- [x] Token devuelto en la respuesta (no por cookies).
+- [x] Token vence a los **15 minutos** (configurable con `JWT_EXPIRES_IN_SEGUNDOS`; 30 s en local mientras dure la exposición, ver sección 0).
+- [x] **POST `/auth/autorizar`**: valida que el token sea válido y no esté vencido. **401** si hay error; si es válido, devuelve `{ usuario }`.
+- [x] **POST `/auth/refrescar`**: valida token; devuelve `{ usuario, token }` con la misma payload y el vencimiento renovado.
+- [x] Proteger todas las rutas con guard JWT (`JwtAuthGuard` global; `@Public()` en registro, login y `GET /`).
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |
@@ -306,7 +304,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 
 > Los nombres de rutas son sugeridos; el enunciado solo fija métodos y comportamiento.
 >
-> Hasta el Sprint #3 las rutas de publicaciones identifican al actor con `usuarioId`: en el body de `POST /publicaciones` y `POST /publicaciones/:id/like`, y como query param en los `DELETE`.
+> Desde el Sprint #3 todas las rutas salvo `POST /auth/registro`, `POST /auth/login` y `GET /` exigen `Authorization: Bearer <token>` (401 si falta, es inválido o venció).
 
 ---
 

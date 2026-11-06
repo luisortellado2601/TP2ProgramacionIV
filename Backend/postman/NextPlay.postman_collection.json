@@ -1,13 +1,38 @@
 {
   "info": {
-    "name": "NextPlay - Auth y Publicaciones (Sprint 1 y 2)",
-    "description": "Pruebas de los endpoints de Autenticacion (Sprint 1) y Publicaciones (Sprint 2) del backend NextPlay.",
+    "name": "NextPlay - Auth, Publicaciones y Comentarios (Sprint 1 a 3)",
+    "description": "Pruebas del backend NextPlay: Auth (registro, login, autorizar, refrescar), Publicaciones y Comentarios. Desde el Sprint #3 todas las rutas salvo registro y login exigen JWT: los pasos \"Setup\" guardan los tokens en variables de la coleccion y cada request los envia como Bearer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "autorId", "value": "" },
-    { "key": "otroUsuarioId", "value": "" },
-    { "key": "publicacionId", "value": "" }
+    {
+      "key": "autorId",
+      "value": ""
+    },
+    {
+      "key": "otroUsuarioId",
+      "value": ""
+    },
+    {
+      "key": "publicacionId",
+      "value": ""
+    },
+    {
+      "key": "comentarioId",
+      "value": ""
+    },
+    {
+      "key": "autorToken",
+      "value": ""
+    },
+    {
+      "key": "otroToken",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -31,7 +56,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Luis\",\n  \"apellido\": \"Ortellado\",\n  \"correo\": \"luis.test@example.com\",\n  \"nombreUsuario\": \"luisito\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\",\n  \"descripcion\": \"Cuenta de prueba\"\n}"
@@ -39,9 +69,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/registro",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "registro"]
+              "path": [
+                "auth",
+                "registro"
+              ]
             }
           },
           "response": []
@@ -61,7 +96,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Otro\",\n  \"apellido\": \"Usuario\",\n  \"correo\": \"luis.test@example.com\",\n  \"nombreUsuario\": \"otroUsuarioDistinto\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
@@ -69,9 +109,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/registro",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "registro"]
+              "path": [
+                "auth",
+                "registro"
+              ]
             }
           },
           "response": []
@@ -91,7 +136,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Perez\",\n  \"correo\": \"juan.debil@example.com\",\n  \"nombreUsuario\": \"juanDebil\",\n  \"contrasena\": \"abc12345\",\n  \"repetirContrasena\": \"abc12345\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
@@ -99,9 +149,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/registro",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "registro"]
+              "path": [
+                "auth",
+                "registro"
+              ]
             }
           },
           "response": []
@@ -116,14 +171,20 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string'));"
+                  "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', body.token);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuarioOCorreo\": \"luis.test@example.com\",\n  \"contrasena\": \"Password1\"\n}"
@@ -131,9 +192,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/login",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "login"]
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           },
           "response": []
@@ -153,7 +219,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuarioOCorreo\": \"luisito\",\n  \"contrasena\": \"Password1\"\n}"
@@ -161,9 +232,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/login",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "login"]
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           },
           "response": []
@@ -183,7 +259,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuarioOCorreo\": \"luisito\",\n  \"contrasena\": \"ContrasenaMala1\"\n}"
@@ -191,14 +272,225 @@
             "url": {
               "raw": "http://localhost:3000/auth/login",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "login"]
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autorizar - Token valido (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve el usuario sin contrasena ni token', () => {",
+                  "  pm.expect(body.usuario.id).to.be.a('string');",
+                  "  pm.expect(body.usuario).to.not.have.property('contrasena');",
+                  "  pm.expect(body).to.not.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth/autorizar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autorizar - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth/autorizar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Autorizar - Token invalido (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth/autorizar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refrescar - Token valido (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve usuario y un token', () => {",
+                  "  pm.expect(body.usuario.id).to.be.a('string');",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth/refrescar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "auth",
+                "refrescar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refrescar - Sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth/refrescar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "auth",
+                "refrescar"
+              ]
             }
           },
           "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "Publicaciones",
@@ -214,14 +506,20 @@
                 "exec": [
                   "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.collectionVariables.set('autorId', body.usuario.id);"
+                  "pm.collectionVariables.set('autorId', body.usuario.id);",
+                  "pm.collectionVariables.set('autorToken', body.token);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"correo\": \"ana.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"ana{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}"
@@ -229,9 +527,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/registro",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "registro"]
+              "path": [
+                "auth",
+                "registro"
+              ]
             }
           },
           "response": []
@@ -246,14 +549,20 @@
                 "exec": [
                   "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.collectionVariables.set('otroUsuarioId', body.usuario.id);"
+                  "pm.collectionVariables.set('otroUsuarioId', body.usuario.id);",
+                  "pm.collectionVariables.set('otroToken', body.token);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Beto\",\n  \"apellido\": \"Lopez\",\n  \"correo\": \"beto.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"beto{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
@@ -261,9 +570,14 @@
             "url": {
               "raw": "http://localhost:3000/auth/registro",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["auth", "registro"]
+              "path": [
+                "auth",
+                "registro"
+              ]
             }
           },
           "response": []
@@ -279,6 +593,7 @@
                   "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
                   "pm.test('Devuelve id', () => pm.expect(body.id).to.be.a('string'));",
+                  "pm.test('El autor sale del token', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('autorId')));",
                   "pm.collectionVariables.set('publicacionId', body.id);"
                 ]
               }
@@ -286,17 +601,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Mi primer post\",\n  \"mensaje\": \"Probando NextPlay\",\n  \"usuarioId\": \"{{autorId}}\"\n}"
+              "raw": "{\n  \"titulo\": \"Mi primer post\",\n  \"mensaje\": \"Probando NextPlay\"\n}"
             },
             "url": {
               "raw": "http://localhost:3000/publicaciones",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones"]
+              "path": [
+                "publicaciones"
+              ]
             }
           },
           "response": []
@@ -316,17 +640,108 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"\",\n  \"mensaje\": \"Sin titulo\",\n  \"usuarioId\": \"{{autorId}}\"\n}"
+              "raw": "{\n  \"titulo\": \"\",\n  \"mensaje\": \"Sin titulo\"\n}"
             },
             "url": {
               "raw": "http://localhost:3000/publicaciones",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones"]
+              "path": [
+                "publicaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear publicacion - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Sin token\",\n  \"mensaje\": \"No deberia crearse\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear publicacion - usuarioId en el body (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('El body ya no acepta usuarioId', () => pm.expect(JSON.stringify(pm.response.json().message)).to.include('usuarioId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Suplantacion\",\n  \"mensaje\": \"Intento de hacerme pasar por otro\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones"
+              ]
             }
           },
           "response": []
@@ -348,12 +763,50 @@
           ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones"]
+              "path": [
+                "publicaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar publicaciones - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/publicaciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones"
+              ]
             }
           },
           "response": []
@@ -373,16 +826,30 @@
           ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones?orden=likes&offset=0&limit=10",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones"],
+              "path": [
+                "publicaciones"
+              ],
               "query": [
-                { "key": "orden", "value": "likes" },
-                { "key": "offset", "value": "0" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "orden",
+                  "value": "likes"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -405,13 +872,23 @@
           ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones?usuario={{autorId}}",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones"],
-              "query": [{ "key": "usuario", "value": "{{autorId}}" }]
+              "path": [
+                "publicaciones"
+              ],
+              "query": [
+                {
+                  "key": "usuario",
+                  "value": "{{autorId}}"
+                }
+              ]
             }
           },
           "response": []
@@ -432,18 +909,30 @@
             }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
             },
+            "method": "POST",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "like"]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
             }
           },
           "response": []
@@ -462,18 +951,65 @@
             }
           ],
           "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
             },
+            "method": "POST",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "like"]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dar like - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
             }
           },
           "response": []
@@ -489,24 +1025,46 @@
                   "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
                   "pm.test('Nace sin modificar', () => pm.expect(body.modificado).to.eql(false));",
-                  "pm.test('Incluye al autor', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('otroUsuarioId')));"
+                  "pm.test('El autor sale del token', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('otroUsuarioId')));",
+                  "pm.collectionVariables.set('comentarioId', body.id);"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Buena resena, la voy a probar\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+              "raw": "{\n  \"mensaje\": \"Buena resena, la voy a probar\"\n}"
             },
             "url": {
               "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "comentarios"]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ]
             }
           },
           "response": []
@@ -525,18 +1083,39 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"   \",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+              "raw": "{\n  \"mensaje\": \" \"\n}"
             },
             "url": {
               "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "comentarios"]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ]
             }
           },
           "response": []
@@ -555,18 +1134,380 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
+              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
             },
             "url": {
               "raw": "http://localhost:3000/publicaciones/000000000000000000000000/comentarios",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "000000000000000000000000", "comentarios"]
+              "path": [
+                "publicaciones",
+                "000000000000000000000000",
+                "comentarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Comentar - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - Exitoso (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Cambia el mensaje', () => pm.expect(body.mensaje).to.eql('Buena resena (editado: ya la probe)'));",
+                  "pm.test('Queda marcado como modificado', () => pm.expect(body.modificado).to.eql(true));",
+                  "pm.test('Conserva el id', () => pm.expect(body.id).to.eql(pm.collectionVariables.get('comentarioId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Buena resena (editado: ya la probe)\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "{{comentarioId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - de otro usuario (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{autorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Intento editar el comentario de otro\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "{{comentarioId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - mensaje vacio (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \" \"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "{{comentarioId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - id invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/abc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "abc"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/000000000000000000000000",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "000000000000000000000000"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar comentario - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "comentarios",
+                "{{comentarioId}}"
+              ]
             }
           },
           "response": []
@@ -588,6 +1529,10 @@
                   "pm.test('Mas recientes primero', () => {",
                   "  const fechas = body.comentarios.map((c) => new Date(c.fecha).getTime());",
                   "  pm.expect(fechas).to.eql([...fechas].sort((a, b) => b - a));",
+                  "});",
+                  "pm.test('El comentario editado figura como modificado', () => {",
+                  "  const editado = body.comentarios.find((c) => c.id === pm.collectionVariables.get('comentarioId'));",
+                  "  pm.expect(editado.modificado).to.eql(true);",
                   "});"
                 ]
               }
@@ -595,15 +1540,28 @@
           ],
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
               "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios?offset=0&limit=5",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "comentarios"],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ],
               "query": [
-                { "key": "offset", "value": "0" },
-                { "key": "limit", "value": "5" }
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           },
@@ -623,41 +1581,104 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId={{otroUsuarioId}}",
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}"],
-              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "Eliminar publicacion - usuario inexistente (400)",
+          "name": "Eliminar publicacion - inexistente (404)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
-                  "pm.test('Mensaje: El usuario no existe', () => pm.expect(pm.response.json().message).to.eql('El usuario no existe'));"
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{autorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId=000000000000000000000000",
+              "raw": "http://localhost:3000/publicaciones/000000000000000000000000",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}"],
-              "query": [{ "key": "usuarioId", "value": "000000000000000000000000" }]
+              "path": [
+                "publicaciones",
+                "000000000000000000000000"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar publicacion - sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
             }
           },
           "response": []
@@ -678,14 +1699,30 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like?usuarioId={{otroUsuarioId}}",
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "like"],
-              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
             }
           },
           "response": []
@@ -704,14 +1741,30 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like?usuarioId={{otroUsuarioId}}",
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}", "like"],
-              "query": [{ "key": "usuarioId", "value": "{{otroUsuarioId}}" }]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
             }
           },
           "response": []
@@ -732,19 +1785,44 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{autorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}?usuarioId={{autorId}}",
+              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "3000",
-              "path": ["publicaciones", "{{publicacionId}}"],
-              "query": [{ "key": "usuarioId", "value": "{{autorId}}" }]
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
             }
           },
           "response": []
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{autorToken}}",
+        "type": "string"
+      }
+    ]
+  }
 }

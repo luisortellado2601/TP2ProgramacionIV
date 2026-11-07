@@ -60,8 +60,8 @@ export class Publicaciones {
 
     const yaDioLike = publicacion.likes.includes(usuario.id);
     const peticion = yaDioLike
-      ? this.publicacionesService.quitarLike(publicacion.id, usuario.id)
-      : this.publicacionesService.darLike(publicacion.id, usuario.id);
+      ? this.publicacionesService.quitarLike(publicacion.id)
+      : this.publicacionesService.darLike(publicacion.id);
 
     peticion.subscribe({
       next: ({ likes, cantidadLikes }) =>
@@ -76,15 +76,10 @@ export class Publicaciones {
   }
 
   eliminar(publicacion: Publicacion): void {
-    const usuario = this.authService.usuarioActual();
-    if (!usuario) {
-      return;
-    }
-
     this.modalService.confirmar(
       `¿Querés eliminar "${publicacion.titulo}"? Esta acción no se puede deshacer.`,
       () =>
-        this.publicacionesService.eliminar(publicacion.id, usuario.id).subscribe({
+        this.publicacionesService.eliminar(publicacion.id).subscribe({
           next: () => {
             // Si era la única de la última página, volvemos a la anterior.
             const quedaVacia = this.publicaciones().length === 1 && this.pagina() > 1;

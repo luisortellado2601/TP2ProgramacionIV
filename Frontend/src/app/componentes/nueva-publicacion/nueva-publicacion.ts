@@ -1,6 +1,5 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
 import { PublicacionesService } from '../../services/publicaciones';
 import { mensajeDeError } from '../../utils/mensaje-error';
@@ -18,7 +17,6 @@ const TAMANO_MAXIMO_IMAGEN_MB = 2;
 })
 export class NuevaPublicacion {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
   private readonly modalService = inject(ModalService);
   private readonly publicacionesService = inject(PublicacionesService);
 
@@ -76,8 +74,7 @@ export class NuevaPublicacion {
   }
 
   publicar(): void {
-    const usuario = this.authService.usuarioActual();
-    if (this.form.invalid || !usuario) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -89,7 +86,6 @@ export class NuevaPublicacion {
       .crear({
         titulo: titulo.trim(),
         mensaje: mensaje.trim(),
-        usuarioId: usuario.id,
         ...(imagen && { imagen }),
       })
       .subscribe({

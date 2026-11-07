@@ -30,17 +30,16 @@ export class PublicacionesService {
     return this.http.post<Publicacion>(this.url, payload);
   }
 
-  eliminar(id: string, usuarioId: string): Observable<{ id: string; eliminada: boolean }> {
-    return this.http.delete<{ id: string; eliminada: boolean }>(`${this.url}/${id}`, {
-      params: { usuarioId },
-    });
+  // Quién actúa lo identifica el back con el token que agrega el interceptor.
+  eliminar(id: string): Observable<{ id: string; eliminada: boolean }> {
+    return this.http.delete<{ id: string; eliminada: boolean }>(`${this.url}/${id}`);
   }
 
-  darLike(id: string, usuarioId: string): Observable<RespuestaLikes> {
-    return this.http.post<RespuestaLikes>(`${this.url}/${id}/like`, { usuarioId });
+  darLike(id: string): Observable<RespuestaLikes> {
+    return this.http.post<RespuestaLikes>(`${this.url}/${id}/like`, {});
   }
 
-  quitarLike(id: string, usuarioId: string): Observable<RespuestaLikes> {
-    return this.http.delete<RespuestaLikes>(`${this.url}/${id}/like`, { params: { usuarioId } });
+  quitarLike(id: string): Observable<RespuestaLikes> {
+    return this.http.delete<RespuestaLikes>(`${this.url}/${id}/like`);
   }
 }

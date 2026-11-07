@@ -4,7 +4,7 @@ Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo impl
 
 Los temas que más conviene dominar tienen su propia explicación de punta a punta en la sección 5: **login (5.2)**, **paginación (5.4)**, **publicaciones (5.5)**, **comentarios (5.6)** y **token, guard, `autorizar` y `refrescar` (5.8)**.
 
-> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al **backend** al cierre del Sprint #3 y al **frontend** al cierre del Sprint #2; lo que viene después se marca como _pendiente_. **Ojo:** el front todavía no envía el token ni deja de mandar `usuarioId`, así que hoy no funciona contra el back nuevo hasta que se haga la parte de front del Sprint #3.
+> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al **backend** al cierre del Sprint #3 y al **frontend** con la parte 1 del Sprint #3 (interceptor con el token); lo que viene después se marca como _pendiente_ (pantalla "Cargando", contador de sesión y detalle de publicación con comentarios).
 
 ---
 
@@ -284,7 +284,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 ## 4. Frontend (Angular 22)
 
-> Esta sección describe el front **al cierre del Sprint #2**. El backend ya exige JWT (sección 3.8) y el front todavía no lo envía: la adaptación (interceptor, pantalla "Cargando", contador de sesión, detalle de publicación con comentarios) es la parte de front del Sprint #3 y se documentará acá al hacerla.
+> Esta sección describe el front con la **parte 1 del Sprint #3** ya hecha: el interceptor que envía el token (4.2 y 4.4). Siguen pendientes la pantalla "Cargando", el contador de sesión y el detalle de publicación con comentarios; se documentarán acá al hacerlos.
 
 ### 4.1 Conceptos de Angular que se usan
 
@@ -302,7 +302,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 ### 4.2 Arranque y estructura
 
 - `main.ts` → `bootstrapApplication(App, appConfig)`.
-- `app.config.ts` registra `provideRouter(routes)` y `provideHttpClient()` (sin interceptores todavía).
+- `app.config.ts` registra `provideRouter(routes)` y `provideHttpClient(withInterceptors([authInterceptor]))`: el interceptor se ejecuta en **todas** las peticiones HTTP de la app (ver 4.4).
 - `app.html` es el "esqueleto" de toda la app:
   ```html
   <app-navbar />
@@ -331,8 +331,16 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 - Derivados con `computed`: `usuarioActual` y `estaAutenticado`. Cuando `sesion` cambia, la navbar y los guards reaccionan solos.
 - `registro()` y `login()` hacen el `POST` y, con el operador `tap`, **guardan la sesión como efecto lateral** cuando la respuesta llega bien; devuelven igualmente el `Observable` para que el componente maneje `next`/`error`.
 - `logout()` limpia el signal y el `localStorage`.
-- `obtenerToken()` queda listo para el interceptor del Sprint #3.
+- `obtenerToken()` lo usa el interceptor para armar el encabezado.
 - `leerSesionGuardada()` está en `try/catch`: si alguien modificó el `localStorage` y el JSON está roto, se borra y se arranca sin sesión en vez de romper la app.
+
+**Interceptor HTTP** (`interceptors/auth-interceptor.ts`, `HttpInterceptorFn`): una función que ve cada petición antes de salir y cada respuesta antes de llegar al componente.
+- **Salida:** si hay token y la URL empieza con `environment.apiUrl`, clona la petición (`clone`, porque las peticiones son inmutables) y agrega `Authorization: Bearer <token>`. El `startsWith` evita mandar el token a otros dominios.
+- **Respuesta con 401** en una ruta protegida de la API que se mandó con token: es una sesión vencida o inválida. Cierra la sesión (`logout`), muestra el modal "Sesión expirada" y navega a `/login`.
+- **Excepciones:** `/auth/login` y `/auth/registro` no se tratan así, porque ahí un 401 significa "credenciales incorrectas" y lo muestra la propia pantalla de login con su modal.
+- **Se corta el flujo con `EMPTY`** (el observable termina sin emitir ni dar error) en vez de propagar el error. Motivo: si no, cada componente mostraría su propio modal genérico ("No pudimos cargar...") y taparía el aviso de sesión expirada. Como además la pantalla se destruye al ir a `/login`, nadie queda esperando.
+- **Varias peticiones fallando a la vez** (por ejemplo, Mi perfil hace 4): solo se cierra la sesión si el token actual sigue siendo el que mandó esa petición. La primera la cierra y avisa; las demás no repiten el aviso. Esa misma comparación evita que una respuesta tardía de un token viejo cierre una sesión nueva si el usuario ya volvió a iniciar sesión.
+- Qué dicen los tests (`auth-interceptor.spec.ts`, con `HttpTestingController`): agrega el Bearer, no lo agrega sin sesión ni a otros dominios, el 401 cierra y redirige una sola vez aunque fallen varias, el 401 del login llega al componente, y otros errores (403) no tocan la sesión.
 
 ### 4.5 Formularios con validación
 
@@ -376,7 +384,7 @@ Es el componente "contenedor": guarda el estado, habla con el servicio y decide 
 
 - `totalPaginas` es un `computed`: `Math.max(1, Math.ceil(total / 5))`. Se recalcula solo cuando cambia `total`. El `Math.max(1, …)` evita mostrar "Página 1 de 0" si no hay publicaciones.
 - **Un único método carga los datos**: `cargar()`. Todo lo demás (cambiar de página, de orden, crear, eliminar) cambia un signal y llama a `cargar()`. El detalle de la paginación está en 5.4.
-- **Like (`alternarLike`)**: mira en el array `likes` de la publicación si el usuario ya había dado like. Si sí, llama a `DELETE`; si no, a `POST`. Cuando el back responde, **solo se reemplaza esa publicación** dentro de la lista con `lista.map(...)` y el spread `{ ...p, likes, cantidadLikes }`; no se recarga todo el listado. Si falla (por ejemplo 409 porque dos pestañas dieron like a la vez), se muestra el error en un modal y se recarga para quedar sincronizado.
+- **Like (`alternarLike`)**: mira en el array `likes` de la publicación si el usuario ya había dado like. Si sí, llama a `DELETE`; si no, a `POST` (el servicio solo recibe el id de la publicación: quién da el like lo sabe el back por el token). Cuando el back responde, **solo se reemplaza esa publicación** dentro de la lista con `lista.map(...)` y el spread `{ ...p, likes, cantidadLikes }`; no se recarga todo el listado. Si falla (por ejemplo 409 porque dos pestañas dieron like a la vez), se muestra el error en un modal y se recarga para quedar sincronizado.
 - **Eliminar**: pide confirmación con `modalService.confirmar(...)` y solo si el usuario acepta llama al back. Después recarga la misma página; si era la única publicación de la última página, retrocede una (si no, quedaría en "Página 3 de 2" y vacía).
 - `@for (... track publicacion.id)`: el `track` le dice a Angular cómo identificar cada elemento, así al actualizar la lista reutiliza el DOM en vez de recrearlo.
 
@@ -474,7 +482,7 @@ Decisiones clave para explicar:
 - **Deshabilitado se chequea después de la clave**: no se le revela el estado de la cuenta a quien no conoce la contraseña.
 - **200 y no 201**: login no crea ningún recurso; se fuerza con `@HttpCode(HttpStatus.OK)`.
 - **El token se guarda junto al usuario** en una sola clave de `localStorage`. Así la sesión sobrevive a recargar la página. `signal` + `computed` hacen que navbar y guards reaccionen solos al cambiar la sesión.
-- **El token se guarda pero el front todavía no lo envía.** El back ya lo exige y lo valida (`JwtAuthGuard`, ver 3.8 y 5.8). Falta el lado del front (Sprint #3): un interceptor que agregue `Authorization: Bearer` y quite `usuarioId` de los pedidos.
+- **El token se guarda y el interceptor lo envía en cada pedido** (ver 4.4). El back lo exige y lo valida (`JwtAuthGuard`, ver 3.8 y 5.8). Si vence, el primer pedido devuelve 401 y el interceptor cierra la sesión y manda al login.
 
 ### 5.3 Recarga de página con sesión activa
 
@@ -667,12 +675,12 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Validación del token en el back (resuelto) | `JwtAuthGuard` global: toda ruta exige token salvo `@Public()` (registro, login y `GET /`); `autorizar` y `refrescar` agregan la comprobación contra la base | — |
 | Actor tomado del token (resuelto) | Publicaciones y comentarios usan `@UsuarioActual()`; `usuarioId` ya no se acepta (400). Ya no se puede actuar ni hacerse pasar por administrador conociendo un id | — |
 | El guard no consulta la base | Verifica firma y vencimiento, pero un usuario deshabilitado (o eliminado) conserva acceso hasta que su token venza (hoy 15 min) | Sprint #4: al implementar la baja de usuarios, el login ya lo bloquea y `autorizar`/`refrescar` también; si hiciera falta cortar de inmediato, el guard podría consultar la base |
-| Front sin adaptar | El front actual no envía el token ni deja de mandar `usuarioId`: contra el back nuevo no puede publicar, dar like ni eliminar | Sprint #3 (front): interceptor con `Bearer` y 401 → login |
+| Interceptor del front (resuelto) | Agrega `Bearer` a los pedidos de la API y, ante un 401 en una ruta protegida, cierra la sesión, avisa y va al login. El front ya no manda `usuarioId` | — |
 | Token de 30 s en local | Solo para poder probar el vencimiento durante el desarrollo | Volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 (o borrar la variable) antes de entregar |
 | Comentarios sin interfaz para escribir ni editar | El alta y la edición existen en la API (Postman); Mi perfil muestra los 5 más recientes sin "cargar más" | Sprint #3 (front): página de detalle con caja de comentario, "cargar más" y edición |
 | Paginación por `offset` | `$skip` es lento con offsets muy grandes y, si alguien publica mientras se navega, puede repetir o saltear una publicación entre páginas | Aceptable a esta escala; la alternativa es paginar por cursor (por ejemplo, "las anteriores a esta fecha") |
 | Likes atómicos (resuelto) | `darLike`/`quitarLike` usan `findOneAndUpdate` con `$addToSet` / `$pull` y la condición en el filtro (`likes: { $ne: id }` / `likes: id`); si no matchea, responde 409 | — |
-| `authGuard` solo mira `localStorage` | Un token vencido sigue habilitando las pantallas | Sprint #3: pantalla "Cargando" que valida el token + interceptor que ante un 401 redirige al login |
+| `authGuard` solo mira `localStorage` | Un token vencido deja entrar a la pantalla; el primer pedido da 401 y el interceptor manda al login | Sprint #3 (front): pantalla "Cargando" que valida el token con `autorizar` al iniciar |
 | Token en `localStorage` | Es simple y suficiente para el TP; es vulnerable si hay XSS (Angular escapa el HTML por defecto, lo que mitiga el riesgo) | Alternativa: cookie `HttpOnly` |
 | Autoselección de `administrador` en el registro | Cualquiera puede registrarse como administrador | Lo pide el enunciado del Sprint #1; en un sistema real el alta de admins sería restringida |
 | Carrera en el registro | Dos registros simultáneos con el mismo correo pasan el chequeo; el índice único de Mongo frena al segundo, pero devolvería un 500 en vez de un 409 | Capturar el error de clave duplicada (código 11000) y convertirlo en `ConflictException` |
@@ -729,7 +737,9 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Por qué el listado de comentarios ordena también por `_id`?** Para desempatar comentarios con la misma fecha y que la paginación sea estable.
 
-**¿Cómo se guarda y se usa el token hoy?** El front lo guarda en `localStorage` junto al usuario, pero todavía no lo envía (falta el interceptor del Sprint #3). El back ya lo exige: un `JwtAuthGuard` global verifica firma y vencimiento en cada pedido y deja el id del usuario disponible con `@UsuarioActual()`.
+**¿Qué es un interceptor HTTP y para qué lo usan?** Es una función que Angular ejecuta con cada petición saliente y cada respuesta. Se usa para agregar el `Authorization: Bearer` en un solo lugar (en vez de en cada servicio) y para manejar el 401 de forma global: cierra la sesión, avisa con un modal y redirige al login.
+
+**¿Cómo se guarda y se usa el token hoy?** El front lo guarda en `localStorage` junto al usuario y el interceptor lo envía en cada pedido a la API. El back lo exige: un `JwtAuthGuard` global verifica firma y vencimiento en cada pedido y deja el id del usuario disponible con `@UsuarioActual()`.
 
 **¿Qué es un guard en Nest y en qué se diferencia del guard de Angular?** Es una clase con `canActivate` que decide si la petición llega al controller; si lanza una excepción, la petición se corta con ese status. Es el equivalente en el servidor de lo que `authGuard` hace con las rutas del front, pero el del back es el que de verdad protege: el del front solo mejora la experiencia.
 

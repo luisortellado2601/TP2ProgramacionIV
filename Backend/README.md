@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-06
-**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde; guard probado con el servidor real). Falta todo el front. Sprint #2 cerrado y probado en local.
+**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde). **Front, parte 1 hecha** (interceptor con `Bearer` y 401 → login, sin `usuarioId`): la app vuelve a funcionar de punta a punta. Faltan "Cargando", contador de sesión y detalle de comentarios. Sprint #2 cerrado y probado en local.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
@@ -21,25 +21,27 @@
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y probado en local; falta subirlo a `master` para producción |
-| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front sin iniciar |
+| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (parte 1 hecha: interceptor) |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
 Sprint #3, **front**, cuando el usuario diga "dale":
-1. Interceptor HTTP: agrega `Authorization: Bearer <token>` y ante un 401 hace logout y redirige a `/login`. Quitar `usuarioId` de los payloads y de las URLs de publicaciones (like, eliminar, crear); el back ya lo rechaza con 400.
+1. _(Hecho)_ Interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos de publicaciones.
 2. `AuthService`: métodos `autorizar()` y `refrescar()`. Pantalla "Cargando" con spinner que valida el token al iniciar (válido → Publicaciones, si no → Login); `authGuard` pasa a depender de eso.
 3. Contador de sesión con modal "¿extender la sesión?" que llama a `refrescar`.
 4. `ComentariosService.crear`/`editar` y página de detalle de publicación: caja para comentar, "cargar más" acumulando, edición del propio comentario con leyenda "editado".
 
+**Partes para pushear** (cada una deja la app funcionando): (1) back + interceptor; (2) pasos 2 y 3; (3) paso 4.
+
 ### Decisiones tomadas para el Sprint #3
 - **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
-- **No pushear a `master` hasta tener el front del paso 1:** el back ya exige JWT y rechaza `usuarioId`, así que el front actual (local y en Vercel) no puede publicar, dar like ni eliminar contra él.
+- **Un 401 en una ruta protegida** (token vencido o inválido) cierra la sesión, muestra el modal "Sesión expirada" y manda a `/login`. En login y registro el 401 sigue siendo "credenciales incorrectas" y lo muestra la propia pantalla.
 
 ### Pendientes y límites conocidos
 - `JwtAuthGuard` solo verifica firma y vencimiento: un usuario deshabilitado conserva acceso hasta que venza su token. `autorizar`/`refrescar` sí consultan la base (401 si no existe o está deshabilitado). Se completa con el login/rol del Sprint #4.
 - En Vercel quedó la variable vieja `JWT_EXPIRES_IN_MINUTOS` (si se cargó): el back ya no la lee; sin `JWT_EXPIRES_IN_SEGUNDOS` usa 900 s.
 - `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
-- `authGuard` del front solo mira `localStorage`: un token vencido sigue habilitando rutas. Se resuelve en el Sprint #3.
+- `authGuard` del front solo mira `localStorage`: un token vencido deja entrar a la pantalla, pero el primer pedido devuelve 401 y el interceptor lo manda al login. La validación al iniciar llega con la pantalla "Cargando".
 - Menor, sin urgencia: en `darLike`/`quitarLike`, si la publicación se elimina entre la comprobación y el `findOneAndUpdate`, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
@@ -206,13 +208,13 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Permitir escribir comentarios.
   - [ ] Comentarios ordenados uno debajo del otro; primera carga limitada; botón **"cargar más"** que trae más sin quitar los anteriores.
   - [ ] El autor de un comentario puede editarlo; un comentario editado debe **anunciar que fue editado**.
-- [ ] **Login y registro**: tomar el token devuelto y guardarlo localmente en el navegador (o usar cookies).
+- [x] **Login y registro**: tomar el token devuelto y guardarlo localmente en el navegador (`AuthService`, `localStorage`); el interceptor lo envía como `Bearer`.
 - [ ] **Página "Cargando"**
   - [ ] Al iniciar la app, mostrar pantalla de carga con spinner.
   - [ ] Validar el token contra la ruta `autorizar`: si es válido → redirigir a Publicaciones; si no → Login.
 - [ ] **A nivel aplicación**
   - [ ] Al iniciar sesión, iniciar un contador de **10 minutos**. Al finalizar, mostrar **modal** avisando que quedan 5 minutos y preguntando si desea extender la sesión (el token vence a los 15 min). Si acepta, **refrescar el token**.
-  - [ ] Si una petición devuelve **401**, redirigir al login para rehacer el token (interceptor HTTP).
+  - [x] Si una petición devuelve **401**, redirigir al login para rehacer el token (interceptor HTTP).
 
 **Back – Comentarios controller**
 - [x] Traer comentarios de una publicación, agregar y modificar.

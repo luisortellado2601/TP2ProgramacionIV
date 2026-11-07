@@ -50,11 +50,12 @@ src/
 │   │   ├── navbar/         Navegación y cierre de sesión
 │   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
 │   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
+│   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
 │   ├── services/           AuthService (sesión en localStorage), ModalService, PublicacionesService y ComentariosService
 │   ├── utils/              Validadores propios y helper de mensajes de error
 │   ├── app.routes.ts       Rutas con lazy loading
-│   └── app.config.ts       Providers (router, HttpClient)
+│   └── app.config.ts       Providers (router, HttpClient con el interceptor)
 ├── environments/           URL de la API por entorno
 └── styles.css              Sistema de diseño global (variables, formularios, botones)
 ```

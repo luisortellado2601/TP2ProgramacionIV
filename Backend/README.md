@@ -13,25 +13,32 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-06
-**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde). **Front, parte 1 hecha** (interceptor con `Bearer` y 401 → login, sin `usuarioId`): la app vuelve a funcionar de punta a punta. Faltan "Cargando", contador de sesión y detalle de comentarios. Sprint #2 cerrado y probado en local.
+**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde) y **front parte 1 hecha** (interceptor con `Bearer`, 401 → login, sin `usuarioId`). Ambos ya están en `master`. **Falta:** pantalla "Cargando", contador de sesión con modal, y todo lo de comentarios en el front (escribir, editar, "cargar más", página de detalle). Sprint #2 cerrado y probado en local.
+**Sin verificar todavía:** la colección de Postman completa y la parte 1 del front en el navegador (login → publicar/like/eliminar → esperar 30 s → "Sesión expirada").
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
-| #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y probado en local; falta subirlo a `master` para producción |
-| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (parte 1 hecha: interceptor) |
+| #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado, probado en local y subido a `master` |
+| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (parte 1 hecha; faltan partes 2 y 3) |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Sprint #3, **front**, cuando el usuario diga "dale":
-1. _(Hecho)_ Interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos de publicaciones.
-2. `AuthService`: métodos `autorizar()` y `refrescar()`. Pantalla "Cargando" con spinner que valida el token al iniciar (válido → Publicaciones, si no → Login); `authGuard` pasa a depender de eso.
-3. Contador de sesión con modal "¿extender la sesión?" que llama a `refrescar`.
-4. `ComentariosService.crear`/`editar` y página de detalle de publicación: caja para comentar, "cargar más" acumulando, edición del propio comentario con leyenda "editado".
+Sprint #3, **front**, cuando el usuario diga "dale". Partes (cada una deja la app funcionando y se pushea por separado):
+1. _(Hecha y subida)_ Back + interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos.
+2. **Parte 2 (siguiente):**
+   - `AuthService`: `autorizar()` y `refrescar()`.
+   - Pantalla "Cargando" con spinner que valida el token al iniciar (válido → Publicaciones, si no → Login); `authGuard` pasa a depender de eso.
+   - Contador de sesión con modal "¿extender la sesión?" que llama a `refrescar`. Con el token de 30 s el aviso va a los 20 s.
+3. **Parte 3:**
+   - `ComentariosService.crear`/`editar`.
+   - Página de detalle de publicación (nueva ruta) con la publicación en grande y sus comentarios.
+   - Caja para comentar, "cargar más" que acumula, y edición del propio comentario con leyenda "editado".
+   - Hoy el front solo **muestra** comentarios (Mi perfil, los 5 más recientes); el back ya permite crear y editar.
 
-**Partes para pushear** (cada una deja la app funcionando): (1) back + interceptor; (2) pasos 2 y 3; (3) paso 4.
+**Antes de entregar el sprint:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900, revisar el checklist de la sección 3 y actualizar `GUIA_TECNICA.md` con lo que se agregue en el front (4.x).
 
 ### Decisiones tomadas para el Sprint #3
 - **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
@@ -46,7 +53,7 @@ Sprint #3, **front**, cuando el usuario diga "dale":
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día hasta el Sprint #2).
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back del Sprint #3 y parte 1 del front).
 
 ---
 

@@ -24,13 +24,13 @@
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado, probado en local y subido a `master` |
-| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (partes 1 y 2 hechas; falta parte 3) |
+| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front: partes 1 y 2 hechas y verificadas en vivo; falta parte 3 |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Retomar la prueba en vivo de la parte 2 apenas `Backend/.env` tenga el `MONGODB_URI` de Atlas (ver "Bloqueado para probar en vivo" arriba), y después seguir con la parte 3. Partes (cada una deja la app funcionando y se pushea por separado):
+Sprint #3, **front, parte 3**, cuando el usuario diga "dale". Partes (cada una deja la app funcionando y se pushea por separado):
 1. _(Hecha y subida)_ Back + interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos.
-2. _(Hecha, pendiente de probar en el navegador contra un Mongo real)_
+2. _(Hecha y verificada en vivo en el navegador, contra Atlas real)_
    - `AuthService`: `autorizar()` y `refrescar()` (`Frontend/src/app/services/auth.ts`).
    - Pantalla "Cargando" con spinner (`Frontend/src/app/componentes/cargando/`) en la ruta raíz `/`: valida el token con `autorizar()` al iniciar (válido → Publicaciones, si no → Login vía el 401 del interceptor o el catch propio).
    - Contador de sesión: al guardar cualquier sesión se programa un aviso cuando queda un tercio de la vida del token (se decodifica el propio JWT en `Frontend/src/app/utils/jwt.ts`, sin tocar `authGuard`); el modal "¿extender la sesión?" llama a `refrescar()`.
@@ -56,7 +56,7 @@ Retomar la prueba en vivo de la parte 2 apenas `Backend/.env` tenga el `MONGODB_
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back del Sprint #3 y parte 1 del front).
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back del Sprint #3 y partes 1 y 2 del front).
 
 ---
 

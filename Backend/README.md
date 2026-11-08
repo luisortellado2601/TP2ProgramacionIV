@@ -12,9 +12,11 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-06
-**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde) y **front parte 1 hecha** (interceptor con `Bearer`, 401 → login, sin `usuarioId`). Ambos ya están en `master`. **Falta:** pantalla "Cargando", contador de sesión con modal, y todo lo de comentarios en el front (escribir, editar, "cargar más", página de detalle). Sprint #2 cerrado y probado en local.
-**Sin verificar todavía:** la colección de Postman completa y la parte 1 del front en el navegador (login → publicar/like/eliminar → esperar 30 s → "Sesión expirada").
+**Última actualización:** 2026-11-08
+**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde). **Front: partes 1 y 2 hechas y verificadas en vivo** (interceptor con `Bearer`, 401 → login, sin `usuarioId`; `autorizar()`/`refrescar()`, pantalla "Cargando" con spinner en `/` y contador de sesión con modal "¿extender la sesión?"). Probado en el navegador contra Atlas real, con cuenta real: login → Cargando (spinner visible entrando a `/` con sesión ya guardada) → Publicaciones, aviso de sesión a los ~20s, extender funciona (se reprograma el aviso), y dejarla vencer manda a "Sesión expirada". **Falta:** parte 3 (comentarios en el front: escribir, editar, "cargar más", página de detalle). Sprint #2 cerrado y probado en local.
+**Sin verificar todavía:** la colección de Postman completa.
+**`Backend/.env` local:** apunta a Atlas real (`MONGODB_URI` con la base `test`, que es donde vive la base real de NextPlay — no uses un Mongo local para este proyecto, nunca se usó uno). La contraseña del usuario de Atlas se regeneró durante esta sesión; si cambia de nuevo, hay que actualizarla en dos lugares: `Backend/.env` local y la env var `MONGODB_URI` del proyecto **Backend** en Vercel (production **y** preview), o el back deployado crashea con `FUNCTION_INVOCATION_FAILED` en todas las rutas (pasó y se solucionó en esta sesión).
+**Cuidado con `npm run start:dev` en Windows:** `nest start --watch` deja procesos `node` colgados (zombies) en el puerto 3000 que sobreviven a `Ctrl+C` y a parar la tarea que los lanzó; si el puerto da `EADDRINUSE` o el back se comporta raro/desactualizado pese a editar código o `.env`, buscar qué PID tiene el puerto 3000 (`Get-NetTCPConnection -LocalPort 3000`) y matarlo (`Stop-Process -Id <pid> -Force`) antes de levantarlo de nuevo.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
 
 ### Progreso por sprint
@@ -22,17 +24,17 @@
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado, probado en local y subido a `master` |
-| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (parte 1 hecha; faltan partes 2 y 3) |
+| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front en curso (partes 1 y 2 hechas; falta parte 3) |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Sprint #3, **front**, cuando el usuario diga "dale". Partes (cada una deja la app funcionando y se pushea por separado):
+Retomar la prueba en vivo de la parte 2 apenas `Backend/.env` tenga el `MONGODB_URI` de Atlas (ver "Bloqueado para probar en vivo" arriba), y después seguir con la parte 3. Partes (cada una deja la app funcionando y se pushea por separado):
 1. _(Hecha y subida)_ Back + interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos.
-2. **Parte 2 (siguiente):**
-   - `AuthService`: `autorizar()` y `refrescar()`.
-   - Pantalla "Cargando" con spinner que valida el token al iniciar (válido → Publicaciones, si no → Login); `authGuard` pasa a depender de eso.
-   - Contador de sesión con modal "¿extender la sesión?" que llama a `refrescar`. Con el token de 30 s el aviso va a los 20 s.
-3. **Parte 3:**
+2. _(Hecha, pendiente de probar en el navegador contra un Mongo real)_
+   - `AuthService`: `autorizar()` y `refrescar()` (`Frontend/src/app/services/auth.ts`).
+   - Pantalla "Cargando" con spinner (`Frontend/src/app/componentes/cargando/`) en la ruta raíz `/`: valida el token con `autorizar()` al iniciar (válido → Publicaciones, si no → Login vía el 401 del interceptor o el catch propio).
+   - Contador de sesión: al guardar cualquier sesión se programa un aviso cuando queda un tercio de la vida del token (se decodifica el propio JWT en `Frontend/src/app/utils/jwt.ts`, sin tocar `authGuard`); el modal "¿extender la sesión?" llama a `refrescar()`.
+3. **Parte 3 (siguiente):**
    - `ComentariosService.crear`/`editar`.
    - Página de detalle de publicación (nueva ruta) con la publicación en grande y sus comentarios.
    - Caja para comentar, "cargar más" que acumula, y edición del propio comentario con leyenda "editado".
@@ -43,12 +45,13 @@ Sprint #3, **front**, cuando el usuario diga "dale". Partes (cada una deja la ap
 ### Decisiones tomadas para el Sprint #3
 - **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
 - **Un 401 en una ruta protegida** (token vencido o inválido) cierra la sesión, muestra el modal "Sesión expirada" y manda a `/login`. En login y registro el 401 sigue siendo "credenciales incorrectas" y lo muestra la propia pantalla.
+- **Contador de sesión como proporción, no como minutos fijos**: en vez de codificar "10 minutos" (que con el token de 30 s de prueba no tendría sentido), el front decodifica el propio JWT (`utils/jwt.ts`, sin librerías) y programa el aviso cuando falta **un tercio** de la vida del token desde que se emitió — con 15 min de token, el aviso cae a los 10 min (quedan 5, como pide el enunciado); con 30 s de token, cae a los 20 s. Así el mismo código vale para desarrollo y para la entrega sin tocarlo.
 
 ### Pendientes y límites conocidos
 - `JwtAuthGuard` solo verifica firma y vencimiento: un usuario deshabilitado conserva acceso hasta que venza su token. `autorizar`/`refrescar` sí consultan la base (401 si no existe o está deshabilitado). Se completa con el login/rol del Sprint #4.
 - En Vercel quedó la variable vieja `JWT_EXPIRES_IN_MINUTOS` (si se cargó): el back ya no la lee; sin `JWT_EXPIRES_IN_SEGUNDOS` usa 900 s.
 - `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
-- `authGuard` del front solo mira `localStorage`: un token vencido deja entrar a la pantalla, pero el primer pedido devuelve 401 y el interceptor lo manda al login. La validación al iniciar llega con la pantalla "Cargando".
+- `authGuard` del front solo mira `localStorage` (no cambió): un token vencido deja entrar a la pantalla si se navega directo a una ruta protegida sin pasar por `/`, pero el primer pedido devuelve 401 y el interceptor lo manda al login. La pantalla "Cargando" cubre la validación al iniciar la app desde la raíz.
 - Menor, sin urgencia: en `darLike`/`quitarLike`, si la publicación se elimina entre la comprobación y el `findOneAndUpdate`, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
@@ -216,11 +219,11 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Comentarios ordenados uno debajo del otro; primera carga limitada; botón **"cargar más"** que trae más sin quitar los anteriores.
   - [ ] El autor de un comentario puede editarlo; un comentario editado debe **anunciar que fue editado**.
 - [x] **Login y registro**: tomar el token devuelto y guardarlo localmente en el navegador (`AuthService`, `localStorage`); el interceptor lo envía como `Bearer`.
-- [ ] **Página "Cargando"**
-  - [ ] Al iniciar la app, mostrar pantalla de carga con spinner.
-  - [ ] Validar el token contra la ruta `autorizar`: si es válido → redirigir a Publicaciones; si no → Login.
-- [ ] **A nivel aplicación**
-  - [ ] Al iniciar sesión, iniciar un contador de **10 minutos**. Al finalizar, mostrar **modal** avisando que quedan 5 minutos y preguntando si desea extender la sesión (el token vence a los 15 min). Si acepta, **refrescar el token**.
+- [x] **Página "Cargando"** (`componentes/cargando/`, ruta `/`)
+  - [x] Al iniciar la app, mostrar pantalla de carga con spinner.
+  - [x] Validar el token contra la ruta `autorizar`: si es válido → redirigir a Publicaciones; si no → Login.
+- [x] **A nivel aplicación**
+  - [x] Al iniciar sesión, iniciar un contador. Al faltar un tercio de la vida del token, mostrar **modal** preguntando si desea extender la sesión. Si acepta, **refrescar el token**. _(Implementado como proporción de la duración real del token en vez de fijo en minutos, para que escale con `JWT_EXPIRES_IN_SEGUNDOS`: ver decisión en sección 0.)_
   - [x] Si una petición devuelve **401**, redirigir al login para rehacer el token (interceptor HTTP).
 
 **Back – Comentarios controller**

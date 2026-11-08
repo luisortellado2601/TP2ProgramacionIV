@@ -284,7 +284,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 ## 4. Frontend (Angular 22)
 
-> Esta sección describe el front con la **parte 1 del Sprint #3** ya hecha: el interceptor que envía el token (4.2 y 4.4). Siguen pendientes la pantalla "Cargando", el contador de sesión y el detalle de publicación con comentarios; se documentarán acá al hacerlos.
+> Esta sección describe el front con las **partes 1 y 2 del Sprint #3** ya hechas: el interceptor que envía el token, `autorizar()`/`refrescar()`, la pantalla "Cargando" y el contador de sesión (4.2 a 4.4.1). Sigue pendiente el detalle de publicación con comentarios (parte 3); se documentará acá al hacerse.
 
 ### 4.1 Conceptos de Angular que se usan
 
@@ -315,7 +315,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 | Ruta | Componente | Guard |
 |---|---|---|
-| `/` | redirige a `/publicaciones` | — |
+| `/` | Cargando (valida el token al iniciar, ver 4.4.1) | — |
 | `/login`, `/registro` | Login, Registro | `guestGuard` (solo sin sesión) |
 | `/publicaciones`, `/perfil` | Publicaciones, MiPerfil | `authGuard` (requiere sesión) |
 | `**` | redirige a `/publicaciones` | — |
@@ -341,6 +341,22 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 - **Se corta el flujo con `EMPTY`** (el observable termina sin emitir ni dar error) en vez de propagar el error. Motivo: si no, cada componente mostraría su propio modal genérico ("No pudimos cargar...") y taparía el aviso de sesión expirada. Como además la pantalla se destruye al ir a `/login`, nadie queda esperando.
 - **Varias peticiones fallando a la vez** (por ejemplo, Mi perfil hace 4): solo se cierra la sesión si el token actual sigue siendo el que mandó esa petición. La primera la cierra y avisa; las demás no repiten el aviso. Esa misma comparación evita que una respuesta tardía de un token viejo cierre una sesión nueva si el usuario ya volvió a iniciar sesión.
 - Qué dicen los tests (`auth-interceptor.spec.ts`, con `HttpTestingController`): agrega el Bearer, no lo agrega sin sesión ni a otros dominios, el 401 cierra y redirige una sola vez aunque fallen varias, el 401 del login llega al componente, y otros errores (403) no tocan la sesión.
+
+**`autorizar()` y `refrescar()`** (parte 2 del Sprint #3): dos métodos más de `AuthService`, mismo patrón que `login()`/`registro()` (`POST` + `tap`).
+- `autorizar()`: `POST /auth/autorizar` sin body (el interceptor ya le agrega el `Bearer`). El back devuelve `{ usuario }` sin token nuevo; el `tap` llama a un método privado `actualizarUsuario()` que **reemplaza solo el usuario** dentro de la sesión guardada, sin tocar el token ni reprogramar el contador (ver abajo): no cambió el vencimiento, no hace falta.
+- `refrescar()`: `POST /auth/refrescar` sin body. El back devuelve `{ usuario, token }` con el mismo formato que login; el `tap` llama a `guardarSesion()`, la misma función que usan login y registro, así que además de persistir la sesión nueva **reprograma el contador** con el nuevo vencimiento.
+
+**Contador de sesión** (también en `AuthService`): en vez de un `setTimeout` fijo en minutos, decodifica el propio JWT.
+- `utils/jwt.ts` → `decodificarPayloadToken(token)`: un JWT es `header.payload.firma` en base64url; el payload se puede leer sin la clave (ver 5.8), así que alcanza con separar por `.`, cambiar los caracteres de base64url a base64 y `JSON.parse(atob(...))`. Devuelve `{ sub, correo, nombreUsuario, perfil, iat, exp }` (`iat`/`exp` en segundos Unix, los agrega automáticamente `jsonwebtoken` al firmar con `expiresIn`).
+- `guardarSesion()` llama a `iniciarContadorSesion(token)`, que calcula `duracionMs = (exp - iat) * 1000` y programa un `setTimeout` para cuando falta **un tercio** de esa duración (`vencimientoMs - duracionMs / 3`). Con un token de 15 min esto cae a los 10 min de uso (quedan 5, como pide el enunciado); con el token de prueba de 30 s cae a los 20 s. Si el token ya venció (por ejemplo, se recargó la página mucho después), no programa nada: el próximo pedido real va a dar 401 y lo maneja el interceptor.
+- Al dispararse, `avisarVencimientoProximo()` usa `modalService.confirmar(...)` (el mismo modal de confirmación que ya existía, ver 4.6) con el tiempo restante formateado (`utils/formatear-duracion.ts`, segundos o minutos según corresponda). Si el usuario confirma, llama a `refrescar()`.
+- `logout()` y cada `guardarSesion()` nuevo cancelan el `setTimeout` anterior (`cancelarContadorSesion`) antes de programar o terminar, para no acumular avisos de una sesión vieja.
+- Por qué no un `setInterval` que cuenta hacia atrás en la UI: el enunciado solo pide **un aviso puntual** a mitad de camino, no un cronómetro visible; un `setTimeout` alcanza y es más simple.
+
+**Pantalla "Cargando"** (`componentes/cargando/`, ruta `/`): parte 2 del Sprint #3.
+- `ngOnInit`: si `authService.estaAutenticado()` es falso (no hay nada en `localStorage`), navega directo a `/login` sin llamar al back.
+- Si hay sesión guardada, llama a `authService.autorizar()`. Si responde bien, navega a `/publicaciones` (y de paso quedaron actualizados los datos del usuario). Si falla con **401**, el interceptor ya se encargó de cerrar la sesión, mostrar "Sesión expirada" y navegar a `/login` — como corta el flujo con `EMPTY` (ver 4.4), el `error` de este `subscribe` ni se dispara. Para cualquier otro error (por ejemplo, el back caído) sí se dispara: se muestra un modal genérico y se navega a `/login` igual, para no dejar a nadie mirando el spinner para siempre.
+- El componente es el único punto de entrada que valida el token **contra el servidor** al arrancar la app; `authGuard` (4.3) sigue mirando solo `localStorage` para las demás navegaciones, que es la limitación conocida que ya estaba documentada en `Backend/README.md`.
 
 ### 4.5 Formularios con validación
 

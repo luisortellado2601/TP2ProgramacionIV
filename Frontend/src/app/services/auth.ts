@@ -3,16 +3,28 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginPayload, RegistroPayload, SesionResponse, Usuario } from '../models/usuario';
+import { ModalService } from './modal';
+import { decodificarPayloadToken } from '../utils/jwt';
+import { formatearDuracion } from '../utils/formatear-duracion';
 
 const CLAVE_SESION = 'nextplay_sesion';
 
 @Service()
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly modalService = inject(ModalService);
   private readonly sesion = signal<SesionResponse | null>(this.leerSesionGuardada());
+  private temporizadorAviso: ReturnType<typeof setTimeout> | null = null;
 
   readonly usuarioActual = computed<Usuario | null>(() => this.sesion()?.usuario ?? null);
   readonly estaAutenticado = computed<boolean>(() => this.sesion() !== null);
+
+  constructor() {
+    const sesionGuardada = this.sesion();
+    if (sesionGuardada) {
+      this.iniciarContadorSesion(sesionGuardada.token);
+    }
+  }
 
   registro(payload: RegistroPayload): Observable<SesionResponse> {
     return this.http
@@ -26,9 +38,26 @@ export class AuthService {
       .pipe(tap((respuesta) => this.guardarSesion(respuesta)));
   }
 
+  // Confirma contra el back que el token guardado sigue valiendo y trae los
+  // datos vigentes del usuario (lo usa la pantalla "Cargando" al iniciar la app).
+  autorizar(): Observable<{ usuario: Usuario }> {
+    return this.http
+      .post<{ usuario: Usuario }>(`${environment.apiUrl}/auth/autorizar`, {})
+      .pipe(tap(({ usuario }) => this.actualizarUsuario(usuario)));
+  }
+
+  // Pide un token nuevo con el mismo vencimiento desde ahora; lo usa el aviso
+  // de "sesión por vencer" cuando el usuario decide extenderla.
+  refrescar(): Observable<SesionResponse> {
+    return this.http
+      .post<SesionResponse>(`${environment.apiUrl}/auth/refrescar`, {})
+      .pipe(tap((respuesta) => this.guardarSesion(respuesta)));
+  }
+
   logout(): void {
     this.sesion.set(null);
     localStorage.removeItem(CLAVE_SESION);
+    this.cancelarContadorSesion();
   }
 
   obtenerToken(): string | null {
@@ -38,6 +67,19 @@ export class AuthService {
   private guardarSesion(respuesta: SesionResponse): void {
     this.sesion.set(respuesta);
     localStorage.setItem(CLAVE_SESION, JSON.stringify(respuesta));
+    this.iniciarContadorSesion(respuesta.token);
+  }
+
+  // Actualiza solo los datos del usuario (p. ej. tras `autorizar`), sin tocar
+  // el token ni reprogramar el aviso de vencimiento.
+  private actualizarUsuario(usuario: Usuario): void {
+    const sesionActual = this.sesion();
+    if (!sesionActual) {
+      return;
+    }
+    const sesionActualizada: SesionResponse = { ...sesionActual, usuario };
+    this.sesion.set(sesionActualizada);
+    localStorage.setItem(CLAVE_SESION, JSON.stringify(sesionActualizada));
   }
 
   private leerSesionGuardada(): SesionResponse | null {
@@ -51,5 +93,48 @@ export class AuthService {
       localStorage.removeItem(CLAVE_SESION);
       return null;
     }
+  }
+
+  // El aviso aparece cuando queda un tercio de la vida del token (p. ej. a los
+  // 10 min de un token de 15, o a los 20 s de uno de prueba de 30): la
+  // proporción escala sola en vez de depender de un valor fijo en minutos.
+  private iniciarContadorSesion(token: string): void {
+    this.cancelarContadorSesion();
+    const payload = decodificarPayloadToken(token);
+    if (!payload) {
+      return;
+    }
+    const vencimientoMs = payload.exp * 1000;
+    const duracionMs = vencimientoMs - payload.iat * 1000;
+    const avisoEnMs = vencimientoMs - duracionMs / 3 - Date.now();
+    if (vencimientoMs - Date.now() <= 0) {
+      return; // ya venció: el próximo pedido lo cierra el interceptor
+    }
+    this.temporizadorAviso = setTimeout(
+      () => this.avisarVencimientoProximo(vencimientoMs),
+      Math.max(avisoEnMs, 0),
+    );
+  }
+
+  private cancelarContadorSesion(): void {
+    if (this.temporizadorAviso) {
+      clearTimeout(this.temporizadorAviso);
+      this.temporizadorAviso = null;
+    }
+  }
+
+  private avisarVencimientoProximo(vencimientoMs: number): void {
+    const restante = formatearDuracion(vencimientoMs - Date.now());
+    this.modalService.confirmar(
+      `Tu sesión vence en ${restante}. ¿Querés extenderla?`,
+      () => {
+        this.refrescar().subscribe({
+          error: () => {
+            // Si falla, el próximo pedido real lo maneja el interceptor (401 → login).
+          },
+        });
+      },
+      'Sesión por vencer',
+    );
   }
 }

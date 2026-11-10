@@ -12,9 +12,10 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-08
-**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Backend terminado** (build, lint y 20 tests en verde). **Front: partes 1 y 2 hechas y verificadas en vivo** (interceptor con `Bearer`, 401 → login, sin `usuarioId`; `autorizar()`/`refrescar()`, pantalla "Cargando" con spinner en `/` y contador de sesión con modal "¿extender la sesión?"). Probado en el navegador contra Atlas real, con cuenta real: login → Cargando (spinner visible entrando a `/` con sesión ya guardada) → Publicaciones, aviso de sesión a los ~20s, extender funciona (se reprograma el aviso), y dejarla vencer manda a "Sesión expirada". **Falta:** parte 3 (comentarios en el front: escribir, editar, "cargar más", página de detalle). Sprint #2 cerrado y probado en local.
-**Sin verificar todavía:** la colección de Postman completa.
+**Última actualización:** 2026-11-10
+**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Back y las 3 partes del front hechas** (build y tests en verde: back 23, front 20). La parte 3 (página de detalle `/publicaciones/:id`, escribir, "cargar más" y editar comentarios) está **sin probar todavía en el navegador**. Sprint #2 cerrado.
+**Cambio en el back durante la parte 3:** nuevo `GET /publicaciones/:id` (lo necesita la página de detalle).
+**Sin verificar todavía:** la colección de Postman completa (incluye 4 casos nuevos de `GET /publicaciones/:id`).
 **`Backend/.env` local:** apunta a Atlas real (`MONGODB_URI` con la base `test`, que es donde vive la base real de NextPlay — no uses un Mongo local para este proyecto, nunca se usó uno). La contraseña del usuario de Atlas se regeneró durante esta sesión; si cambia de nuevo, hay que actualizarla en dos lugares: `Backend/.env` local y la env var `MONGODB_URI` del proyecto **Backend** en Vercel (production **y** preview), o el back deployado crashea con `FUNCTION_INVOCATION_FAILED` en todas las rutas (pasó y se solucionó en esta sesión).
 **Cuidado con `npm run start:dev` en Windows:** `nest start --watch` deja procesos `node` colgados (zombies) en el puerto 3000 que sobreviven a `Ctrl+C` y a parar la tarea que los lanzó; si el puerto da `EADDRINUSE` o el back se comporta raro/desactualizado pese a editar código o `.env`, buscar qué PID tiene el puerto 3000 (`Get-NetTCPConnection -LocalPort 3000`) y matarlo (`Stop-Process -Id <pid> -Force`) antes de levantarlo de nuevo.
 **Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
@@ -24,23 +25,23 @@
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Funcional y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado, probado en local y subido a `master` |
-| #3 Comentarios, JWT y sesión | [ ] | [x] | Back listo; front: partes 1 y 2 hechas y verificadas en vivo; falta parte 3 |
+| #3 Comentarios, JWT y sesión | [x] | [x] | Código completo; falta probar la parte 3 en el navegador y cerrar el sprint |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Sprint #3, **front, parte 3**, cuando el usuario diga "dale". Partes (cada una deja la app funcionando y se pushea por separado):
+Sprint #3: **probar la parte 3 en el navegador** (detalle, comentar, "cargar más", editar), correr la colección de Postman y cerrar el sprint. Partes (cada una deja la app funcionando y se pushea por separado):
 1. _(Hecha y subida)_ Back + interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos.
-2. _(Hecha y verificada en vivo en el navegador, contra Atlas real)_
+2. _(Hecha)_
    - `AuthService`: `autorizar()` y `refrescar()` (`Frontend/src/app/services/auth.ts`).
    - Pantalla "Cargando" con spinner (`Frontend/src/app/componentes/cargando/`) en la ruta raíz `/`: valida el token con `autorizar()` al iniciar (válido → Publicaciones, si no → Login vía el 401 del interceptor o el catch propio).
    - Contador de sesión: al guardar cualquier sesión se programa un aviso cuando queda un tercio de la vida del token (se decodifica el propio JWT en `Frontend/src/app/utils/jwt.ts`, sin tocar `authGuard`); el modal "¿extender la sesión?" llama a `refrescar()`.
-3. **Parte 3 (siguiente):**
-   - `ComentariosService.crear`/`editar`.
-   - Página de detalle de publicación (nueva ruta) con la publicación en grande y sus comentarios.
-   - Caja para comentar, "cargar más" que acumula, y edición del propio comentario con leyenda "editado".
-   - Hoy el front solo **muestra** comentarios (Mi perfil, los 5 más recientes); el back ya permite crear y editar.
+3. _(Hecha, sin probar en el navegador)_
+   - Back: `GET /publicaciones/:id` (200, 400 id inválido, 404 inexistente o dada de baja).
+   - `ComentariosService.crear`/`editar` y `PublicacionesService.obtener`.
+   - Página de detalle `/publicaciones/:id` (`componentes/publicacion-detalle/`): publicación en grande (con like y eliminar) + comentarios. El título de cada tarjeta enlaza al detalle.
+   - `Comentarios` en modo `interactivo`: caja para comentar, "cargar más" que acumula y edición del propio comentario con leyenda "editado". En Mi perfil no se comenta ni se edita, pero un botón "Ver N comentarios más" trae los ocultos.
 
-**Antes de entregar el sprint:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900, revisar el checklist de la sección 3 y actualizar `GUIA_TECNICA.md` con lo que se agregue en el front (4.x).
+**Antes de entregar el sprint:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900, revisar el checklist de la sección 5.
 
 ### Decisiones tomadas para el Sprint #3
 - **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
@@ -56,7 +57,7 @@ Sprint #3, **front, parte 3**, cuando el usuario diga "dale". Partes (cada una d
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
 - Backend en ESM: los imports relativos terminan en `.js`.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back del Sprint #3 y partes 1 y 2 del front).
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back y las 3 partes del front del Sprint #3).
 
 ---
 
@@ -183,7 +184,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Crear publicación (título, mensaje, imagen opcional).
 - [x] **Componente Mi Perfil**
   - [x] Mostrar todos los datos del usuario y su foto de perfil.
-  - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 5 comentarios más recientes de cada una y cuántos más hay.)_
+  - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 5 comentarios más recientes de cada una y un botón para ver los demás.)_
 
 **Back – Publicaciones controller**
 - [x] Alta, listado y baja lógica de publicaciones.
@@ -213,11 +214,11 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 ### SPRINT #3 – Comentarios, JWT y manejo de sesión
 
 **Front**
-- [ ] **Página Publicación** (detalle)
-  - [ ] Ver la publicación en grande con sus comentarios.
-  - [ ] Permitir escribir comentarios.
-  - [ ] Comentarios ordenados uno debajo del otro; primera carga limitada; botón **"cargar más"** que trae más sin quitar los anteriores.
-  - [ ] El autor de un comentario puede editarlo; un comentario editado debe **anunciar que fue editado**.
+- [x] **Página Publicación** (detalle, `/publicaciones/:id`) _(sin probar en el navegador)_
+  - [x] Ver la publicación en grande con sus comentarios.
+  - [x] Permitir escribir comentarios.
+  - [x] Comentarios ordenados uno debajo del otro; primera carga limitada (5); botón **"cargar más"** que trae más sin quitar los anteriores.
+  - [x] El autor de un comentario puede editarlo; un comentario editado debe **anunciar que fue editado**.
 - [x] **Login y registro**: tomar el token devuelto y guardarlo localmente en el navegador (`AuthService`, `localStorage`); el interceptor lo envía como `Bearer`.
 - [x] **Página "Cargando"** (`componentes/cargando/`, ruta `/`)
   - [x] Al iniciar la app, mostrar pantalla de carga con spinner.
@@ -246,7 +247,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 | 1 | Back: JWT en login/registro (15 min), `JwtAuthGuard`, `POST /auth/autorizar` y `POST /auth/refrescar`. |
 | 2 | Back: esquema Comentario, `POST`, `PUT` (modificado:true) y `GET` paginado (recientes primero). |
 | 3 | Front: guardar token, servicio de auth, interceptor (agrega token + maneja 401), guard de rutas. |
-| 4 | Front: pantalla "Cargando" con spinner + validación de token; contador de 10 min con modal de extender sesión + refresh. |
+| 4 | Front: pantalla "Cargando" con spinner + validación de token; contador (aviso a un tercio de la vida del token) con modal de extender sesión + refresh. |
 | 5 | Front: página Publicación (detalle), comentarios, "cargar más", edición con leyenda "editado". |
 | 6 | Pruebas de punta a punta, revisión de checklist y correcciones. |
 
@@ -302,6 +303,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 | POST | `/auth/refrescar` | Nuevo token (15 min) | 3 |
 | POST | `/publicaciones` | Crear publicación | 2 |
 | GET | `/publicaciones?orden=&offset=&limit=&usuario=` | Listar | 2 |
+| GET | `/publicaciones/:id` | Una publicación (detalle) | 3 |
 | DELETE | `/publicaciones/:id` | Baja lógica | 2 |
 | POST | `/publicaciones/:id/like` | Dar me gusta | 2 |
 | DELETE | `/publicaciones/:id/like` | Quitar me gusta | 2 |

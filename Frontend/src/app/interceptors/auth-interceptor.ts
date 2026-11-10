@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuthService } from '../services/auth';
+import { AuthService, MENSAJE_SESION_EXPIRADA } from '../services/auth';
 import { ModalService } from '../services/modal';
 
 // En estas rutas un 401 significa "credenciales incorrectas": lo maneja la pantalla
@@ -44,10 +44,7 @@ export const authInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
       // respuesta tardía de un token viejo cuando ya hay otra sesión) no repiten nada.
       if (authService.obtenerToken() === token) {
         authService.logout();
-        modalService.error(
-          'Tu sesión venció o ya no es válida. Iniciá sesión nuevamente para continuar.',
-          'Sesión expirada',
-        );
+        modalService.error(MENSAJE_SESION_EXPIRADA, 'Sesión expirada');
         void router.navigateByUrl('/login');
       }
       // En todos los casos se corta el flujo sin error, para que los componentes no

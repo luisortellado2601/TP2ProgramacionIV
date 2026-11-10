@@ -40,20 +40,22 @@ Proyecto de Vercel con *Root Directory* `Frontend` (https://nextplaygaming.verce
 src/
 ├── app/
 │   ├── componentes/
+│   │   ├── cargando/       Pantalla de inicio (`/`): spinner y validación del token con `autorizar`
 │   │   ├── login/          Login por correo o nombre de usuario
 │   │   ├── registro/       Registro con validaciones por campo
 │   │   ├── publicaciones/  Listado paginado, orden por fecha o me gusta, crear y eliminar
 │   │   ├── publicacion/    Tarjeta de una publicación (presentacional, con like)
+│   │   ├── publicacion-detalle/  Página de una publicación (en grande) con sus comentarios
 │   │   ├── nueva-publicacion/  Formulario de alta con imagen opcional
-│   │   ├── comentarios/    Comentarios de una publicación (más recientes primero)
+│   │   ├── comentarios/    Comentarios de una publicación (más recientes primero); en modo interactivo: comentar, "cargar más" y editar los propios
 │   │   ├── mi-perfil/      Datos del usuario, sus últimas 3 publicaciones y comentarios
 │   │   ├── navbar/         Navegación y cierre de sesión
 │   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
 │   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
 │   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage), ModalService, PublicacionesService y ComentariosService
-│   ├── utils/              Validadores propios y helper de mensajes de error
+│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar` y aviso de sesión por vencer), ModalService, PublicacionesService y ComentariosService
+│   ├── utils/              Validadores propios, helper de mensajes de error, decodificar JWT y formatear duración
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient con el interceptor)
 ├── environments/           URL de la API por entorno
@@ -64,9 +66,11 @@ src/
 
 | Ruta | Componente | Acceso |
 |---|---|---|
+| `/` | Cargando (valida el token y redirige) | — |
 | `/login` | Login | Solo sin sesión |
 | `/registro` | Registro | Solo sin sesión |
 | `/publicaciones` | Publicaciones | Requiere sesión |
+| `/publicaciones/:id` | Detalle de una publicación y sus comentarios | Requiere sesión |
 | `/perfil` | Mi perfil | Requiere sesión |
 | cualquier otra | redirige a `/publicaciones` | — |
 

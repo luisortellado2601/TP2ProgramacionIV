@@ -60,7 +60,74 @@
   overflow-wrap: anywhere;
 }
 
-.comentarios__mas {
-  font-family: var(--font-mono);
+.comentario__cuerpo {
+  flex: 1;
+}
+
+.comentario__editar {
+  align-self: flex-start;
   font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+/* ---------- Escribir y editar (solo en modo interactivo) ---------- */
+
+.comentarios__nuevo,
+.comentario__edicion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comentarios__etiqueta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.comentarios textarea {
+  width: 100%;
+  resize: vertical;
+  background: #0a0d13;
+  border: var(--borde);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  padding: 0.65rem 0.8rem;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.comentarios textarea:focus {
+  outline: none;
+  box-shadow: var(--shadow-small);
+}
+
+.comentarios textarea.is-invalid {
+  border-color: var(--color-danger);
+  box-shadow: 3px 3px 0 var(--color-danger);
+}
+
+.comentarios__error {
+  color: var(--color-danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.comentarios__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.comentarios__cargar-mas {
+  align-self: center;
+}
+
+@media (max-width: 560px) {
+  .comentarios__acciones .btn {
+    flex: 1;
+  }
 }

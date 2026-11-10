@@ -33,12 +33,12 @@ export class NuevaPublicacion {
       '',
       [
         Validators.required,
-        sinSoloEspaciosValidator,
+        sinSoloEspaciosValidator(),
         Validators.minLength(2),
         Validators.maxLength(100),
       ],
     ],
-    mensaje: ['', [Validators.required, sinSoloEspaciosValidator, Validators.maxLength(2000)]],
+    mensaje: ['', [Validators.required, sinSoloEspaciosValidator(), Validators.maxLength(2000)]],
   });
 
   seleccionarImagen(evento: Event): void {

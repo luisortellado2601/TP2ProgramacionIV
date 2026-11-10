@@ -1,6 +1,28 @@
 <section class="comentarios">
   <h4 class="comentarios__titulo">Comentarios ({{ total() }})</h4>
 
+  @if (interactivo()) {
+    <form class="comentarios__nuevo" (submit)="$event.preventDefault(); comentar()" novalidate>
+      <label class="comentarios__etiqueta" for="nuevo-comentario">Escribí un comentario</label>
+      <textarea
+        id="nuevo-comentario"
+        rows="3"
+        [formControl]="nuevo"
+        [attr.maxlength]="maximoCaracteres"
+        placeholder="¿Qué opinás?"
+        [class.is-invalid]="nuevo.touched && nuevo.invalid"
+      ></textarea>
+      @if (nuevo.touched && nuevo.invalid) {
+        <span class="comentarios__error">El comentario no puede estar vacío.</span>
+      }
+      <div class="comentarios__acciones">
+        <button class="btn btn-primary" type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Comentando...' : 'Comentar' }}
+        </button>
+      </div>
+    </form>
+  }
+
   @if (cargando()) {
     <p class="text-muted">Cargando comentarios...</p>
   } @else if (falloCarga()) {
@@ -30,15 +52,64 @@
                 · <em>editado</em>
               }
             </span>
-            <p class="comentario__mensaje">{{ comentario.mensaje }}</p>
+
+            @if (editandoId() === comentario.id) {
+              <form
+                class="comentario__edicion"
+                (submit)="$event.preventDefault(); guardarEdicion(comentario)"
+                novalidate
+              >
+                <textarea
+                  rows="3"
+                  [formControl]="edicion"
+                  [attr.maxlength]="maximoCaracteres"
+                  [attr.aria-label]="'Editar tu comentario'"
+                  [class.is-invalid]="edicion.touched && edicion.invalid"
+                ></textarea>
+                @if (edicion.touched && edicion.invalid) {
+                  <span class="comentarios__error">El comentario no puede estar vacío.</span>
+                }
+                <div class="comentarios__acciones">
+                  <button class="btn btn-secondary" type="button" (click)="cancelarEdicion()">
+                    Cancelar
+                  </button>
+                  <button class="btn btn-primary" type="submit" [disabled]="guardando()">
+                    {{ guardando() ? 'Guardando...' : 'Guardar' }}
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <p class="comentario__mensaje">{{ comentario.mensaje }}</p>
+              @if (interactivo() && esMio(comentario)) {
+                <button
+                  class="btn btn-link comentario__editar"
+                  type="button"
+                  (click)="iniciarEdicion(comentario)"
+                >
+                  Editar
+                </button>
+              }
+            }
           </div>
         </li>
       }
     </ul>
+
     @if (ocultos() > 0) {
-      <p class="comentarios__mas text-muted">
-        {{ ocultos() === 1 ? 'Y 1 comentario más' : 'Y ' + ocultos() + ' comentarios más' }}
-      </p>
+      <button
+        class="btn btn-secondary comentarios__cargar-mas"
+        type="button"
+        [disabled]="cargandoMas()"
+        (click)="cargarMas()"
+      >
+        @if (cargandoMas()) {
+          Cargando...
+        } @else if (interactivo()) {
+          Cargar más ({{ ocultos() }})
+        } @else {
+          {{ ocultos() === 1 ? 'Ver 1 comentario más' : 'Ver ' + ocultos() + ' comentarios más' }}
+        }
+      </button>
     }
   }
 </section>

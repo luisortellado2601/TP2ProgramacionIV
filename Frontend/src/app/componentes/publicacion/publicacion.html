@@ -1,4 +1,4 @@
-<article class="card publicacion">
+<article class="card publicacion" [class.publicacion--grande]="grande()">
   <header class="publicacion__autor">
     @if (publicacion().autor.imagenPerfilUrl) {
       <img
@@ -20,7 +20,15 @@
     </div>
   </header>
 
-  <h3>{{ publicacion().titulo }}</h3>
+  <h3>
+    @if (grande()) {
+      {{ publicacion().titulo }}
+    } @else {
+      <a class="publicacion__enlace" [routerLink]="['/publicaciones', publicacion().id]">
+        {{ publicacion().titulo }}
+      </a>
+    }
+  </h3>
   <p class="publicacion__mensaje">{{ publicacion().mensaje }}</p>
 
   @if (publicacion().imagenUrl) {

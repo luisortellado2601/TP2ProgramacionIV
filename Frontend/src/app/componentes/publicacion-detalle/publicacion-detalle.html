@@ -1,0 +1,28 @@
+<div class="page">
+  <a class="btn btn-secondary detalle__volver" routerLink="/publicaciones">
+    &larr; Volver a publicaciones
+  </a>
+
+  @if (cargando()) {
+    <p class="text-muted text-center">Cargando publicación...</p>
+  } @else if (error() === 'noExiste') {
+    <div class="card text-center">
+      <h3>Publicación no disponible</h3>
+      <p class="text-muted">La publicación no existe o fue eliminada.</p>
+    </div>
+  } @else if (error() === 'falla') {
+    <div class="card text-center">
+      <p class="text-muted">No pudimos cargar la publicación. Probá recargar la página.</p>
+    </div>
+  } @else if (publicacion(); as actual) {
+    <div class="detalle">
+      <app-publicacion
+        [publicacion]="actual"
+        [grande]="true"
+        (alternarLike)="alternarLike($event)"
+        (eliminar)="eliminar($event)"
+      />
+      <app-comentarios [publicacionId]="actual.id" [limite]="comentariosPorCarga" [interactivo]="true" />
+    </div>
+  }
+</div>

@@ -7,6 +7,8 @@ export interface EstadoModal {
   titulo: string;
   mensaje: string;
   onConfirmar?: () => void;
+  // Si es true, un clic en el fondo no lo cierra: hay que elegir un botón.
+  persistente?: boolean;
 }
 
 @Service()
@@ -21,8 +23,13 @@ export class ModalService {
     this.estado.set({ tipo: 'error', titulo, mensaje });
   }
 
-  confirmar(mensaje: string, onConfirmar: () => void, titulo = 'Confirmar'): void {
-    this.estado.set({ tipo: 'confirmacion', titulo, mensaje, onConfirmar });
+  confirmar(
+    mensaje: string,
+    onConfirmar: () => void,
+    titulo = 'Confirmar',
+    persistente = false,
+  ): void {
+    this.estado.set({ tipo: 'confirmacion', titulo, mensaje, onConfirmar, persistente });
   }
 
   cerrar(): void {

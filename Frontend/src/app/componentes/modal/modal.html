@@ -1,5 +1,5 @@
 @if (modalService.estado(); as estado) {
-  <div class="modal-overlay" (click)="cerrar()">
+  <div class="modal-overlay" (click)="cerrarPorFondo()">
     <div class="modal-box modal-box--{{ estado.tipo }}" (click)="$event.stopPropagation()">
       <h3>{{ estado.titulo }}</h3>
       <p>{{ estado.mensaje }}</p>

@@ -30,6 +30,11 @@ export class PublicacionesController {
     return this.publicacionesService.listar(dto);
   }
 
+  @Get(':id')
+  obtener(@Param('id') id: string) {
+    return this.publicacionesService.obtener(id);
+  }
+
   @Delete(':id')
   eliminar(@Param('id') id: string, @UsuarioActual() usuarioId: string) {
     return this.publicacionesService.eliminar(id, usuarioId);

@@ -1,11 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { Publicacion } from '../../models/publicacion';
 
 @Component({
   selector: 'app-publicacion',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './publicacion.html',
   styleUrl: './publicacion.css',
 })
@@ -15,6 +16,8 @@ export class PublicacionCard {
   readonly publicacion = input.required<Publicacion>();
   // En Mi perfil se muestra solo para leer.
   readonly interactiva = input(true);
+  // En la página de detalle se muestra en grande y el título ya no enlaza a sí misma.
+  readonly grande = input(false);
 
   readonly alternarLike = output<Publicacion>();
   readonly eliminar = output<Publicacion>();

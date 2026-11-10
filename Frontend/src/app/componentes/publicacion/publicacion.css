@@ -175,3 +175,58 @@ button.corazon:hover {
     max-height: 320px;
   }
 }
+
+/* El título de la tarjeta lleva al detalle de la publicación. */
+.publicacion__enlace {
+  color: inherit;
+  text-decoration: none;
+}
+
+.publicacion__enlace:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* Detalle: la publicación en grande, sin el "levantado" al pasar el mouse. */
+.publicacion--grande {
+  padding: 2rem;
+  gap: 1.1rem;
+}
+
+.publicacion--grande:hover {
+  transform: none;
+  box-shadow: var(--shadow-elevated);
+}
+
+.publicacion--grande h3 {
+  font-size: 2rem;
+}
+
+.publicacion--grande .publicacion__mensaje {
+  font-size: 1.1rem;
+}
+
+.publicacion--grande .publicacion__avatar {
+  width: 56px;
+  height: 56px;
+}
+
+.publicacion--grande .publicacion__marco img {
+  max-height: 640px;
+}
+
+@media (max-width: 560px) {
+  .publicacion--grande {
+    padding: 1.25rem;
+  }
+
+  .publicacion--grande h3 {
+    font-size: 1.5rem;
+  }
+
+  .publicacion--grande .publicacion__marco img {
+    max-height: 420px;
+  }
+}

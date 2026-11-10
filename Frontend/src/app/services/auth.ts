@@ -1,5 +1,6 @@
 import { Service, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoginPayload, RegistroPayload, SesionResponse, Usuario } from '../models/usuario';
@@ -9,12 +10,18 @@ import { formatearDuracion } from '../utils/formatear-duracion';
 
 const CLAVE_SESION = 'nextplay_sesion';
 
+// Aviso que se muestra cuando la sesión venció (por el temporizador o por un 401).
+export const MENSAJE_SESION_EXPIRADA =
+  'Tu sesión venció o ya no es válida. Iniciá sesión nuevamente para continuar.';
+
 @Service()
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly modalService = inject(ModalService);
+  private readonly router = inject(Router);
   private readonly sesion = signal<SesionResponse | null>(this.leerSesionGuardada());
   private temporizadorAviso: ReturnType<typeof setTimeout> | null = null;
+  private temporizadorVencimiento: ReturnType<typeof setTimeout> | null = null;
 
   readonly usuarioActual = computed<Usuario | null>(() => this.sesion()?.usuario ?? null);
   readonly estaAutenticado = computed<boolean>(() => this.sesion() !== null);
@@ -114,6 +121,12 @@ export class AuthService {
       () => this.avisarVencimientoProximo(vencimientoMs),
       Math.max(avisoEnMs, 0),
     );
+    // Si el usuario ignora o cancela el aviso, al llegar el vencimiento la sesión
+    // se cierra sola en vez de esperar a que un pedido devuelva 401.
+    this.temporizadorVencimiento = setTimeout(
+      () => this.expirarSesion(),
+      vencimientoMs - Date.now(),
+    );
   }
 
   private cancelarContadorSesion(): void {
@@ -121,6 +134,16 @@ export class AuthService {
       clearTimeout(this.temporizadorAviso);
       this.temporizadorAviso = null;
     }
+    if (this.temporizadorVencimiento) {
+      clearTimeout(this.temporizadorVencimiento);
+      this.temporizadorVencimiento = null;
+    }
+  }
+
+  private expirarSesion(): void {
+    this.logout();
+    this.modalService.error(MENSAJE_SESION_EXPIRADA, 'Sesión expirada');
+    void this.router.navigateByUrl('/login');
   }
 
   private avisarVencimientoProximo(vencimientoMs: number): void {
@@ -135,6 +158,7 @@ export class AuthService {
         });
       },
       'Sesión por vencer',
+      true,
     );
   }
 }

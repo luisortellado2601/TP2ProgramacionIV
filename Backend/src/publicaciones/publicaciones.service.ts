@@ -89,18 +89,38 @@ export class PublicacionesService {
         .exec(),
     ]);
 
-    const publicaciones = resultados.map((publicacion) => ({
-      id: publicacion._id.toString(),
-      titulo: publicacion.titulo,
-      mensaje: publicacion.mensaje,
-      imagenUrl: publicacion.imagenUrl,
-      fecha: publicacion.fecha,
-      likes: publicacion.likes.map((id: Types.ObjectId) => id.toString()),
-      cantidadLikes: publicacion.cantidadLikes,
-      autor: this.aAutor(publicacion.autor),
-    }));
+    return {
+      total,
+      publicaciones: resultados.map((p) => this.aRespuestaPublicacion(p)),
+    };
+  }
 
-    return { total, publicaciones };
+  async obtener(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('El id de la publicación no es válido');
+    }
+
+    // Mismo pipeline que el listado (cantidadLikes y autor), para un solo documento.
+    const [publicacion] = await this.publicacionModel
+      .aggregate([
+        { $match: { _id: new Types.ObjectId(id), eliminada: false } },
+        { $addFields: { cantidadLikes: { $size: '$likes' } } },
+        {
+          $lookup: {
+            from: 'usuarios',
+            localField: 'usuario',
+            foreignField: '_id',
+            as: 'autor',
+          },
+        },
+        { $unwind: '$autor' },
+      ])
+      .exec();
+    if (!publicacion) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    return this.aRespuestaPublicacion(publicacion);
   }
 
   async eliminar(id: string, usuarioId: string) {
@@ -188,6 +208,30 @@ export class PublicacionesService {
     }
 
     return usuario;
+  }
+
+  // Forma de una publicación en las respuestas; `publicacion` viene de un aggregate
+  // con `cantidadLikes` calculado y el autor ya unido.
+  private aRespuestaPublicacion(publicacion: {
+    _id: Types.ObjectId;
+    titulo: string;
+    mensaje: string;
+    imagenUrl?: string;
+    fecha: Date;
+    likes: Types.ObjectId[];
+    cantidadLikes: number;
+    autor: UsuarioDocument;
+  }) {
+    return {
+      id: publicacion._id.toString(),
+      titulo: publicacion.titulo,
+      mensaje: publicacion.mensaje,
+      imagenUrl: publicacion.imagenUrl,
+      fecha: publicacion.fecha,
+      likes: publicacion.likes.map((id) => id.toString()),
+      cantidadLikes: publicacion.cantidadLikes,
+      autor: this.aAutor(publicacion.autor),
+    };
   }
 
   private aRespuestaLikes(publicacion: PublicacionDocument) {

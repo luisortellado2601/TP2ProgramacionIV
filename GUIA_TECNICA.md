@@ -1,10 +1,10 @@
 # NextPlay – Guía técnica para estudiar y explicar el código
 
-Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #2** completo (registro y login, publicaciones, likes, paginación, Mi Perfil y la lectura/alta de comentarios) más el **backend del Sprint #3**: JWT validado en todas las rutas con un guard global, `autorizar`, `refrescar` y edición de comentarios. Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta**.
+Documento de estudio del TP #2 (Programación IV, UTN Avellaneda). Cubre lo implementado hasta el **Sprint #2** completo (registro y login, publicaciones, likes, paginación, Mi Perfil y la lectura/alta de comentarios) más el **Sprint #3** completo: en el backend, JWT validado en todas las rutas con un guard global, `autorizar`, `refrescar`, edición de comentarios y `GET /publicaciones/:id`; en el frontend, el interceptor, la pantalla "Cargando", el aviso de sesión por vencer y la página de detalle de una publicación con sus comentarios (escribir, "cargar más" y editar). Está pensado para que puedas explicar **qué hace cada pieza, por qué se hizo así y qué pasa de punta a punta**.
 
 Los temas que más conviene dominar tienen su propia explicación de punta a punta en la sección 5: **login (5.2)**, **paginación (5.4)**, **publicaciones (5.5)**, **comentarios (5.6)** y **token, guard, `autorizar` y `refrescar` (5.8)**.
 
-> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al **backend** al cierre del Sprint #3 y al **frontend** con la parte 1 del Sprint #3 (interceptor con el token); lo que viene después se marca como _pendiente_ (pantalla "Cargando", contador de sesión y detalle de publicación con comentarios).
+> Convención de este documento: las rutas de archivo son relativas a la raíz del repositorio. Todo lo que dice "hoy" se refiere al **backend** al cierre del Sprint #3 y al **frontend** con las 3 partes del Sprint #3 (interceptor con el token, pantalla "Cargando" y contador de sesión, y detalle de publicación con comentarios); lo que viene después (Sprint #4) se marca como _pendiente_.
 
 ---
 
@@ -30,9 +30,9 @@ NextPlay es una red social de videojuegos. Son **dos proyectos independientes** 
 | Imágenes | Supabase Storage (API REST) | Guardar las fotos de perfil y devolver una URL pública |
 | Autenticación | JWT (`@nestjs/jwt`) | Identificar al usuario en cada petición: el back lo valida con un guard global (Sprint #3) |
 
-**Qué hace hoy la app (Sprints #1 y #2):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver el listado de publicaciones (paginado, ordenable por fecha o por me gusta), crear publicaciones con imagen opcional, dar y quitar me gusta, eliminar las propias, ver Mi perfil con las últimas 3 publicaciones y sus comentarios, y cerrar sesión. Las rutas privadas están protegidas con guards. Todavía **no** se puede comentar desde la interfaz (el alta y la edición existen en la API; la pantalla llega en el Sprint #3).
+**Qué hace hoy la app (Sprints #1 a #3):** registrarse (con foto opcional), iniciar sesión con correo **o** nombre de usuario, ver el listado de publicaciones (paginado, ordenable por fecha o por me gusta), crear publicaciones con imagen opcional, dar y quitar me gusta, eliminar las propias, ver Mi perfil con las últimas 3 publicaciones y sus comentarios, y cerrar sesión. Las rutas privadas están protegidas con guards. Al hacer clic en el título de una publicación se abre su página de detalle, donde se puede comentar, traer más comentarios con "cargar más" y editar los propios (la edición se anuncia con la leyenda "editado"). Si la sesión está por vencer, un modal ofrece extenderla.
 
-**Qué suma el backend del Sprint #3:** todas las rutas salvo registro, login y `GET /` exigen `Authorization: Bearer <token>`; el usuario que actúa sale del token (ya no viaja `usuarioId`); `POST /auth/autorizar` y `POST /auth/refrescar`; y `PUT /comentarios/:id` para editar el propio comentario.
+**Qué suma el backend del Sprint #3:** todas las rutas salvo registro, login y `GET /` exigen `Authorization: Bearer <token>`; el usuario que actúa sale del token (ya no viaja `usuarioId`); `POST /auth/autorizar` y `POST /auth/refrescar`; `PUT /comentarios/:id` para editar el propio comentario; y `GET /publicaciones/:id` para traer una sola publicación (la usa la página de detalle).
 
 ---
 
@@ -59,12 +59,13 @@ TP2PrograIV/
     └── src/
         ├── environments/    URL de la API según entorno
         └── app/
-            ├── componentes/ login, registro, publicaciones, publicacion, nueva-publicacion,
-            │                comentarios, mi-perfil, navbar, modal
+            ├── componentes/ cargando, login, registro, publicaciones, publicacion,
+            │                nueva-publicacion, publicacion-detalle, comentarios, mi-perfil, navbar, modal
             ├── guards/      authGuard, guestGuard
+            ├── interceptors/ authInterceptor (Bearer y manejo del 401)
             ├── services/    AuthService, ModalService, PublicacionesService, ComentariosService
             ├── models/      Interfaces TypeScript
-            └── utils/       Validadores propios y helper de errores
+            └── utils/       Validadores propios, helper de errores, decodificar JWT y formatear duración
 ```
 
 ---
@@ -237,6 +238,7 @@ Decisiones:
 |---|---|---|
 | `POST /publicaciones` | Crea una publicación (título, mensaje, imagen opcional en base64); el autor es el dueño del token | 201, 400 |
 | `GET /publicaciones?orden=&usuario=&offset=&limit=` | Lista publicaciones activas con el autor incluido. Responde `{ total, publicaciones }`; `total` cuenta todas las que cumplen el filtro (sin paginar) para armar "Página X de Y" | 200, 400 |
+| `GET /publicaciones/:id` | Una publicación activa con su autor y `cantidadLikes` (la usa la página de detalle). Valida el id antes de consultar y usa el mismo pipeline de `aggregate` que el listado, con un `$match` por `_id` | 200, 400 id inválido, 404 inexistente o dada de baja |
 | `DELETE /publicaciones/:id` | Baja lógica (`eliminada: true`), solo el autor o un administrador | 200, 403, 404 |
 | `POST /publicaciones/:id/like` | Da me gusta (uno por usuario) | 200, 409 si ya lo dio |
 | `DELETE /publicaciones/:id/like` | Quita el me gusta | 200, 409 si no lo había dado |
@@ -245,7 +247,7 @@ Decisiones:
 - **Imagen:** reutiliza `AlmacenamientoService.subirImagen(dto.imagen, 'publicaciones')`, igual que la foto de perfil.
 - **Likes:** array de ids de usuario dentro de la publicación; la regla "un like por usuario" se garantiza de forma atómica en Mongo: `$addToSet` con filtro `likes: { $ne: usuarioId }` para agregar y `$pull` con filtro `likes: usuarioId` para quitar. Si el filtro no matchea, se responde 409.
 - **Baja lógica:** nada se borra; `listar` filtra `eliminada: false` y las demás operaciones responden 404 sobre una publicación eliminada.
-- **Por qué `listar` usa `aggregate` y no `find`:** `find` no puede ordenar por una cantidad calculada. Orden por likes necesita `cantidadLikes = $size: '$likes'`, que no existe como campo en la base, y `$lookup` trae al autor en la misma consulta. El pipeline es `$match` → `$addFields` → `$sort` → `$skip` → `$limit` → `$lookup` → `$unwind`. Ordenar y paginar antes del `$lookup` evita unir autores de publicaciones que se van a descartar.
+- **Por qué `listar` usa `aggregate` y no `find`:** `find` no puede ordenar por una cantidad calculada. Orden por likes necesita `cantidadLikes = $size: '$likes'`, que no existe como campo en la base, y `$lookup` trae al autor en la misma consulta. El pipeline es `$match` → `$addFields` → `$sort` → `$skip` → `$limit` → `$lookup` → `$unwind`. `listar` y `obtener` comparten el método privado `aRespuestaPublicacion`, que arma la forma de la respuesta (así las dos rutas devuelven exactamente lo mismo). Ordenar y paginar antes del `$lookup` evita unir autores de publicaciones que se van a descartar.
 
 ### 3.12 Comentarios (alta y listado: Sprint #2; edición: Sprint #3): `Backend/src/comentarios/`
 
@@ -284,7 +286,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 ## 4. Frontend (Angular 22)
 
-> Esta sección describe el front con las **partes 1 y 2 del Sprint #3** ya hechas: el interceptor que envía el token, `autorizar()`/`refrescar()`, la pantalla "Cargando" y el contador de sesión (4.2 a 4.4.1). Sigue pendiente el detalle de publicación con comentarios (parte 3); se documentará acá al hacerse.
+> Esta sección describe el front con las **3 partes del Sprint #3**: el interceptor que envía el token, `autorizar()`/`refrescar()`, la pantalla "Cargando" y el contador de sesión (4.2 a 4.4), y la página de detalle con comentarios (4.9 y 4.11).
 
 ### 4.1 Conceptos de Angular que se usan
 
@@ -315,9 +317,10 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 | Ruta | Componente | Guard |
 |---|---|---|
-| `/` | Cargando (valida el token al iniciar, ver 4.4.1) | — |
+| `/` | Cargando (valida el token al iniciar, ver 4.4) | — |
 | `/login`, `/registro` | Login, Registro | `guestGuard` (solo sin sesión) |
 | `/publicaciones`, `/perfil` | Publicaciones, MiPerfil | `authGuard` (requiere sesión) |
+| `/publicaciones/:id` | PublicacionDetalle | `authGuard` (requiere sesión) |
 | `**` | redirige a `/publicaciones` | — |
 
 - `authGuard`: si hay sesión, deja pasar; si no, devuelve un `UrlTree` hacia `/login`.
@@ -349,8 +352,9 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 **Contador de sesión** (también en `AuthService`): en vez de un `setTimeout` fijo en minutos, decodifica el propio JWT.
 - `utils/jwt.ts` → `decodificarPayloadToken(token)`: un JWT es `header.payload.firma` en base64url; el payload se puede leer sin la clave (ver 5.8), así que alcanza con separar por `.`, cambiar los caracteres de base64url a base64 y `JSON.parse(atob(...))`. Devuelve `{ sub, correo, nombreUsuario, perfil, iat, exp }` (`iat`/`exp` en segundos Unix, los agrega automáticamente `jsonwebtoken` al firmar con `expiresIn`).
 - `guardarSesion()` llama a `iniciarContadorSesion(token)`, que calcula `duracionMs = (exp - iat) * 1000` y programa un `setTimeout` para cuando falta **un tercio** de esa duración (`vencimientoMs - duracionMs / 3`). Con un token de 15 min esto cae a los 10 min de uso (quedan 5, como pide el enunciado); con el token de prueba de 30 s cae a los 20 s. Si el token ya venció (por ejemplo, se recargó la página mucho después), no programa nada: el próximo pedido real va a dar 401 y lo maneja el interceptor.
-- Al dispararse, `avisarVencimientoProximo()` usa `modalService.confirmar(...)` (el mismo modal de confirmación que ya existía, ver 4.6) con el tiempo restante formateado (`utils/formatear-duracion.ts`, segundos o minutos según corresponda). Si el usuario confirma, llama a `refrescar()`.
-- `logout()` y cada `guardarSesion()` nuevo cancelan el `setTimeout` anterior (`cancelarContadorSesion`) antes de programar o terminar, para no acumular avisos de una sesión vieja.
+- Al dispararse, `avisarVencimientoProximo()` usa `modalService.confirmar(...)` (el mismo modal de confirmación que ya existía, ver 4.6) con el tiempo restante formateado (`utils/formatear-duracion.ts`, segundos o minutos según corresponda). Si el usuario confirma, llama a `refrescar()`. El modal es **persistente**: un clic en el fondo no lo descarta (ver 4.6).
+- **Segundo temporizador, al vencimiento:** `iniciarContadorSesion` programa además un `setTimeout` para `exp`. Si el usuario ignoró o canceló el aviso, `expirarSesion()` cierra la sesión, muestra el modal "Sesión expirada" y navega a `/login` sin esperar a que un pedido devuelva 401 (antes, con el aviso descartado, la app seguía "funcionando" hasta el primer 401). El mensaje es la constante `MENSAJE_SESION_EXPIRADA`, compartida con el interceptor.
+- `logout()` y cada `guardarSesion()` nuevo cancelan **los dos** temporizadores (`cancelarContadorSesion`) antes de programar o terminar, para no acumular avisos de una sesión vieja. Por eso, si el usuario extiende la sesión, el vencimiento del token anterior no dispara nada.
 - Por qué no un `setInterval` que cuenta hacia atrás en la UI: el enunciado solo pide **un aviso puntual** a mitad de camino, no un cronómetro visible; un `setTimeout` alcanza y es más simple.
 
 **Pantalla "Cargando"** (`componentes/cargando/`, ruta `/`): parte 2 del Sprint #3.
@@ -378,7 +382,7 @@ El `.env` real **no se sube a git** (está en `.gitignore`); solo el `.env.examp
 
 - `ModalService` guarda en un signal el `estado` del modal (`exito`, `error` o `confirmacion`, con título, mensaje y un callback).
 - El componente `Modal` (montado una sola vez en `app.html`) lo lee y se muestra con `@if`.
-- Click en el fondo cierra el modal; el `stopPropagation` en la caja evita que un click dentro también lo cierre.
+- Click en el fondo cierra el modal; el `stopPropagation` en la caja evita que un click dentro también lo cierre. Excepción: si el estado tiene `persistente: true` (4º parámetro de `confirmar`), el fondo no lo cierra y hay que elegir un botón. Lo usa el aviso de "sesión por vencer", para que no se descarte sin querer.
 - Ejemplo de confirmación: cerrar sesión en la navbar llama a `modalService.confirmar('¿Querés cerrar tu sesión?', () => {...})`.
 
 ### 4.7 Navbar y pantallas
@@ -409,6 +413,7 @@ Es el componente "contenedor": guarda el estado, habla con el servicio y decide 
 Componente **presentacional** (también llamado "tonto"): no llama al back. Recibe datos y emite eventos.
 
 - **`input.required<Publicacion>()`**: el dato que le pasa el padre; es obligatorio.
+- **`input(false)` → `grande`**: en la página de detalle la tarjeta se ve en grande (título, texto, avatar e imagen más grandes) y sin el efecto de "levantarse" al pasar el mouse. Cuando es `false`, el título es un enlace (`routerLink` a `/publicaciones/:id`) que lleva al detalle; cuando es `true` es texto, porque ya estás ahí.
 - **`input(true)` → `interactiva`**: en Mi perfil se usa con `[interactiva]="false"` para mostrar la publicación solo para leer (sin botón de like ni de eliminar, solo el contador).
 - **`output<Publicacion>()` → `alternarLike` y `eliminar`**: eventos hacia el padre (`(alternarLike)="alternarLike($event)"`). El hijo no decide qué hacer; solo avisa que el usuario hizo clic.
 - **`computed`**: `leDiMeGusta` (¿mi id está en `likes`?) y `esMia` (¿soy el autor?). El botón "Eliminar" solo se muestra si `esMia()`. Es comodidad de interfaz: la regla real ("solo el autor o un administrador") la hace cumplir el back con un 403.
@@ -420,14 +425,34 @@ Componente **presentacional** (también llamado "tonto"): no llama al back. Reci
 - La **imagen queda fuera del formulario**, como en el registro: se lee con `FileReader.readAsDataURL` a un signal, validando tipo (JPG/PNG/WEBP) y tamaño (2 MB) antes de aceptarla. Se envía en el JSON como data URL en base64 solo si existe (`...(imagen && { imagen })`).
 - Al publicar con éxito: muestra un modal de éxito y emite `creada`. El padre responde volviendo a la **página 1 ordenada por fecha**, que es donde aparece la publicación nueva.
 
-### 4.11 Comentarios en Mi perfil (`componentes/comentarios/`, `componentes/mi-perfil/`)
+### 4.11 Comentarios y página de detalle (`componentes/comentarios/`, `componentes/publicacion-detalle/`, `componentes/mi-perfil/`)
 
-- **Mi perfil** (`mi-perfil.ts`) pide `listar({ orden: 'fecha', offset: 0, limit: 3, usuario: miId })`: es el **mismo endpoint** del listado, solo cambia el filtro `usuario` y el `limit`. Tiene tres estados (cargando / falló / vacío) con `@if ... @else if`.
-- Debajo de cada publicación se inserta `<app-comentarios [publicacionId]="publicacion.id" />`. Cada instancia pide **sus propios comentarios** (`GET /publicaciones/:id/comentarios?offset=0&limit=5`). Son 3 pedidos extra por visita a Mi perfil; se aceptó por simplicidad y porque el mismo componente se reutiliza en la página de detalle del Sprint #3.
-- El componente usa **`ngOnInit`** para cargar: los `input()` todavía no tienen valor dentro del constructor, recién están disponibles en `ngOnInit`.
-- Muestra los **5 más recientes** y, si hay más, `Y N comentarios más` (`ocultos = total - mostrados`, un `computed`). El título siempre muestra el total real. Por ahora **no hay botón "cargar más"**: es del Sprint #3.
-- Si un comentario tiene `modificado: true` muestra la leyenda _editado_ (el `PUT` que lo activa ya existe en el back; falta la interfaz para editar, Sprint #3 front).
-- Para ver comentarios hoy hay que crearlos con Postman (`POST /publicaciones/:id/comentarios`); la caja para escribir llega con la página de detalle.
+**Mi perfil** (`mi-perfil.ts`) pide `listar({ orden: 'fecha', offset: 0, limit: 3, usuario: miId })`: es el **mismo endpoint** del listado, solo cambia el filtro `usuario` y el `limit`. Tiene tres estados (cargando / falló / vacío) con `@if ... @else if`. Debajo de cada publicación inserta `<app-comentarios [publicacionId]="publicacion.id" />` (3 pedidos extra por visita; se aceptó por simplicidad).
+
+**Un solo componente, dos modos** (`comentarios.ts`): `Comentarios` tiene el `input(false)` **`interactivo`**.
+- *Solo lectura* (Mi perfil): muestra los 5 más recientes y, si hay más, el botón `Ver N comentarios más` (`ocultos = total - mostrados`, un `computed`), que usa el mismo `cargarMas()` del modo interactivo. No hay caja para comentar ni botón de editar.
+- *Interactivo* (detalle): suma la caja para comentar, el botón "cargar más" y el botón "Editar" en los comentarios propios. Se reutiliza el mismo componente en vez de duplicarlo porque la lista, el avatar y la leyenda son iguales.
+- Carga con **`ngOnInit`** (los `input()` no tienen valor dentro del constructor). El título siempre muestra el total real que devuelve el back.
+
+**Página de detalle** (`publicacion-detalle.ts`, ruta `/publicaciones/:id`):
+- Lee el `id` con `ActivatedRoute.snapshot.paramMap` y llama a `PublicacionesService.obtener(id)` (`GET /publicaciones/:id`).
+- Estados: cargando, "Publicación no disponible" (404 o 400: no existe, fue eliminada o el id está mal formado), error genérico, o la publicación en grande (`<app-publicacion [grande]="true">`) con `<app-comentarios [interactivo]="true">` debajo.
+- Soporta **me gusta** y **eliminar** con la misma lógica que el listado (reemplaza la publicación en su signal; al eliminar vuelve a `/publicaciones` y avisa con un modal). Un 401 lo maneja el interceptor.
+- Por qué existe el endpoint `GET /publicaciones/:id` y no se reutiliza el listado: la página tiene que abrirse también al recargar o pegar el enlace, y para eso la publicación se tiene que poder pedir por id.
+
+**Comentar** (`comentar()`): un `FormControl` con `required`, `sinSoloEspaciosValidator()` y `maxLength(500)` (las mismas reglas que `CrearComentarioDto`). Si es inválido marca el campo como tocado y muestra el error; si no, hace `POST` con el mensaje recortado, pone el comentario nuevo **arriba** de la lista (es el más reciente), suma 1 al total y limpia la caja. Mientras espera, el botón queda deshabilitado ("Comentando...").
+
+**"Cargar más"** (`cargarMas()`): pide `offset = comentarios cargados hasta ahora` y `limit = 5`, y **agrega** los que llegan al final de la lista actual (`[...lista, ...nuevos]`); nunca reemplaza. Usa la misma mecánica de `offset`/`limit` de la paginación (5.4), pero acumulando. El botón muestra cuántos faltan (`ocultos`) y desaparece cuando no queda ninguno. **Se descartan los repetidos por id**: si alguien comentó mientras tanto, los comentarios se corren una posición y la siguiente página podría traer uno que ya se mostraba.
+
+**Editar** (`iniciarEdicion`, `guardarEdicion`): el botón "Editar" solo aparece si `comentario.autor.id` es el id del usuario logueado (comodidad de interfaz; la regla real la hace cumplir el back con un 403). Al pulsarlo, el mensaje se reemplaza por un `textarea` con el texto actual y los botones Guardar y Cancelar; solo hay un comentario en edición a la vez (`editandoId`). Si el texto quedó igual, **no se llama al back**: si no, el comentario quedaría marcado "editado" sin haber cambiado. Si cambió, `PUT /comentarios/:id` y se reemplaza ese comentario en la lista por el que devuelve el back, que ya trae `modificado: true`.
+
+**Leyenda "editado"**: sale de `comentario.modificado` (viene del back), no de comparar textos; por eso también aparece al recargar.
+
+**Formularios sin `ngSubmit`**: estos dos `<form>` no usan `[formGroup]`, sino un `FormControl` suelto. El evento `ngSubmit` lo emiten `NgForm`/`FormGroupDirective`, que acá no se aplican, así que el template escucha el evento nativo `(submit)="$event.preventDefault(); comentar()"`. El `preventDefault` evita que el navegador recargue la página.
+
+**Errores**: si falla comentar, editar o "cargar más" se muestra un modal con el mensaje del back (`mensajeDeError`). Un 401 lo atiende el interceptor (4.4) antes de llegar acá.
+
+**Tests** (`comentarios.spec.ts`, Vitest + `HttpTestingController`, manejados por el DOM): "cargar más" suma sin quitar, comentar con mensaje recortado y arriba, no enviar vacío, solo editar los propios y mostrar "editado", no llamar al back si no hay cambios, y modo solo lectura sin caja ni edición, pero con el botón "Ver N comentarios más" que trae los ocultos.
 
 ### 4.12 Environments y build
 
@@ -576,7 +601,7 @@ Botón Eliminar (solo si soy el autor) ─► modal de confirmación
 
 ### 5.6 Comentarios de punta a punta
 
-**Listar (lo que ve Mi perfil)**
+**Listar (Mi perfil y página de detalle)**
 ```
 Mi perfil carga mis 3 últimas publicaciones (GET /publicaciones?usuario=&limit=3)
   ─► por cada una se monta <app-comentarios [publicacionId]>
@@ -584,19 +609,30 @@ Mi perfil carga mis 3 últimas publicaciones (GET /publicaciones?usuario=&limit=
   ─► Back: id inválido 400 · publicación inexistente/eliminada 404
            countDocuments + find (sort fecha desc, skip, limit, populate autor)
   ─► 200 { total, comentarios }
-  ─► el front muestra los 5 más recientes y "Y N comentarios más" si total > 5
+  ─► Mi perfil muestra los 5 más recientes y el botón "Ver N comentarios más" si total > 5
+  ─► el detalle (modo interactivo) muestra el botón "cargar más": pide offset = cargados, limit = 5 y agrega al final
 ```
 
-**Crear (hoy solo por API)**
+**Abrir el detalle**
+```
+Clic en el título de una publicación ─► /publicaciones/:id  (authGuard)
+  ─► GET /publicaciones/:id    [400 id inválido · 404 inexistente o eliminada ─► "Publicación no disponible"]
+  ─► 200 { id, titulo, ..., likes, cantidadLikes, autor } ─► tarjeta en grande
+  ─► <app-comentarios [interactivo]="true"> pide la primera página de comentarios
+```
+
+**Crear**
 ```
 POST /publicaciones/:id/comentarios { mensaje }   (el autor sale del token Bearer)
   ─► 401 sin token válido
   ─► 400 mensaje vacío o > 500 caracteres / usuario del token inexistente / usuarioId en el body
   ─► 404 publicación inexistente o eliminada
   ─► 201 { id, publicacionId, mensaje, fecha, modificado: false, autor }
+Front: la caja valida (obligatorio, no solo espacios, hasta 500) ─► POST con el mensaje recortado
+  ─► el comentario devuelto se pone arriba de la lista y el total sube en 1
 ```
 
-**Editar (hoy solo por API)**
+**Editar**
 ```
 PUT /comentarios/:id { mensaje }   (Bearer)
   ─► 401 sin token válido
@@ -604,15 +640,15 @@ PUT /comentarios/:id { mensaje }   (Bearer)
   ─► 404 comentario inexistente o eliminado, o su publicación dada de baja
   ─► 403 el dueño del token no es el autor del comentario
   ─► 200 { id, ..., mensaje nuevo, modificado: true, autor }   (la fecha original no cambia)
+Front: "Editar" (solo en los propios) ─► textarea con el texto actual ─► Guardar
+  ─► ¿mismo texto? se cierra sin llamar al back · si cambió, PUT y se reemplaza ese comentario (ahora con "editado")
 ```
-
-**Pendiente (Sprint #3, front):** pantalla de detalle con caja para comentar, botón "cargar más" y edición del propio comentario con la leyenda "editado".
 
 ### 5.7 Códigos HTTP usados
 
 | Código | Cuándo |
 |---|---|
-| 200 | Login correcto; `autorizar` y `refrescar`; listados; like y quitar like; baja lógica de una publicación; edición de un comentario |
+| 200 | Login correcto; `autorizar` y `refrescar`; listados y detalle de una publicación; like y quitar like; baja lógica de una publicación; edición de un comentario |
 | 201 | Registro, publicación o comentario creados |
 | 400 | Validación fallida, usuario inexistente o id inválido, contraseñas distintas, imagen inválida o muy pesada, propiedades no permitidas (por ejemplo `usuarioId`), `offset`/`limit` inválidos |
 | 401 | Credenciales incorrectas o usuario deshabilitado (login); falta el token, es inválido o venció (cualquier ruta protegida); en `autorizar`/`refrescar`, el usuario ya no existe o está deshabilitado |
@@ -664,8 +700,8 @@ Decisiones clave para explicar:
 
 ## 6. Pruebas y calidad
 
-- **Postman** (`Backend/postman/NextPlay.postman_collection.json`, 41 requests): una carpeta "Auth" (registro 201/409/400, login 200/401, `autorizar` y `refrescar` con token válido, sin token y con token inválido) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, like/unlike con sus 409, comentar, **editar comentario** con sus 200/400/403/404, listar comentarios, baja lógica propia y ajena, y un caso 401 "sin token" por cada tipo de ruta). Los pasos "Setup" registran dos usuarios y guardan en variables de la colección sus ids y sus **tokens** (`autorToken`, `otroToken`); la colección usa auth Bearer con `{{autorToken}}` por defecto y las requests del "otro" usuario lo reemplazan con `{{otroToken}}`; las rutas públicas y los casos 401 usan "No Auth". Se corre entera con "Run folder" sin copiar nada. Ojo: apunta a `localhost:3000` y, si el `.env` usa Atlas, crea datos reales; con el token de 30 s del `.env` local, una corrida muy lenta puede recibir 401.
-- **Tests unitarios:** back 20 en 8 suites (Jest), front 2 (Vitest). Los de creación de controller/service/app son básicos; los nuevos del Sprint #3 sí verifican comportamiento: `JwtAuthGuard` (ruta pública, sin token, esquema distinto de Bearer, token inválido/vencido, token válido que deja el payload en la request), `AuthService.autorizar`/`refrescar` (401 si el usuario no existe, está deshabilitado o el id no es un ObjectId) y `ComentariosService.actualizar` (éxito, 403, 404 en sus dos variantes, 400). Los servicios se prueban con modelos de Mongoose simulados, sin base de datos. El resto de la cobertura se probó con requests directos al servidor real (ver README).
+- **Postman** (`Backend/postman/NextPlay.postman_collection.json`, 50 requests): una carpeta "Auth" (registro 201/409/400, login 200/401, `autorizar` y `refrescar` con token válido, sin token y con token inválido) y una carpeta "Publicaciones" (alta, listado con los 3 filtros, **detalle por id** con 200/400/404/401, like/unlike con sus 409, comentar, **editar comentario** con sus 200/400/403/404, listar comentarios, baja lógica propia y ajena, y un caso 401 "sin token" por cada tipo de ruta). Los pasos "Setup" registran dos usuarios y guardan en variables de la colección sus ids y sus **tokens** (`autorToken`, `otroToken`); la colección usa auth Bearer con `{{autorToken}}` por defecto y las requests del "otro" usuario lo reemplazan con `{{otroToken}}`; las rutas públicas y los casos 401 usan "No Auth". Se corre entera con "Run folder" sin copiar nada. Una tercera carpeta, **"Token vencido"** (5 requests, va al final para no frenar las otras), prueba que un token vencido da 401 en `autorizar`, `refrescar` y una ruta protegida, y que `refrescar` sí funciona con el token vigente. Su pre-request lee el `exp` del token y **espera hasta que venza**; solo espera si faltan 120 s o menos, así que con `JWT_EXPIRES_IN_SEGUNDOS=900` esos pasos se omiten (`skip`) en vez de colgarse 15 minutos. Se corre aparte, con un valor bajo (por ejemplo 30) en el `.env` y "Run folder" sobre esa carpeta. Ojo: apunta a `localhost:3000` y, si el `.env` usa Atlas, crea datos reales; con el token de 30 s del `.env` local, una corrida muy lenta puede recibir 401.
+- **Tests unitarios:** back 23 en 8 suites (Jest), front 20 en 4 archivos (Vitest). Los de creación de controller/service/app son básicos; los nuevos del Sprint #3 sí verifican comportamiento: `JwtAuthGuard` (ruta pública, sin token, esquema distinto de Bearer, token inválido/vencido, token válido que deja el payload en la request), `AuthService.autorizar`/`refrescar` (401 si el usuario no existe, está deshabilitado o el id no es un ObjectId) `ComentariosService.actualizar` (éxito, 403, 404 en sus dos variantes, 400) y `PublicacionesService.obtener` (éxito con autor y likes, 400 sin consultar la base, 404). En el front, el interceptor y el componente `Comentarios` (ver 4.11). Los servicios se prueban con modelos de Mongoose simulados, sin base de datos. El resto de la cobertura se probó con requests directos al servidor real (ver README).
 - **Lint** del back con `oxlint`. **Build** de ambos proyectos en verde.
 
 Comandos:
@@ -693,10 +729,10 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | El guard no consulta la base | Verifica firma y vencimiento, pero un usuario deshabilitado (o eliminado) conserva acceso hasta que su token venza (hoy 15 min) | Sprint #4: al implementar la baja de usuarios, el login ya lo bloquea y `autorizar`/`refrescar` también; si hiciera falta cortar de inmediato, el guard podría consultar la base |
 | Interceptor del front (resuelto) | Agrega `Bearer` a los pedidos de la API y, ante un 401 en una ruta protegida, cierra la sesión, avisa y va al login. El front ya no manda `usuarioId` | — |
 | Token de 30 s en local | Solo para poder probar el vencimiento durante el desarrollo | Volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 (o borrar la variable) antes de entregar |
-| Comentarios sin interfaz para escribir ni editar | El alta y la edición existen en la API (Postman); Mi perfil muestra los 5 más recientes sin "cargar más" | Sprint #3 (front): página de detalle con caja de comentario, "cargar más" y edición |
+| "Cargar más" con paginación por `offset` | Si alguien comenta mientras tanto, los comentarios se corren y la siguiente página puede traer uno que ya se mostraba | El front descarta los repetidos por id; la alternativa es paginar por cursor (comentarios anteriores a una fecha) |
 | Paginación por `offset` | `$skip` es lento con offsets muy grandes y, si alguien publica mientras se navega, puede repetir o saltear una publicación entre páginas | Aceptable a esta escala; la alternativa es paginar por cursor (por ejemplo, "las anteriores a esta fecha") |
 | Likes atómicos (resuelto) | `darLike`/`quitarLike` usan `findOneAndUpdate` con `$addToSet` / `$pull` y la condición en el filtro (`likes: { $ne: id }` / `likes: id`); si no matchea, responde 409 | — |
-| `authGuard` solo mira `localStorage` | Un token vencido deja entrar a la pantalla; el primer pedido da 401 y el interceptor manda al login | Sprint #3 (front): pantalla "Cargando" que valida el token con `autorizar` al iniciar |
+| `authGuard` solo mira `localStorage` | Un token vencido deja entrar a la pantalla si se navega directo a una ruta protegida; el primer pedido da 401 y el interceptor manda al login | Parcialmente resuelto: la pantalla "Cargando" (`/`) valida el token con `autorizar` al iniciar la app. El guard sigue sin consultar al back |
 | Token en `localStorage` | Es simple y suficiente para el TP; es vulnerable si hay XSS (Angular escapa el HTML por defecto, lo que mitiga el riesgo) | Alternativa: cookie `HttpOnly` |
 | Autoselección de `administrador` en el registro | Cualquiera puede registrarse como administrador | Lo pide el enunciado del Sprint #1; en un sistema real el alta de admins sería restringida |
 | Carrera en el registro | Dos registros simultáneos con el mismo correo pasan el chequeo; el índice único de Mongo frena al segundo, pero devolvería un 500 en vez de un 409 | Capturar el error de clave duplicada (código 11000) y convertirlo en `ConflictException` |
@@ -771,7 +807,11 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 **¿Qué pasa si se edita un comentario?** `PUT /comentarios/:id` cambia el mensaje y marca `modificado: true`. Solo lo puede hacer el autor (403 si no); la fecha original no cambia y la leyenda "editado" sale de ese campo.
 
-**¿Qué falta de comentarios?** El backend está completo (alta, listado y edición). Falta la interfaz: caja para escribirlos, "cargar más" y edición del propio comentario. Entra en el Sprint #3 (front).
+**¿Cómo funciona "cargar más"?** El front pide `offset` = cantidad de comentarios ya mostrados y `limit` = 5, y **agrega** el resultado al final de la lista (no la reemplaza). Descarta los repetidos por id y el botón desaparece cuando ya se mostraron todos (`total`).
+
+**¿Cómo se sabe que un comentario fue editado?** El back pone `modificado: true` en el `PUT` y el front muestra la leyenda "editado" a partir de ese campo; si se edita con el mismo texto, el front ni llama al back.
+
+**¿Por qué existe `GET /publicaciones/:id`?** Para que la página de detalle funcione al recargar o abrir el enlace directamente: la publicación se pide por id en vez de depender de lo que había en el listado.
 
 **¿Qué falta para cerrar el Sprint #1?** Nada: el deploy en Vercel ya está hecho (front: `https://nextplaygaming.vercel.app`, back: `https://nextplay-delta.vercel.app`). Queda opcional definir `CORS_ORIGIN` en el back para restringir el acceso al dominio del front.
 
@@ -794,7 +834,9 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 | Paginación en el front | `Frontend/src/app/componentes/publicaciones/publicaciones.ts` |
 | Publicación (presentacional) | `Frontend/src/app/componentes/publicacion/publicacion.ts` |
 | Alta de publicación | `Frontend/src/app/componentes/nueva-publicacion/nueva-publicacion.ts` |
-| Comentarios y Mi perfil | `Frontend/src/app/componentes/comentarios/` y `componentes/mi-perfil/` |
+| Comentarios (escribir, "cargar más", editar) y Mi perfil | `Frontend/src/app/componentes/comentarios/` y `componentes/mi-perfil/` |
+| Página de detalle de una publicación | `Frontend/src/app/componentes/publicacion-detalle/` |
+| Una publicación por id (back) | `PublicacionesService.obtener` en `Backend/src/publicaciones/publicaciones.service.ts` |
 | Login (pantalla) | `Frontend/src/app/componentes/login/login.ts` |
 | Modelo de usuario | `Backend/src/usuarios/usuario.schema.ts` |
 | Sesión del lado del cliente | `Frontend/src/app/services/auth.ts` |

@@ -1,0 +1,10 @@
+.detalle__volver {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+}
+
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}

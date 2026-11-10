@@ -54,7 +54,7 @@ src/
 │   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
 │   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar` y aviso de sesión por vencer), ModalService, PublicacionesService y ComentariosService
+│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService y ComentariosService
 │   ├── utils/              Validadores propios, helper de mensajes de error, decodificar JWT y formatear duración
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient con el interceptor)
@@ -95,5 +95,5 @@ En el login se pide correo o nombre de usuario (máximo 100 caracteres) y una co
 ## Decisiones de diseño
 
 - Sin librerías de UI: estilos propios en `styles.css` con variables CSS, reutilizados por todas las pantallas.
-- Nada de `alert()`: todos los mensajes pasan por `ModalService` y el componente `Modal`.
+- Nada de `alert()`: todos los mensajes pasan por `ModalService` y el componente `Modal`. Un modal puede ser `persistente` (no se cierra al hacer clic afuera): lo usa el aviso de sesión por vencer.
 - Los mensajes de error del backend (`message` de Nest, string o array) se muestran tal cual en el modal (`utils/mensaje-error.ts`).

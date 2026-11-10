@@ -1,16 +1,107 @@
 {
   "info": {
-    "name": "NextPlay - Auth, Publicaciones y Comentarios (Sprint 1 a 3)",
-    "description": "Pruebas del backend NextPlay: Auth (registro, login, autorizar, refrescar), Publicaciones y Comentarios. Desde el Sprint #3 todas las rutas salvo registro y login exigen JWT: los pasos \"Setup\" guardan los tokens en variables de la coleccion y cada request los envia como Bearer.",
+    "name": "NextPlay - API (Sprint 1 a 3)",
+    "description": "Coleccion compacta de NextPlay: 13 requests. Cada request hace el pedido principal y, en la pestana Tests, dispara las variantes (400, 401, 403, 404, 409) con un helper compartido (ver el Pre-request Script de la coleccion); cada variante aparece como un test \"caso -> status esperado\". La URL sale de la variable {{baseUrl}}: elegir el environment \"NextPlay - Local\" o \"NextPlay - Produccion\" (sin environment usa localhost). Correr toda la coleccion en orden con \"Run collection\"; los requests dependen de los anteriores (guardan tokens e ids en variables).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{autorToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Helper compartido por todos los requests (se guarda en la variable local \"lib\").",
+          "// En cada script se usa asi:  const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+          "function lib(pm) {",
+          "  const ID_INEXISTENTE = '000000000000000000000000';",
+          "  const base = () => pm.variables.get('baseUrl');",
+          "  const v = (clave) => pm.collectionVariables.get(clave);",
+          "",
+          "  // Hace un pedido con pm.sendRequest y devuelve { err, res } (nunca rechaza).",
+          "  function pedir(p) {",
+          "    return new Promise((resolve) => {",
+          "      const header = { 'Content-Type': 'application/json' };",
+          "      if (p.token) header.Authorization = 'Bearer ' + p.token;",
+          "      const opciones = { url: base() + p.ruta, method: p.metodo || 'GET', header: header };",
+          "      if (p.body !== undefined) opciones.body = { mode: 'raw', raw: JSON.stringify(p.body) };",
+          "      pm.sendRequest(opciones, (err, res) => resolve({ err: err, res: res }));",
+          "    });",
+          "  }",
+          "",
+          "  // Dispara una variante y la registra como un test: \"<nombre> -> <status esperado>\".",
+          "  async function probar(nombre, esperado, pedido, verificar) {",
+          "    const r = await pedir(pedido);",
+          "    pm.test(nombre + ' -> ' + esperado, () => {",
+          "      pm.expect(r.res, r.err ? String(r.err) : 'sin respuesta').to.exist;",
+          "      pm.expect(r.res.code, 'status recibido').to.eql(esperado);",
+          "      if (verificar) verificar(r.res.json());",
+          "    });",
+          "    return r.res;",
+          "  }",
+          "",
+          "  // Cuerpo de registro valido; \"extra\" pisa campos (por ejemplo para forzar un error).",
+          "  function cuerpoRegistro(prefijo, extra) {",
+          "    const s = Date.now() + '' + Math.floor(Math.random() * 100);",
+          "    return Object.assign({",
+          "      nombre: 'Ana', apellido: 'Gomez',",
+          "      correo: prefijo + '.' + s + '@example.com', nombreUsuario: prefijo + s,",
+          "      contrasena: 'Password1', repetirContrasena: 'Password1', fechaNacimiento: '2000-01-01',",
+          "    }, extra || {});",
+          "  }",
+          "",
+          "  function decodificar(token) {",
+          "    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+          "  }",
+          "",
+          "  return {",
+          "    ID_INEXISTENTE: ID_INEXISTENTE, TOKEN_INVALIDO: 'token.invalido.firma',",
+          "    v: v, pedir: pedir, probar: probar, cuerpoRegistro: cuerpoRegistro, decodificar: decodificar,",
+          "    autor: () => v('autorToken'), otro: () => v('otroToken'),",
+          "    texto: (n) => 'a'.repeat(n),",
+          "  };",
+          "}",
+          "pm.variables.set('lib', lib.toString());"
+        ]
+      }
+    }
+  ],
   "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "autorCorreo",
+      "value": ""
+    },
+    {
+      "key": "autorUsuario",
+      "value": ""
+    },
     {
       "key": "autorId",
       "value": ""
     },
     {
-      "key": "otroUsuarioId",
+      "key": "autorToken",
+      "value": ""
+    },
+    {
+      "key": "otroId",
+      "value": ""
+    },
+    {
+      "key": "otroToken",
       "value": ""
     },
     {
@@ -19,18 +110,6 @@
     },
     {
       "key": "comentarioId",
-      "value": ""
-    },
-    {
-      "key": "autorToken",
-      "value": ""
-    },
-    {
-      "key": "otroToken",
-      "value": ""
-    },
-    {
-      "key": "token",
       "value": ""
     },
     {
@@ -47,475 +126,57 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Registro - Exitoso (201)",
+          "name": "1. Registro",
+          "description": "Principal: registra al usuario \"autor\" (201) y guarda su token. Variantes: correo duplicado (409), contrasena debil (400), contrasenas distintas (400). Tambien registra a un segundo usuario (\"otro\") que usan los casos 403.",
           "event": [
             {
-              "listen": "test",
+              "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string'));",
-                  "pm.test('No devuelve la contrasena', () => pm.expect(body.usuario.contrasena).to.be.undefined);"
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "const datos = L.cuerpoRegistro('ana');",
+                  "pm.collectionVariables.set('autorCorreo', datos.correo);",
+                  "pm.collectionVariables.set('autorUsuario', datos.nombreUsuario);"
                 ]
               }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Luis\",\n  \"apellido\": \"Ortellado\",\n  \"correo\": \"luis.test@example.com\",\n  \"nombreUsuario\": \"luisito\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\",\n  \"descripcion\": \"Cuenta de prueba\"\n}"
             },
-            "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "registro"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Registro - Correo duplicado (409)",
-          "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Otro\",\n  \"apellido\": \"Usuario\",\n  \"correo\": \"luis.test@example.com\",\n  \"nombreUsuario\": \"otroUsuarioDistinto\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "registro"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Registro - Contrasena debil (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Perez\",\n  \"correo\": \"juan.debil@example.com\",\n  \"nombreUsuario\": \"juanDebil\",\n  \"contrasena\": \"abc12345\",\n  \"repetirContrasena\": \"abc12345\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "registro"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login - Por correo (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve token', () => pm.expect(body.token).to.be.a('string'));",
-                  "pm.collectionVariables.set('token', body.token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usuarioOCorreo\": \"luis.test@example.com\",\n  \"contrasena\": \"Password1\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/login",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login - Por nombre de usuario (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usuarioOCorreo\": \"luisito\",\n  \"contrasena\": \"Password1\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/login",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login - Contrasena incorrecta (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usuarioOCorreo\": \"luisito\",\n  \"contrasena\": \"ContrasenaMala1\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/login",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Autorizar - Token valido (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve el usuario sin contrasena ni token', () => {",
-                  "  pm.expect(body.usuario.id).to.be.a('string');",
-                  "  pm.expect(body.usuario).to.not.have.property('contrasena');",
-                  "  pm.expect(body).to.not.have.property('token');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/autorizar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "autorizar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Autorizar - Sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/autorizar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "autorizar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Autorizar - Token invalido (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "token-invalido",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/autorizar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "autorizar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Refrescar - Token valido (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve usuario y un token', () => {",
-                  "  pm.expect(body.usuario.id).to.be.a('string');",
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Registro del autor -> 201', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
                   "  pm.expect(body.token).to.be.a('string');",
+                  "  pm.expect(body.usuario.contrasena, 'no debe filtrar el hash').to.be.undefined;",
+                  "  pm.collectionVariables.set('autorId', body.usuario.id);",
+                  "  pm.collectionVariables.set('autorToken', body.token);",
                   "});",
-                  "pm.collectionVariables.set('token', body.token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/refrescar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "refrescar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Refrescar - Sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/refrescar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "refrescar"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "auth": {
-        "type": "noauth"
-      }
-    },
-    {
-      "name": "Publicaciones",
-      "description": "Correr esta carpeta de arriba a abajo (botón Run). Los primeros dos requests crean usuarios de prueba y guardan sus ids en variables de colección (autorId, otroUsuarioId) que usan el resto de los requests. Como todavía no hay JwtAuthGuard (llega en el Sprint #3), el usuario que actúa viaja como `usuarioId` en el body o como query param.",
-      "item": [
-        {
-          "name": "Setup - Registrar autor (201)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.collectionVariables.set('autorId', body.usuario.id);",
-                  "pm.collectionVariables.set('autorToken', body.token);"
+                  "",
+                  "const duplicado = L.cuerpoRegistro('ana', {",
+                  "  correo: pm.collectionVariables.get('autorCorreo'),",
+                  "});",
+                  "await L.probar('Correo duplicado', 409, { metodo: 'POST', ruta: '/auth/registro', body: duplicado });",
+                  "await L.probar('Contrasena debil', 400, {",
+                  "  metodo: 'POST', ruta: '/auth/registro',",
+                  "  body: L.cuerpoRegistro('x', { contrasena: 'abc', repetirContrasena: 'abc' }),",
+                  "});",
+                  "await L.probar('Contrasenas distintas', 400, {",
+                  "  metodo: 'POST', ruta: '/auth/registro',",
+                  "  body: L.cuerpoRegistro('x', { repetirContrasena: 'Password2' }),",
+                  "});",
+                  "",
+                  "// Segundo usuario, para los casos \"de otro usuario\" (403) de los requests siguientes.",
+                  "const otro = L.cuerpoRegistro('beto', { nombre: 'Beto', apellido: 'Lopez' });",
+                  "const r = await L.probar('Registro del otro usuario', 201, { metodo: 'POST', ruta: '/auth/registro', body: otro }, (body) => {",
+                  "  pm.collectionVariables.set('otroId', body.usuario.id);",
+                  "  pm.collectionVariables.set('otroToken', body.token);",
+                  "});",
+                  "})();"
                 ]
               }
             }
@@ -528,37 +189,56 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"correo\": \"ana.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"ana{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}"
-            },
             "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/auth/registro",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "auth",
                 "registro"
               ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Gomez\",\n  \"correo\": \"{{autorCorreo}}\",\n  \"nombreUsuario\": \"{{autorUsuario}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}"
             }
           },
           "response": []
         },
         {
-          "name": "Setup - Registrar otro usuario (201)",
+          "name": "2. Login",
+          "description": "Principal: login por correo (200). Variantes: por nombre de usuario (200), contrasena incorrecta (401), usuario inexistente (401, mismo mensaje), body vacio (400).",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.collectionVariables.set('otroUsuarioId', body.usuario.id);",
-                  "pm.collectionVariables.set('otroToken', body.token);"
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Login por correo -> 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});",
+                  "",
+                  "await L.probar('Login por nombre de usuario', 200, {",
+                  "  metodo: 'POST', ruta: '/auth/login',",
+                  "  body: { usuarioOCorreo: pm.collectionVariables.get('autorUsuario'), contrasena: 'Password1' },",
+                  "});",
+                  "const mala = await L.probar('Contrasena incorrecta', 401, {",
+                  "  metodo: 'POST', ruta: '/auth/login',",
+                  "  body: { usuarioOCorreo: pm.collectionVariables.get('autorCorreo'), contrasena: 'Equivocada1' },",
+                  "});",
+                  "await L.probar('Usuario inexistente (mismo mensaje que la contrasena incorrecta)', 401, {",
+                  "  metodo: 'POST', ruta: '/auth/login',",
+                  "  body: { usuarioOCorreo: 'no.existe@example.com', contrasena: 'Equivocada1' },",
+                  "}, (body) => pm.expect(body.message).to.eql(mala.json().message));",
+                  "await L.probar('Body vacio', 400, { metodo: 'POST', ruta: '/auth/login', body: {} });",
+                  "})();"
                 ]
               }
             }
@@ -571,1380 +251,99 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Beto\",\n  \"apellido\": \"Lopez\",\n  \"correo\": \"beto.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"beto{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"1999-05-05\"\n}"
-            },
             "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/auth/login",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "auth",
-                "registro"
+                "login"
               ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Crear publicacion (201)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve id', () => pm.expect(body.id).to.be.a('string'));",
-                  "pm.test('El autor sale del token', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('autorId')));",
-                  "pm.collectionVariables.set('publicacionId', body.id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Mi primer post\",\n  \"mensaje\": \"Probando NextPlay\"\n}"
             },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Crear publicacion - titulo vacio (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titulo\": \"\",\n  \"mensaje\": \"Sin titulo\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Crear publicacion - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
             "auth": {
               "type": "noauth"
             },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Sin token\",\n  \"mensaje\": \"No deberia crearse\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
+              "raw": "{\n  \"usuarioOCorreo\": \"{{autorCorreo}}\",\n  \"contrasena\": \"Password1\"\n}"
             }
           },
           "response": []
         },
         {
-          "name": "Crear publicacion - usuarioId en el body (400)",
+          "name": "3. Autorizar",
+          "description": "Principal: token valido (200, devuelve el usuario). Variantes: sin token (401), token invalido (401).",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));",
-                  "pm.test('El body ya no acepta usuarioId', () => pm.expect(JSON.stringify(pm.response.json().message)).to.include('usuarioId'));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Suplantacion\",\n  \"mensaje\": \"Intento de hacerme pasar por otro\",\n  \"usuarioId\": \"{{otroUsuarioId}}\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar publicaciones (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve total y publicaciones', () => { pm.expect(body.total).to.be.a('number'); pm.expect(body.publicaciones).to.be.an('array'); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Obtener publicacion (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve la publicacion creada con su autor', () => { pm.expect(body.id).to.eql(pm.collectionVariables.get('publicacionId')); pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('autorId')); });",
-                  "pm.test('Incluye likes y cantidadLikes', () => { pm.expect(body.likes).to.be.an('array'); pm.expect(body.cantidadLikes).to.eql(body.likes.length); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Obtener publicacion - inexistente (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/000000000000000000000000",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "000000000000000000000000"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Obtener publicacion - id invalido (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/no-es-un-id",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "no-es-un-id"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Obtener publicacion - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar publicaciones - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar publicaciones - orden por likes (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones?orden=likes&offset=0&limit=10",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ],
-              "query": [
-                {
-                  "key": "orden",
-                  "value": "likes"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar publicaciones - filtro por usuario (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Todas son del autor filtrado', () => body.publicaciones.forEach((p) => pm.expect(p.autor.id).to.eql(pm.collectionVariables.get('autorId'))));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones?usuario={{autorId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones"
-              ],
-              "query": [
-                {
-                  "key": "usuario",
-                  "value": "{{autorId}}"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Dar like - otro usuario (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('cantidadLikes es 1', () => pm.expect(body.cantidadLikes).to.eql(1));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "like"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Dar like duplicado (409)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "like"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Dar like - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "like"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Comentar - Exitoso (201)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test('Nace sin modificar', () => pm.expect(body.modificado).to.eql(false));",
-                  "pm.test('El autor sale del token', () => pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('otroUsuarioId')));",
-                  "pm.collectionVariables.set('comentarioId', body.id);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Buena resena, la voy a probar\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "comentarios"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Comentar - mensaje vacio (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \" \"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "comentarios"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Comentar - publicacion inexistente (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/000000000000000000000000/comentarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "000000000000000000000000",
-                "comentarios"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Comentar - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "comentarios"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - Exitoso (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Cambia el mensaje', () => pm.expect(body.mensaje).to.eql('Buena resena (editado: ya la probe)'));",
-                  "pm.test('Queda marcado como modificado', () => pm.expect(body.modificado).to.eql(true));",
-                  "pm.test('Conserva el id', () => pm.expect(body.id).to.eql(pm.collectionVariables.get('comentarioId')));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Buena resena (editado: ya la probe)\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "{{comentarioId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - de otro usuario (403)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{autorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Intento editar el comentario de otro\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "{{comentarioId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - mensaje vacio (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \" \"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "{{comentarioId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - id invalido (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 400 Bad Request', () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/abc",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "abc"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - inexistente (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/000000000000000000000000",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "000000000000000000000000"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Editar comentario - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mensaje\": \"Hola\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/comentarios/{{comentarioId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "comentarios",
-                "{{comentarioId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Listar comentarios (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Devuelve total y comentarios', () => {",
-                  "  pm.expect(body.total).to.be.a('number');",
-                  "  pm.expect(body.comentarios).to.be.an('array');",
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Token valido -> 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().usuario.id).to.eql(pm.collectionVariables.get('autorId'));",
                   "});",
-                  "pm.test('Mas recientes primero', () => {",
-                  "  const fechas = body.comentarios.map((c) => new Date(c.fecha).getTime());",
-                  "  pm.expect(fechas).to.eql([...fechas].sort((a, b) => b - a));",
+                  "await L.probar('Sin token', 401, { metodo: 'POST', ruta: '/auth/autorizar' });",
+                  "await L.probar('Token invalido', 401, { metodo: 'POST', ruta: '/auth/autorizar', token: L.TOKEN_INVALIDO });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/autorizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Refrescar",
+          "description": "Principal: token valido (200, devuelve un token nuevo con el mismo usuario). Variantes: sin token (401), token invalido (401).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Token valido -> 200 con token nuevo', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.token).to.be.a('string');",
+                  "  pm.expect(L.decodificar(body.token).exp).to.be.at.least(L.decodificar(L.autor()).exp);",
                   "});",
-                  "pm.test('El comentario editado figura como modificado', () => {",
-                  "  const editado = body.comentarios.find((c) => c.id === pm.collectionVariables.get('comentarioId'));",
-                  "  pm.expect(editado.modificado).to.eql(true);",
-                  "});"
+                  "await L.probar('Sin token', 401, { metodo: 'POST', ruta: '/auth/refrescar' });",
+                  "await L.probar('Token invalido', 401, { metodo: 'POST', ruta: '/auth/refrescar', token: L.TOKEN_INVALIDO });",
+                  "})();"
                 ]
               }
             }
           ],
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/comentarios?offset=0&limit=5",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/auth/refrescar",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "comentarios"
-              ],
-              "query": [
-                {
-                  "key": "offset",
-                  "value": "0"
-                },
-                {
-                  "key": "limit",
-                  "value": "5"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Eliminar publicacion ajena (403)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Eliminar publicacion - inexistente (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{autorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/000000000000000000000000",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "000000000000000000000000"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Eliminar publicacion - sin token (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Quitar like (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('cantidadLikes vuelve a 0', () => pm.expect(body.cantidadLikes).to.eql(0));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "like"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Quitar like que no existe (409)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otroToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}/like",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}",
-                "like"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Eliminar publicacion propia (200)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Queda marcada como eliminada', () => pm.expect(body.eliminada).to.eql(true));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{autorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/publicaciones/{{publicacionId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "publicaciones",
-                "{{publicacionId}}"
+                "auth",
+                "refrescar"
               ]
             }
           },
@@ -1953,29 +352,38 @@
       ]
     },
     {
-      "name": "Token vencido (Sprint 3, requiere token de vida corta)",
-      "description": "Prueba que un token vencido se rechaza con 401 (autorizar, refrescar y una ruta protegida) y que refrescar funciona mientras el token sigue vigente. El request \"Autorizar con token vencido\" espera hasta que venza el token guardado, leyendo su \"exp\". Solo espera si faltan 120 s o menos: con JWT_EXPIRES_IN_SEGUNDOS = 900 los pasos que dependen del vencimiento se omiten (skip). Para probarlo, poner un valor bajo (por ejemplo 30) en Backend/.env, reiniciar el back y correr esta carpeta completa con \"Run folder\"; volver a 900 al terminar.",
+      "name": "Publicaciones",
       "item": [
         {
-          "name": "Vencido - Setup: registrar usuario y guardar token (201)",
+          "name": "5. Crear publicacion",
+          "description": "Principal: crea una publicacion (201) y guarda su id. Variantes: titulo vacio (400), sin token (401), usuarioId en el body (400, el autor sale del token).",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.collectionVariables.set('tokenVencible', body.token);",
-                  "pm.collectionVariables.set('vencidoOmitido', 'false');"
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Crear publicacion -> 201', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('publicacionId', body.id);",
+                  "});",
+                  "const valida = { titulo: 'Titulo valido', mensaje: 'Mensaje valido' };",
+                  "await L.probar('Titulo vacio', 400, { metodo: 'POST', ruta: '/publicaciones', token: L.autor(), body: { titulo: '', mensaje: 'x' } });",
+                  "await L.probar('Sin token', 401, { metodo: 'POST', ruta: '/publicaciones', body: valida });",
+                  "await L.probar('usuarioId en el body', 400, {",
+                  "  metodo: 'POST', ruta: '/publicaciones', token: L.autor(),",
+                  "  body: Object.assign({ usuarioId: pm.collectionVariables.get('otroId') }, valida),",
+                  "});",
+                  "})();"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
             "method": "POST",
             "header": [
               {
@@ -1983,221 +391,64 @@
                 "value": "application/json"
               }
             ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Vera\",\n  \"apellido\": \"Venc\",\n  \"correo\": \"vera.{{$timestamp}}@example.com\",\n  \"nombreUsuario\": \"vera{{$timestamp}}\",\n  \"contrasena\": \"Password1\",\n  \"repetirContrasena\": \"Password1\",\n  \"fechaNacimiento\": \"2000-01-01\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/auth/registro",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "registro"
-              ]
+              "raw": "{\n  \"titulo\": \"Mi primera publicacion\",\n  \"mensaje\": \"Probando la API de NextPlay\"\n}"
             }
           },
           "response": []
         },
         {
-          "name": "Vencido - Refrescar con token vigente (200)",
+          "name": "6. Listar publicaciones",
+          "description": "Principal: listado por fecha (200, { total, publicaciones }). Variantes: orden por likes (200), filtro por usuario (200), orden invalido (400), limit 0 (400), limit 51 (400), sin token (401).",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "const exp = (t) => JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp;",
-                  "pm.test('El token nuevo no vence antes que el anterior', () => {",
-                  "  pm.expect(exp(body.token)).to.be.at.least(exp(pm.collectionVariables.get('tokenVencible')));",
-                  "});"
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Listado por fecha -> 200 con { total, publicaciones }', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.total).to.be.a('number');",
+                  "  pm.expect(body.publicaciones).to.be.an('array').with.length.of.at.most(5);",
+                  "});",
+                  "const t = L.autor();",
+                  "await L.probar('Orden por likes', 200, { ruta: '/publicaciones?orden=likes', token: t });",
+                  "await L.probar('Filtro por usuario (todas del autor)', 200, {",
+                  "  ruta: '/publicaciones?usuario=' + pm.collectionVariables.get('autorId'), token: t,",
+                  "}, (body) => {",
+                  "  pm.expect(body.publicaciones.length).to.be.above(0);",
+                  "  body.publicaciones.forEach((p) => pm.expect(p.autor.id).to.eql(pm.collectionVariables.get('autorId')));",
+                  "});",
+                  "await L.probar('Orden invalido', 400, { ruta: '/publicaciones?orden=azar', token: t });",
+                  "await L.probar('limit = 0', 400, { ruta: '/publicaciones?limit=0', token: t });",
+                  "await L.probar('limit = 51 (supera el maximo)', 400, { ruta: '/publicaciones?limit=51', token: t });",
+                  "await L.probar('Sin token', 401, { ruta: '/publicaciones' });",
+                  "})();"
                 ]
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{tokenVencible}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/refrescar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "refrescar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Vencido - Autorizar con token vencido (401)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Espera hasta que venza el token guardado (lee su \"exp\"). Solo espera si falta poco:",
-                  "// con JWT_EXPIRES_IN_SEGUNDOS = 900 serian 15 minutos, asi que en ese caso se omite.",
-                  "const MAXIMO_ESPERA_S = 120;",
-                  "const token = pm.collectionVariables.get('tokenVencible');",
-                  "const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
-                  "const faltanMs = payload.exp * 1000 - Date.now() + 1500;",
-                  "if (faltanMs / 1000 > MAXIMO_ESPERA_S) {",
-                  "  pm.collectionVariables.set('vencidoOmitido', 'true');",
-                  "} else {",
-                  "  pm.collectionVariables.set('vencidoOmitido', 'false');",
-                  "  if (faltanMs > 0) {",
-                  "    setTimeout(() => {}, faltanMs);",
-                  "  }",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('vencidoOmitido') === 'true') {",
-                  "  pm.test.skip('Omitido: el token dura mas de 120 s (bajar JWT_EXPIRES_IN_SEGUNDOS para probar el vencimiento)');",
-                  "} else {",
-                  "  pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "  pm.test('El mensaje dice que esta vencido', () => pm.expect(pm.response.json().message).to.include('vencido'));",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{tokenVencible}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/autorizar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "autorizar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Vencido - Refrescar con token vencido (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('vencidoOmitido') === 'true') {",
-                  "  pm.test.skip('Omitido: el token no llego a vencer');",
-                  "} else {",
-                  "  pm.test('Status 401: un token vencido ya no se puede refrescar', () => pm.response.to.have.status(401));",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{tokenVencible}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/auth/refrescar",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "auth",
-                "refrescar"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Vencido - Listar publicaciones con token vencido (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.collectionVariables.get('vencidoOmitido') === 'true') {",
-                  "  pm.test.skip('Omitido: el token no llego a vencer');",
-                  "} else {",
-                  "  pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{tokenVencible}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/publicaciones?orden=fecha&offset=0&limit=5",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/publicaciones?orden=fecha&offset=0&limit=5",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "publicaciones"
               ],
@@ -2218,18 +469,410 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "7. Obtener publicacion (detalle)",
+          "description": "Principal: detalle por id (200). Variantes: id mal formado (400), id inexistente (404), sin token (401).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "pm.test('Detalle -> 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(pm.collectionVariables.get('publicacionId'));",
+                  "  pm.expect(body.autor.id).to.eql(pm.collectionVariables.get('autorId'));",
+                  "});",
+                  "await L.probar('Id mal formado', 400, { ruta: '/publicaciones/abc', token: L.autor() });",
+                  "await L.probar('Id inexistente', 404, { ruta: '/publicaciones/' + L.ID_INEXISTENTE, token: L.autor() });",
+                  "await L.probar('Sin token', 401, { ruta: '/publicaciones/' + pm.collectionVariables.get('publicacionId') });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Like y quitar like",
+          "description": "Principal: el \"otro\" usuario da like (200). Variantes: like duplicado (409), sin token (401), publicacion inexistente (404), quitar like (200), quitar de nuevo (409).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "const id = pm.collectionVariables.get('publicacionId');",
+                  "const ruta = '/publicaciones/' + id + '/like';",
+                  "pm.test('Dar like -> 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().cantidadLikes).to.eql(1);",
+                  "});",
+                  "await L.probar('Like duplicado', 409, { metodo: 'POST', ruta: ruta, token: L.otro() });",
+                  "await L.probar('Sin token', 401, { metodo: 'POST', ruta: ruta });",
+                  "await L.probar('Publicacion inexistente', 404, { metodo: 'POST', ruta: '/publicaciones/' + L.ID_INEXISTENTE + '/like', token: L.otro() });",
+                  "await L.probar('Quitar like', 200, { metodo: 'DELETE', ruta: ruta, token: L.otro() }, (body) => pm.expect(body.cantidadLikes).to.eql(0));",
+                  "await L.probar('Quitar un like que no existe', 409, { metodo: 'DELETE', ruta: ruta, token: L.otro() });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comentarios",
+      "item": [
+        {
+          "name": "9. Comentar",
+          "description": "Principal: comenta la publicacion (201) y guarda el id. Variantes: mensaje vacio (400), solo espacios (400), mas de 500 caracteres (400), id de publicacion mal formado (400), publicacion inexistente (404), sin token (401).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "const ruta = '/publicaciones/' + pm.collectionVariables.get('publicacionId') + '/comentarios';",
+                  "pm.test('Comentar -> 201', () => {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.modificado).to.eql(false);",
+                  "  pm.collectionVariables.set('comentarioId', body.id);",
+                  "});",
+                  "const t = L.autor();",
+                  "await L.probar('Mensaje vacio', 400, { metodo: 'POST', ruta: ruta, token: t, body: { mensaje: '' } });",
+                  "await L.probar('Solo espacios', 400, { metodo: 'POST', ruta: ruta, token: t, body: { mensaje: '     ' } });",
+                  "await L.probar('Mas de 500 caracteres', 400, { metodo: 'POST', ruta: ruta, token: t, body: { mensaje: L.texto(501) } });",
+                  "await L.probar('Id de publicacion mal formado', 400, { metodo: 'POST', ruta: '/publicaciones/abc/comentarios', token: t, body: { mensaje: 'hola' } });",
+                  "await L.probar('Publicacion inexistente', 404, { metodo: 'POST', ruta: '/publicaciones/' + L.ID_INEXISTENTE + '/comentarios', token: t, body: { mensaje: 'hola' } });",
+                  "await L.probar('Sin token', 401, { metodo: 'POST', ruta: ruta, body: { mensaje: 'hola' } });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}/comentarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Primer comentario de prueba\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10. Listar comentarios",
+          "description": "Principal: comentarios de la publicacion (200, { total, comentarios }, mas recientes primero). Variantes: pagina vacia con offset alto (200), limit 0 (400), publicacion inexistente (404), sin token (401).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "const ruta = '/publicaciones/' + pm.collectionVariables.get('publicacionId') + '/comentarios';",
+                  "pm.test('Listado -> 200 con { total, comentarios }', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.total).to.be.at.least(1);",
+                  "  pm.expect(body.comentarios[0].id).to.eql(pm.collectionVariables.get('comentarioId'));",
+                  "  pm.expect(body.comentarios[0].autor.correo, 'no debe exponer el correo').to.be.undefined;",
+                  "});",
+                  "const t = L.autor();",
+                  "await L.probar('Pagina vacia (offset alto)', 200, { ruta: ruta + '?offset=100', token: t }, (body) => pm.expect(body.comentarios).to.have.length(0));",
+                  "await L.probar('limit = 0', 400, { ruta: ruta + '?limit=0', token: t });",
+                  "await L.probar('Publicacion inexistente', 404, { ruta: '/publicaciones/' + L.ID_INEXISTENTE + '/comentarios', token: t });",
+                  "await L.probar('Sin token', 401, { ruta: ruta });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}/comentarios?offset=0&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "comentarios"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11. Editar comentario",
+          "description": "Principal: el autor edita su comentario (200, modificado: true). Variantes: de otro usuario (403), vacio (400), id mal formado (400), inexistente (404), sin token (401).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "const ruta = '/comentarios/' + pm.collectionVariables.get('comentarioId');",
+                  "pm.test('Editar -> 200 con modificado: true', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.mensaje).to.eql('Comentario editado');",
+                  "  pm.expect(body.modificado).to.eql(true);",
+                  "});",
+                  "const valido = { mensaje: 'Intento de edicion' };",
+                  "await L.probar('Comentario de otro usuario', 403, { metodo: 'PUT', ruta: ruta, token: L.otro(), body: valido });",
+                  "await L.probar('Mensaje vacio', 400, { metodo: 'PUT', ruta: ruta, token: L.autor(), body: { mensaje: '' } });",
+                  "await L.probar('Id mal formado', 400, { metodo: 'PUT', ruta: '/comentarios/abc', token: L.autor(), body: valido });",
+                  "await L.probar('Comentario inexistente', 404, { metodo: 'PUT', ruta: '/comentarios/' + L.ID_INEXISTENTE, token: L.autor(), body: valido });",
+                  "await L.probar('Sin token', 401, { metodo: 'PUT', ruta: ruta, body: valido });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comentarios/{{comentarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comentarios",
+                "{{comentarioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Comentario editado\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Baja y vencimiento",
+      "item": [
+        {
+          "name": "12. Eliminar publicacion",
+          "description": "Principal: un usuario ajeno intenta eliminarla (403). Variantes: id inexistente (404), sin token (401), el autor la elimina (200, baja logica) y, despues, detalle, comentar, listar y editar un comentario de esa publicacion (404, dejan de estar disponibles). Va despues de los comentarios porque da de baja la publicacion.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "const id = pm.collectionVariables.get('publicacionId');",
+                  "const ruta = '/publicaciones/' + id;",
+                  "pm.test('Eliminar la publicacion de otro usuario -> 403', () => pm.response.to.have.status(403));",
+                  "await L.probar('Publicacion inexistente', 404, { metodo: 'DELETE', ruta: '/publicaciones/' + L.ID_INEXISTENTE, token: L.autor() });",
+                  "await L.probar('Sin token', 401, { metodo: 'DELETE', ruta: ruta });",
+                  "await L.probar('El autor la elimina (baja logica)', 200, { metodo: 'DELETE', ruta: ruta, token: L.autor() }, (body) => pm.expect(body.eliminada).to.eql(true));",
+                  "await L.probar('Detalle de una publicacion eliminada', 404, { ruta: ruta, token: L.autor() });",
+                  "await L.probar('Comentar en una publicacion eliminada', 404, { metodo: 'POST', ruta: ruta + '/comentarios', token: L.autor(), body: { mensaje: 'hola' } });",
+                  "await L.probar('Listar comentarios de una publicacion eliminada', 404, { ruta: ruta + '/comentarios', token: L.autor() });",
+                  "await L.probar('Editar un comentario de una publicacion eliminada', 404, {",
+                  "  metodo: 'PUT', ruta: '/comentarios/' + pm.collectionVariables.get('comentarioId'), token: L.autor(), body: { mensaje: 'tarde' },",
+                  "});",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otroToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13. Token vencido (solo con token de vida corta)",
+          "description": "Registra un usuario nuevo y espera hasta que venza su token (lee el \"exp\"). Solo espera si faltan 120 s o menos: con JWT_EXPIRES_IN_SEGUNDOS = 900 (produccion) el vencimiento se omite. Para probarlo, poner un valor bajo (30) en Backend/.env, reiniciar el back y correr este request. Verifica que autorizar, refrescar y una ruta protegida respondan 401 con el token vencido.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "const MAXIMO_ESPERA_S = 120;",
+                  "pm.collectionVariables.set('vencidoOmitido', 'true');",
+                  "pm.sendRequest({",
+                  "  url: pm.variables.get('baseUrl') + '/auth/registro', method: 'POST',",
+                  "  header: { 'Content-Type': 'application/json' },",
+                  "  body: { mode: 'raw', raw: JSON.stringify(L.cuerpoRegistro('vera')) },",
+                  "}, (err, res) => {",
+                  "  const token = res.json().token;",
+                  "  pm.collectionVariables.set('tokenVencible', token);",
+                  "  const faltanMs = L.decodificar(token).exp * 1000 - Date.now() + 1500;",
+                  "  if (faltanMs / 1000 <= MAXIMO_ESPERA_S) {",
+                  "    pm.collectionVariables.set('vencidoOmitido', 'false');",
+                  "    setTimeout(() => {}, Math.max(faltanMs, 0));",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = eval('(' + pm.variables.get('lib') + ')')(pm);",
+                  "(async () => {",
+                  "if (pm.collectionVariables.get('vencidoOmitido') === 'true') {",
+                  "  pm.test.skip('Omitido: el token dura mas de 120 s (bajar JWT_EXPIRES_IN_SEGUNDOS para probar el vencimiento)');",
+                  "  return;",
+                  "}",
+                  "pm.test('Autorizar con token vencido -> 401 \"vencido\"', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json().message).to.include('vencido');",
+                  "});",
+                  "const vencido = pm.collectionVariables.get('tokenVencible');",
+                  "await L.probar('Refrescar con token vencido (ya no se puede renovar)', 401, { metodo: 'POST', ruta: '/auth/refrescar', token: vencido });",
+                  "await L.probar('Ruta protegida con token vencido', 401, { ruta: '/publicaciones', token: vencido });",
+                  "})();"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/autorizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenVencible}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }
-  ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{autorToken}}",
-        "type": "string"
-      }
-    ]
-  }
+  ]
 }

@@ -13,51 +13,43 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-10
-**Sprint en curso:** #3 – Comentarios, JWT y sesión. **Back y las 3 partes del front hechas** (build y tests en verde: back 23, front 20). La parte 3 (página de detalle `/publicaciones/:id`, escribir, "cargar más" y editar comentarios) está **sin probar todavía en el navegador**. Sprint #2 cerrado.
-**Cambio en el back durante la parte 3:** nuevo `GET /publicaciones/:id` (lo necesita la página de detalle).
-**Sin verificar todavía:** la colección de Postman completa (incluye 4 casos nuevos de `GET /publicaciones/:id`).
-**`Backend/.env` local:** apunta a Atlas real (`MONGODB_URI` con la base `test`, que es donde vive la base real de NextPlay — no uses un Mongo local para este proyecto, nunca se usó uno). La contraseña del usuario de Atlas se regeneró durante esta sesión; si cambia de nuevo, hay que actualizarla en dos lugares: `Backend/.env` local y la env var `MONGODB_URI` del proyecto **Backend** en Vercel (production **y** preview), o el back deployado crashea con `FUNCTION_INVOCATION_FAILED` en todas las rutas (pasó y se solucionó en esta sesión).
-**Cuidado con `npm run start:dev` en Windows:** `nest start --watch` deja procesos `node` colgados (zombies) en el puerto 3000 que sobreviven a `Ctrl+C` y a parar la tarea que los lanzó; si el puerto da `EADDRINUSE` o el back se comporta raro/desactualizado pese a editar código o `.env`, buscar qué PID tiene el puerto 3000 (`Get-NetTCPConnection -LocalPort 3000`) y matarlo (`Stop-Process -Id <pid> -Force`) antes de levantarlo de nuevo.
-**Producción:** front → https://nextplaygaming.vercel.app · back → https://nextplay-delta.vercel.app (dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos).
+**Sprint en curso:** #3 terminado y probado (navegador y Postman, en local y en producción; tests: back 23, front 20). Solo falta cerrarlo (ver "Próximo paso"). Sigue el Sprint #4.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
-| #1 Registro/Login base | [x] | [x] | Funcional y deployado |
-| #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado, probado en local y subido a `master` |
-| #3 Comentarios, JWT y sesión | [x] | [x] | Código completo; falta probar la parte 3 en el navegador y cerrar el sprint |
+| #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
+| #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
+| #3 Comentarios, JWT y sesión | [x] | [x] | Terminado y probado; falta volver el token a 900 s |
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
 
 ### Próximo paso
-Sprint #3: **probar la parte 3 en el navegador** (detalle, comentar, "cargar más", editar), correr la colección de Postman y cerrar el sprint. Partes (cada una deja la app funcionando y se pushea por separado):
-1. _(Hecha y subida)_ Back + interceptor HTTP (`Frontend/src/app/interceptors/auth-interceptor.ts`) y `usuarioId` fuera de los pedidos.
-2. _(Hecha)_
-   - `AuthService`: `autorizar()` y `refrescar()` (`Frontend/src/app/services/auth.ts`).
-   - Pantalla "Cargando" con spinner (`Frontend/src/app/componentes/cargando/`) en la ruta raíz `/`: valida el token con `autorizar()` al iniciar (válido → Publicaciones, si no → Login vía el 401 del interceptor o el catch propio).
-   - Contador de sesión: al guardar cualquier sesión se programa un aviso cuando queda un tercio de la vida del token (se decodifica el propio JWT en `Frontend/src/app/utils/jwt.ts`, sin tocar `authGuard`); el modal "¿extender la sesión?" llama a `refrescar()`.
-3. _(Hecha, sin probar en el navegador)_
-   - Back: `GET /publicaciones/:id` (200, 400 id inválido, 404 inexistente o dada de baja).
-   - `ComentariosService.crear`/`editar` y `PublicacionesService.obtener`.
-   - Página de detalle `/publicaciones/:id` (`componentes/publicacion-detalle/`): publicación en grande (con like y eliminar) + comentarios. El título de cada tarjeta enlaza al detalle.
-   - `Comentarios` en modo `interactivo`: caja para comentar, "cargar más" que acumula y edición del propio comentario con leyenda "editado". En Mi perfil no se comenta ni se edita, pero un botón "Ver N comentarios más" trae los ocultos.
+1. **Cerrar el Sprint #3:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 en `Backend/.env` (hoy 60), verificar el front en Vercel con el último deploy y revisar el checklist de la sección 5.
+2. **Sprint #4**, back primero (`RolesGuard`, módulo de usuarios para admin, estadísticas, login que bloquea deshabilitados) y después front (baja de publicaciones para admin, dashboard de usuarios y de estadísticas, pipes, directivas y PWA). Detalle en la sección 3.
 
-**Antes de entregar el sprint:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900, revisar el checklist de la sección 5.
+### Cómo probar
+- **Tests:** `npm test` en `Backend/` y en `Frontend/`.
+- **Postman** (`Backend/postman/`): una colección de 13 requests y dos environments, **NextPlay - Local** (`localhost:3000`) y **NextPlay - Produccion** (back de Vercel). Cada request hace el pedido principal y dispara en sus tests las variantes (400, 401, 403, 404, 409), que aparecen como "caso -> status esperado". Se corre entera en orden con "Run collection". El request 13 (token vencido) solo corre si el token dura 120 s o menos; con 900 se omite solo.
+- Las pruebas crean usuarios y publicaciones de prueba en la base real (no hay endpoint para borrarlos).
 
-### Decisiones tomadas para el Sprint #3
-- **Token de 30 segundos mientras dure la exposición** (para poder probar el vencimiento). La variable es `JWT_EXPIRES_IN_SEGUNDOS` (default 900; **30 en el `.env` local**, 900 en `.env.example`). El contador del front debe escalar (aviso a los 20 s en vez de a los 10 min). **Antes de entregar, volver a 900 s (15 min), que es lo que pide el enunciado.** Con 30 s, una corrida lenta de la colección de Postman puede recibir 401.
-- **Un 401 en una ruta protegida** (token vencido o inválido) cierra la sesión, muestra el modal "Sesión expirada" y manda a `/login`. En login y registro el 401 sigue siendo "credenciales incorrectas" y lo muestra la propia pantalla.
-- **Contador de sesión como proporción, no como minutos fijos**: en vez de codificar "10 minutos" (que con el token de 30 s de prueba no tendría sentido), el front decodifica el propio JWT (`utils/jwt.ts`, sin librerías) y programa el aviso cuando falta **un tercio** de la vida del token desde que se emitió — con 15 min de token, el aviso cae a los 10 min (quedan 5, como pide el enunciado); con 30 s de token, cae a los 20 s. Así el mismo código vale para desarrollo y para la entrega sin tocarlo.
+### Entorno y producción
+- Front: https://nextplaygaming.vercel.app · Back: https://nextplay-delta.vercel.app. Son dos proyectos de Vercel del mismo repo; cada push a `master` redeploya ambos.
+- `Backend/.env` apunta a Atlas real (base `test`); nunca se usó un Mongo local. Si cambia la contraseña de Atlas, actualizarla también en `MONGODB_URI` del proyecto Backend en Vercel (production y preview), o el back falla con `FUNCTION_INVOCATION_FAILED`.
+- En Windows, `nest start --watch` puede dejar procesos `node` colgados en el puerto 3000 (`EADDRINUSE`). Buscar el PID con `Get-NetTCPConnection -LocalPort 3000` y matarlo con `Stop-Process`.
+
+### Decisiones vigentes
+- **Sesión:** el token dura `JWT_EXPIRES_IN_SEGUNDOS` (900 por defecto, que es lo que pide el enunciado). El front decodifica el JWT y avisa cuando queda un tercio de su vida (a los 10 min con 900 s), con un modal que no se cierra al hacer clic afuera. Si se ignora, la sesión se cierra sola al vencer el token.
+- **401** en una ruta protegida: el interceptor cierra la sesión, muestra "Sesión expirada" y manda a `/login`. En login y registro el 401 significa credenciales incorrectas y lo muestra la propia pantalla.
+- Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage.
+- Backend en ESM: los imports relativos terminan en `.js`.
 
 ### Pendientes y límites conocidos
-- `JwtAuthGuard` solo verifica firma y vencimiento: un usuario deshabilitado conserva acceso hasta que venza su token. `autorizar`/`refrescar` sí consultan la base (401 si no existe o está deshabilitado). Se completa con el login/rol del Sprint #4.
-- En Vercel quedó la variable vieja `JWT_EXPIRES_IN_MINUTOS` (si se cargó): el back ya no la lee; sin `JWT_EXPIRES_IN_SEGUNDOS` usa 900 s.
-- `UsuariosController` desactivado (exponía el hash de contraseñas); vuelve en el Sprint #4 con guard JWT + rol administrador.
-- `authGuard` del front solo mira `localStorage` (no cambió): un token vencido deja entrar a la pantalla si se navega directo a una ruta protegida sin pasar por `/`, pero el primer pedido devuelve 401 y el interceptor lo manda al login. La pantalla "Cargando" cubre la validación al iniciar la app desde la raíz.
-- Menor, sin urgencia: en `darLike`/`quitarLike`, si la publicación se elimina entre la comprobación y el `findOneAndUpdate`, responde 409 en vez de 404.
-- Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`).
-- Backend en ESM: los imports relativos terminan en `.js`.
-- Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage con `AlmacenamientoService`.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md) (al día: back y las 3 partes del front del Sprint #3).
+- `JwtAuthGuard` solo verifica firma y vencimiento, así que un usuario deshabilitado conserva acceso hasta que venza su token. Se completa en el Sprint #4.
+- `UsuariosController` está desactivado (exponía el hash de las contraseñas). Vuelve en el Sprint #4 con guard JWT y rol administrador.
+- `authGuard` del front solo mira `localStorage`; un token vencido se detecta en el primer pedido (401) o al iniciar la app en `/` (pantalla "Cargando").
+- Menor: en `darLike`/`quitarLike`, si la publicación se elimina justo entre la comprobación y la actualización, responde 409 en vez de 404.
+- Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`) y borrar la variable vieja `JWT_EXPIRES_IN_MINUTOS`, si existe.
+- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 
 ---
 
@@ -68,7 +60,7 @@ TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
 └── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios
     ├── Funcional.md   Descripción funcional de NextPlay
-    └── postman/       Colección de pruebas de Auth, Publicaciones y Comentarios (con tokens, Sprint #3)
+    └── postman/       Colección de Postman (13 requests) y environments Local y Produccion
 ```
 
 **Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_SEGUNDOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):
@@ -214,7 +206,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 ### SPRINT #3 – Comentarios, JWT y manejo de sesión
 
 **Front**
-- [x] **Página Publicación** (detalle, `/publicaciones/:id`) _(sin probar en el navegador)_
+- [x] **Página Publicación** (detalle, `/publicaciones/:id`)
   - [x] Ver la publicación en grande con sus comentarios.
   - [x] Permitir escribir comentarios.
   - [x] Comentarios ordenados uno debajo del otro; primera carga limitada (5); botón **"cargar más"** que trae más sin quitar los anteriores.
@@ -236,7 +228,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 **Back – Módulo Autenticación**
 - [x] Login y registro generan **token JWT** con identidad del usuario (id/correo/nombre de usuario) y su **rol**.
 - [x] Token devuelto en la respuesta (no por cookies).
-- [x] Token vence a los **15 minutos** (configurable con `JWT_EXPIRES_IN_SEGUNDOS`; 30 s en local mientras dure la exposición, ver sección 0).
+- [x] Token vence a los **15 minutos** (configurable con `JWT_EXPIRES_IN_SEGUNDOS`; se puede bajar en el `.env` local para probar el vencimiento).
 - [x] **POST `/auth/autorizar`**: valida que el token sea válido y no esté vencido. **401** si hay error; si es válido, devuelve `{ usuario }`.
 - [x] **POST `/auth/refrescar`**: valida token; devuelve `{ usuario, token }` con la misma payload y el vencimiento renovado.
 - [x] Proteger todas las rutas con guard JWT (`JwtAuthGuard` global; `@Public()` en registro, login y `GET /`).
@@ -324,14 +316,14 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 
 ## 5. Criterios de calidad a verificar antes de cada entrega
 
-- [ ] Status HTTP correctos en todos los endpoints.
-- [ ] Sin `alert()`; todo con modales.
+- [x] Status HTTP correctos en todos los endpoints (Postman, local y producción).
+- [x] Sin `alert()`; todo con modales.
 - [ ] Diseño uniforme en todas las pantallas.
-- [ ] Validaciones y mensajes claros en formularios.
-- [ ] Contraseñas encriptadas; JWT con vencimiento a 15 minutos.
-- [ ] Rutas protegidas por guard (front) y por JWT/roles (back).
-- [ ] Bajas lógicas (no se borra físicamente).
-- [ ] Deploy en hosting funcionando.
+- [x] Validaciones y mensajes claros en formularios.
+- [ ] Contraseñas encriptadas; JWT con vencimiento a 15 minutos. _(Contraseñas hechas; falta volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 en el `.env` local.)_
+- [x] Rutas protegidas por guard (front) y por JWT (back). _(Los roles llegan en el Sprint #4.)_
+- [x] Bajas lógicas (no se borra físicamente). _(Publicaciones; la de usuarios es del Sprint #4.)_
+- [ ] Deploy en hosting funcionando. _(Back verificado con Postman; falta revisar el front tras el último deploy.)_
 
 ---
 

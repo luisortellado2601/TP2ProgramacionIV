@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UsuariosController } from './usuarios.controller.js';
 import { UsuariosService } from './usuarios.service.js';
 import { Usuario, UsuarioSchema } from './usuario.schema.js';
+import { AuthModule } from '../auth/auth.module.js';
 
-// UsuariosController (CRUD de prueba) está desactivado hasta el Sprint #4: sin
-// guard devolvía todos los usuarios con el hash de la contraseña. Se vuelve a
-// registrar en `controllers` cuando tenga guard JWT + rol administrador.
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([{ name: Usuario.name, schema: UsuarioSchema }]),
   ],
+  controllers: [UsuariosController],
   providers: [UsuariosService],
 })
 export class UsuariosModule {}

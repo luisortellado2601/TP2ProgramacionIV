@@ -183,7 +183,7 @@ Por qué así:
 
 **Emisión** (`AuthService.construirRespuesta` y `AuthModule`):
 
-- `JwtModule.registerAsync` firma con `JWT_SECRET` y define el vencimiento con `JWT_EXPIRES_IN_SEGUNDOS` (por defecto **900 s = 15 minutos**, como pide el enunciado). Las variables de entorno llegan como **texto**, así que se convierte con `Number(...)`: `jsonwebtoken` interpreta un string sin unidad (`"30"`) como **milisegundos**, y el token duraría 30 ms en vez de 30 s. Mientras dure la exposición el `.env` local usa 30 s para poder probar el vencimiento; antes de entregar hay que volver a 900.
+- `JwtModule.registerAsync` firma con `JWT_SECRET` y define el vencimiento con `JWT_EXPIRES_IN_SEGUNDOS` (por defecto **900 s = 15 minutos**, como pide el enunciado). Las variables de entorno llegan como **texto**, así que se convierte con `Number(...)`: `jsonwebtoken` interpreta un string sin unidad (`"30"`) como **milisegundos**, y el token duraría 30 ms en vez de 30 s. Para probar el vencimiento se puede bajar el valor en el `.env` local (se usó 30 y 60 s); hoy está en 900.
 - `global: true` permite inyectar `JwtService` en cualquier módulo sin reimportar.
 - **Payload** del token: `sub` (id del usuario), `correo`, `nombreUsuario`, `perfil` (el rol). `sub` es el nombre estándar de JWT para el "sujeto".
 - Un JWT son tres partes en base64url: `header.payload.firmaHMAC`. El payload **se puede leer** (no es secreto); lo que no se puede es **modificarlo sin la clave** porque la firma dejaría de coincidir. Por eso nunca se guardan datos sensibles en el payload.
@@ -194,14 +194,14 @@ Por qué así:
 - Pasos del guard: (1) si la ruta es pública, deja pasar; (2) lee el encabezado `Authorization: Bearer <token>`; si falta o el esquema no es `Bearer` → **401** "Falta el token de autenticación"; (3) `jwtService.verifyAsync(token)` comprueba **firma y vencimiento**; si falla (token alterado, firmado con otra clave o vencido) → **401** "El token es inválido o está vencido"; (4) si está bien, guarda el payload en `request.usuario` y deja pasar.
 - `@UsuarioActual()` (`auth/decoradores/usuario-actual.decorator.ts`) es un decorador de parámetro (`createParamDecorator`): devuelve `request.usuario.sub`, el id del dueño del token. Así los controllers escriben `crear(@UsuarioActual() usuarioId: string, ...)`. **El actor nunca se toma del body ni de la query**, porque eso lo controla el cliente: con `usuarioId` en el body cualquiera podía actuar como otro.
 - `payload-token.ts` define el tipo `PayloadToken` (`sub`, `correo`, `nombreUsuario`, `perfil`, `iat`, `exp`) y `RequestAutenticada`, la `Request` de Express con el campo `usuario`.
-- **Qué NO hace el guard:** no consulta la base. Confirma que el token lo firmó el servidor y no venció, pero no que el usuario siga existiendo o habilitado (hacerlo en cada pedido sería una consulta extra por request). Esa comprobación la hacen `autorizar` y `refrescar`, y se completa en el Sprint #4. Consecuencia conocida: un usuario deshabilitado conserva acceso hasta que venza su token.
+- **Qué NO hace el guard:** no consulta la base. Confirma que el token lo firmó el servidor y no venció, pero no que el usuario siga existiendo o habilitado (hacerlo en cada pedido sería una consulta extra por request). Esa comprobación la hacen `autorizar`, `refrescar` y, desde el Sprint #4, `RolesGuard` en las rutas de administrador (ver 3.10). Consecuencia conocida: en las rutas comunes, un usuario deshabilitado conserva acceso hasta que venza su token (15 min). El enunciado solo pide que el guard valide firma y vencimiento y que `autorizar` confirme el token, así que se dejó así; si hiciera falta cortar de inmediato, el guard podría consultar la base.
 
 **`POST /auth/autorizar` → 200** `{ usuario }` y **`POST /auth/refrescar` → 200** `{ usuario, token }`:
 
 - Ambas pasan por el guard (sin token válido ya responden 401) y además llaman a `AuthService.obtenerVigenteOFallar(id)`: busca el usuario y, si **no existe o está deshabilitado**, responde **401** "La sesión ya no es válida". El id se valida con `Types.ObjectId.isValid` antes de consultar, para que un `sub` raro dé 401 y no un 500 por error de cast de Mongoose.
 - `autorizar` sirve para que el front, al arrancar, sepa si el token guardado sigue valendo y recupere los datos del usuario. `refrescar` emite un **token nuevo con la misma payload y el vencimiento renovado**; el front lo usará para extender la sesión.
 - Se devuelve 200 y no 201 porque no se crea ningún recurso (mismo criterio que el login).
-- `aRespuestaUsuario` es el único lugar que arma el objeto de usuario sin contraseña; lo usan registro, login, `autorizar` y `refrescar`, así nunca se filtra el hash.
+- `aRespuestaUsuario` (`usuarios/usuario-respuesta.ts`) es el único lugar que arma el objeto de usuario sin contraseña; lo usan registro, login, `autorizar` y `refrescar`, así nunca se filtra el hash.
 
 ### 3.9 Imágenes: `Backend/src/almacenamiento/almacenamiento.service.ts`
 
@@ -228,9 +228,44 @@ Decisiones:
 - La validación de tipo/tamaño existe **en front y en back**: la del front es comodidad para el usuario; la del back es la que realmente protege.
 - El constructor usa `getOrThrow`: si falta alguna variable de Supabase, **la app no arranca**. Es útil (falla rápido) pero hay que tenerlo presente al hacer el deploy.
 
-### 3.10 Módulo Usuarios (de prueba)
+### 3.10 Roles, Usuarios y Estadísticas (Sprint #4, back): `Backend/src/usuarios/`, `Backend/src/estadisticas/`
 
-`usuarios.service.ts` es un CRUD genérico anterior a Auth (`delete` ya hace **baja lógica**, `habilitado: false`). El `usuarios.controller.ts` existe pero **no está registrado** en el módulo: se reactiva y se rehace con guard de administrador en el Sprint #4 (ver sección 7).
+**`RolesGuard` y `@Roles(...)`** (`auth/roles.guard.ts`, `auth/decoradores/roles.decorator.ts`):
+
+- `@Roles(PerfilUsuario.ADMINISTRADOR)` junta dos cosas con `applyDecorators`: guarda los perfiles permitidos con `SetMetadata` y activa `RolesGuard` con `UseGuards`. Se puede poner en un método o en un controller entero. El módulo del controller debe registrar el modelo `Usuario` (`MongooseModule.forFeature`), porque el guard se instancia ahí.
+- Orden de ejecución: primero el `JwtAuthGuard` global (token válido y vigente, deja el payload en `request.usuario`) y después `RolesGuard`.
+- `RolesGuard` **lee el perfil y el estado desde la base**, no del token. El token dice el perfil que tenía al emitirse y puede quedar viejo: si se le quita el rol a un admin o se lo deshabilita, tiene que perder el acceso en el acto, sin esperar a que venza su JWT. Respuestas: **401** si el usuario ya no existe o está deshabilitado ("La sesión ya no es válida"), **403** si existe pero su perfil no alcanza ("No tenés permisos para realizar esta acción").
+- Constante `ROLES` definida en el guard (no en el decorador) para evitar un import circular entre ambos archivos.
+
+**Usuarios** (`usuarios.controller.ts`, solo administradores):
+
+| Método y ruta | Qué hace | Respuestas |
+|---|---|---|
+| `GET /usuarios` | Lista todos los usuarios, los más nuevos primero | 200 |
+| `POST /usuarios` | Alta con las mismas reglas del registro (`RegistroDto`); `perfil` define si es usuario o administrador. **No devuelve token** (no inicia sesión como el nuevo usuario) | 201, 400, 409 correo o nombre de usuario repetido |
+| `DELETE /usuarios/:id` | Baja lógica: `habilitado: false`. Un administrador no puede deshabilitarse a sí mismo | 200, 400 id inválido o intento de auto-baja, 404 |
+| `POST /usuarios/:id/habilitar` | Alta lógica: `habilitado: true` | 200, 400, 404 |
+
+- El alta reutiliza `AuthService.crearUsuario(dto)`, que es el mismo código del registro público (validar contraseñas, duplicados, subir la imagen, hashear y guardar). `AuthModule` exporta `AuthService` y `UsuariosModule` lo importa; así no se duplica la lógica.
+- `usuarios/usuario-respuesta.ts` tiene `aRespuestaUsuario`, la única función que arma el usuario "público" (sin el hash). La usan auth y usuarios.
+- Se quitaron `GET :id` y `PATCH :id` del CRUD de prueba anterior: el `PATCH` aceptaba cualquier body sin validar y permitía cambiar `perfil` o `contrasena` a mano.
+- 200 y no 204 en `DELETE`: devuelve el usuario ya deshabilitado, útil para que el front actualice la fila.
+- El login de un usuario deshabilitado ya respondía 401 "El usuario se encuentra deshabilitado" (ver 3.6).
+
+**Estadísticas** (`estadisticas/`, solo administradores). Las tres rutas son `GET` y aceptan `desde` y `hasta` (opcionales):
+
+| Ruta | Devuelve | Gráfico pensado |
+|---|---|---|
+| `/estadisticas/publicaciones-por-usuario` | `[{ usuarioId, nombreUsuario, cantidad }]`, de más a menos | Barras |
+| `/estadisticas/comentarios` | `{ total, porDia: [{ fecha, cantidad }] }` | Líneas |
+| `/estadisticas/comentarios-por-publicacion` | `[{ publicacionId, titulo, cantidad }]`, de más a menos | Torta |
+
+- Las dos con ranking aceptan `limit` (1 a 50, por defecto 10).
+- Fechas: se aceptan `2026-11-01` o una fecha ISO completa. Si `hasta` viene solo como fecha, se incluye el **día entero** (internamente `$lt` del día siguiente). Si `desde` es posterior a `hasta` → **400**. Un solo día se pide con `desde` y `hasta` iguales.
+- Se usa el pipeline de agregación de MongoDB: `$match` (fecha y no eliminado) → `$group` (cuenta) → `$lookup` (trae usuario o publicación para mostrar el nombre o título) → `$sort` → `$limit`.
+- Se excluyen publicaciones dadas de baja y los comentarios de esas publicaciones o eliminados: la consigna dice que al dar de baja una publicación "sus comentarios dejan de estar disponibles".
+- Los nombres de colección de los `$lookup` se piden al modelo (`modelo.collection.name`) en vez de escribirlos a mano: Mongoose pluraliza a su manera (`Publicacion` → `publicacions`).
+- Los días se agrupan y se filtran en **UTC**. El enunciado no pide una zona horaria; un comentario hecho a la noche en Argentina (UTC-3) puede caer en el día siguiente. Si hiciera falta, se resuelve pasando `timezone` a `$dateToString` y ajustando el corte de `desde`/`hasta`.
 
 ### 3.11 Publicaciones y likes (Sprint #2): `Backend/src/publicaciones/`
 
@@ -701,7 +736,7 @@ Decisiones clave para explicar:
 ## 6. Pruebas y calidad
 
 - **Postman** (`Backend/postman/`): una colección de **13 requests** y dos environments (**NextPlay - Local**, `localhost:3000`, y **NextPlay - Produccion**, el back de Vercel). La URL sale de `{{baseUrl}}`, así que la misma colección sirve para los dos entornos. Cada request hace el **pedido principal** y, en su pestaña Tests, dispara las **variantes** (400, 401, 403, 404, 409) con pedidos extra (`pm.sendRequest`); cada una queda como un test "caso -> status esperado". Así un solo `GET` muestra 200, 400, 404 y 401, sin un request por caso. El helper que arma y registra esos pedidos vive una vez en el Pre-request Script de la colección y los tests lo cargan con `eval`. Orden: Auth (registro, login, autorizar, refrescar), Publicaciones (crear, listar, detalle, like), Comentarios (comentar, listar, editar) y, al final, Baja (eliminar la publicación y comprobar que sus comentarios dejan de estar disponibles) y Token vencido. Los requests dependen de los anteriores (guardan tokens e ids en variables), por eso se corre entera con "Run collection". El request 13 lee el `exp` del token y espera a que venza solo si faltan 120 s o menos; con `JWT_EXPIRES_IN_SEGUNDOS=900` se omite (`skip`). Las corridas crean datos de prueba reales, y con el token de 30 a 60 s del `.env` local una corrida lenta puede recibir 401.
-- **Tests unitarios:** back 23 en 8 suites (Jest), front 20 en 4 archivos (Vitest). Los de creación de controller/service/app son básicos; los nuevos del Sprint #3 sí verifican comportamiento: `JwtAuthGuard` (ruta pública, sin token, esquema distinto de Bearer, token inválido/vencido, token válido que deja el payload en la request), `AuthService.autorizar`/`refrescar` (401 si el usuario no existe, está deshabilitado o el id no es un ObjectId) `ComentariosService.actualizar` (éxito, 403, 404 en sus dos variantes, 400) y `PublicacionesService.obtener` (éxito con autor y likes, 400 sin consultar la base, 404). En el front, el interceptor y el componente `Comentarios` (ver 4.11). Los servicios se prueban con modelos de Mongoose simulados, sin base de datos. El resto de la cobertura se probó con requests directos al servidor real (ver README).
+- **Tests unitarios:** back 44 en 10 suites (Jest), front 20 en 4 archivos (Vitest). Los del Sprint #4 (back): `RolesGuard` (admin habilitado pasa, usuario común 403, admin deshabilitado o inexistente 401), `UsuariosService` (sin hash en las respuestas, baja y alta lógica, 400 de auto-baja e id inválido, 404) y `EstadisticasService` (armado del filtro de fechas, `hasta` inclusivo, 400 de rango invertido, mapeo de resultados). Los de creación de controller/service/app son básicos; los nuevos del Sprint #3 sí verifican comportamiento: `JwtAuthGuard` (ruta pública, sin token, esquema distinto de Bearer, token inválido/vencido, token válido que deja el payload en la request), `AuthService.autorizar`/`refrescar` (401 si el usuario no existe, está deshabilitado o el id no es un ObjectId) `ComentariosService.actualizar` (éxito, 403, 404 en sus dos variantes, 400) y `PublicacionesService.obtener` (éxito con autor y likes, 400 sin consultar la base, 404). En el front, el interceptor y el componente `Comentarios` (ver 4.11). Los servicios se prueban con modelos de Mongoose simulados, sin base de datos. El resto de la cobertura se probó con requests directos al servidor real (ver README).
 - **Lint** del back con `oxlint`. **Build** de ambos proyectos en verde.
 
 Comandos:
@@ -723,10 +758,10 @@ Es mejor conocer los puntos débiles que descubrirlos en plena presentación.
 
 | Tema | Estado hoy | Cómo se resuelve |
 |---|---|---|
-| `UsuariosController` desactivado | Era un CRUD de prueba sin protección (`GET /usuarios` devolvía el hash de las contraseñas y `PATCH` permitía cambiar el `perfil`). Se quitó de `UsuariosModule` antes del deploy; el servicio y el esquema siguen | Sprint #4: se reactiva con guard JWT + rol administrador |
+| `UsuariosController` desactivado | Era un CRUD de prueba sin protección (`GET /usuarios` devolvía el hash de las contraseñas y `PATCH` permitía cambiar el `perfil`). Se quitó de `UsuariosModule` antes del deploy; el servicio y el esquema siguen | Resuelto en el Sprint #4: reactivado con rol administrador (`@Roles`), sin `GET :id` ni `PATCH` y sin devolver el hash |
 | Validación del token en el back (resuelto) | `JwtAuthGuard` global: toda ruta exige token salvo `@Public()` (registro, login y `GET /`); `autorizar` y `refrescar` agregan la comprobación contra la base | — |
 | Actor tomado del token (resuelto) | Publicaciones y comentarios usan `@UsuarioActual()`; `usuarioId` ya no se acepta (400). Ya no se puede actuar ni hacerse pasar por administrador conociendo un id | — |
-| El guard no consulta la base | Verifica firma y vencimiento, pero un usuario deshabilitado (o eliminado) conserva acceso hasta que su token venza (hoy 15 min) | Sprint #4: al implementar la baja de usuarios, el login ya lo bloquea y `autorizar`/`refrescar` también; si hiciera falta cortar de inmediato, el guard podría consultar la base |
+| El guard no consulta la base | Verifica firma y vencimiento, pero un usuario deshabilitado (o eliminado) conserva acceso hasta que su token venza (hoy 15 min) | Decisión: el login, `autorizar`, `refrescar` y las rutas de administrador (`RolesGuard`) sí consultan la base; las demás rutas no, porque el enunciado no lo pide. Si hiciera falta cortar de inmediato, el guard podría consultar la base |
 | Interceptor del front (resuelto) | Agrega `Bearer` a los pedidos de la API y, ante un 401 en una ruta protegida, cierra la sesión, avisa y va al login. El front ya no manda `usuarioId` | — |
 | Token de 30 s en local | Solo para poder probar el vencimiento durante el desarrollo | Volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 (o borrar la variable) antes de entregar |
 | "Cargar más" con paginación por `offset` | Si alguien comenta mientras tanto, los comentarios se corren y la siguiente página puede traer uno que ya se mostraba | El front descarta los repetidos por id; la alternativa es paginar por cursor (comentarios anteriores a una fecha) |

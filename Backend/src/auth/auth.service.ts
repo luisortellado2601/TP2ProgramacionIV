@@ -12,6 +12,7 @@ import { RegistroDto } from './dto/registro.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { PasswordHasher } from './password-hasher.js';
 import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service.js';
+import { aRespuestaUsuario } from '../usuarios/usuario-respuesta.js';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,13 @@ export class AuthService {
   ) {}
 
   async registro(dto: RegistroDto) {
+    const usuario = await this.crearUsuario(dto);
+    return this.construirRespuesta(usuario);
+  }
+
+  // Valida y guarda un usuario nuevo. Lo usan el registro público y el alta
+  // desde el panel de administración.
+  async crearUsuario(dto: RegistroDto): Promise<UsuarioDocument> {
     if (dto.contrasena !== dto.repetirContrasena) {
       throw new BadRequestException('Las contraseñas no coinciden');
     }
@@ -49,7 +57,7 @@ export class AuthService {
         )
       : undefined;
 
-    const usuario = await this.usuarioModel.create({
+    return this.usuarioModel.create({
       nombre: dto.nombre,
       apellido: dto.apellido,
       correo: dto.correo,
@@ -60,8 +68,6 @@ export class AuthService {
       imagenPerfilUrl,
       perfil: dto.perfil,
     });
-
-    return this.construirRespuesta(usuario);
   }
 
   async login(dto: LoginDto) {
@@ -94,7 +100,7 @@ export class AuthService {
   // Confirma que el dueño del token siga existiendo y habilitado; devuelve sus datos.
   async autorizar(usuarioId: string) {
     const usuario = await this.obtenerVigenteOFallar(usuarioId);
-    return { usuario: this.aRespuestaUsuario(usuario) };
+    return { usuario: aRespuestaUsuario(usuario) };
   }
 
   // Emite un token nuevo (misma payload, vencimiento renovado) para el usuario vigente.
@@ -124,22 +130,6 @@ export class AuthService {
     };
     const token = await this.jwtService.signAsync(payload);
 
-    return { usuario: this.aRespuestaUsuario(usuario), token };
-  }
-
-  private aRespuestaUsuario(usuario: UsuarioDocument) {
-    return {
-      id: usuario._id.toString(),
-      nombre: usuario.nombre,
-      apellido: usuario.apellido,
-      correo: usuario.correo,
-      nombreUsuario: usuario.nombreUsuario,
-      fechaNacimiento: usuario.fechaNacimiento,
-      descripcion: usuario.descripcion,
-      imagenPerfilUrl: usuario.imagenPerfilUrl,
-      perfil: usuario.perfil,
-      habilitado: usuario.habilitado,
-      fechaAlta: usuario.fechaAlta,
-    };
+    return { usuario: aRespuestaUsuario(usuario), token };
   }
 }

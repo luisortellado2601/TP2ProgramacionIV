@@ -12,24 +12,25 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-10
-**Sprint en curso:** #3 terminado y probado (navegador y Postman, en local y en producción; tests: back 23, front 20). Solo falta cerrarlo (ver "Próximo paso"). Sigue el Sprint #4.
+**Última actualización:** 2026-11-11
+**Sprint en curso:** #4. Back terminado y probado contra la API real en local (tests: back 44, front 20). Falta Postman, deploy del back y todo el front.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
-| #3 Comentarios, JWT y sesión | [x] | [x] | Terminado y probado; falta volver el token a 900 s |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [ ] | Sin iniciar |
+| #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back listo (sin deployar); front sin iniciar |
 
 ### Próximo paso
-1. **Cerrar el Sprint #3:** volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 en `Backend/.env` (hoy 60), verificar el front en Vercel con el último deploy y revisar el checklist de la sección 5.
-2. **Sprint #4**, back primero (`RolesGuard`, módulo de usuarios para admin, estadísticas, login que bloquea deshabilitados) y después front (baja de publicaciones para admin, dashboard de usuarios y de estadísticas, pipes, directivas y PWA). Detalle en la sección 3.
+1. Probar el back del Sprint #4 con su colección de Postman y deployarlo.
+2. **Front del Sprint #4**, en el orden del plan (sección 3): baja de publicaciones para admin, dashboard de usuarios, dashboard de estadísticas, pipes, directivas y PWA.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
 - **Postman** (`Backend/postman/`): una colección de 13 requests y dos environments, **NextPlay - Local** (`localhost:3000`) y **NextPlay - Produccion** (back de Vercel). Cada request hace el pedido principal y dispara en sus tests las variantes (400, 401, 403, 404, 409), que aparecen como "caso -> status esperado". Se corre entera en orden con "Run collection". El request 13 (token vencido) solo corre si el token dura 120 s o menos; con 900 se omite solo. La carpeta "Pruebas rapidas (manual)" sirve para probar a mano (likes, etc.) con un único token, `{{tokenActivo}}`, que se cambia con "Usar usuario: autor/otro".
+- **Sprint #4 (back):** `NextPlay.Sprint4.postman_collection.json`, colección aparte de 34 requests (usuarios y estadísticas de admin). Es independiente de la anterior (crea sus propios usuarios y publicación), usa los mismos environments y se corre entera en orden con "Run collection".
 - Las pruebas crean usuarios y publicaciones de prueba en la base real (no hay endpoint para borrarlos).
 
 ### Entorno y producción
@@ -44,8 +45,8 @@
 - Backend en ESM: los imports relativos terminan en `.js`.
 
 ### Pendientes y límites conocidos
-- `JwtAuthGuard` solo verifica firma y vencimiento, así que un usuario deshabilitado conserva acceso hasta que venza su token. Se completa en el Sprint #4.
-- `UsuariosController` está desactivado (exponía el hash de las contraseñas). Vuelve en el Sprint #4 con guard JWT y rol administrador.
+- `JwtAuthGuard` solo verifica firma y vencimiento, así que un usuario deshabilitado conserva acceso a las rutas comunes hasta que venza su token (15 min). Las rutas de administrador (`@Roles`) sí consultan la base en cada pedido, y `autorizar`/`refrescar` también.
+- Las estadísticas agrupan y filtran los días en UTC (el enunciado no pide zona horaria).
 - `authGuard` del front solo mira `localStorage`; un token vencido se detecta en el primer pedido (401) o al iniciar la app en `/` (pantalla "Cargando").
 - Menor: en `darLike`/`quitarLike`, si la publicación se elimina justo entre la comprobación y la actualización, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`) y borrar la variable vieja `JWT_EXPIRES_IN_MINUTOS`, si existe.
@@ -58,7 +59,7 @@
 ```
 TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
-└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios
+└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios, estadisticas
     ├── Funcional.md   Descripción funcional de NextPlay
     └── postman/       Colección de Postman (13 requests) y environments Local y Produccion
 ```
@@ -264,14 +265,18 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] **3 directivas PROPIAS**.
 
 **Back – Usuarios controller** (validar que el token sea de administrador)
-- [ ] **GET**: listado de usuarios.
-- [ ] **POST**: alta de nuevo usuario (define perfil administrador/usuario).
-- [ ] **DELETE**: deshabilitar usuario (al intentar ingresar debe notificarse que no está autorizado).
-- [ ] **POST**: alta lógica, rehabilita usuario previamente deshabilitado.
-- [ ] Login: bloquear usuarios deshabilitados con status y mensaje claros (401/403).
+- [x] `RolesGuard` + decorador `@Roles(...)`: 403 si el perfil no corresponde, 401 si el usuario ya no existe o fue deshabilitado. Lee el perfil de la base, no del token.
+- [x] **GET** `/usuarios`: listado de usuarios (sin el hash de la contraseña).
+- [x] **POST** `/usuarios`: alta de nuevo usuario con las mismas reglas del registro (`RegistroDto`); `perfil` define administrador/usuario. No devuelve token.
+- [x] **DELETE** `/usuarios/:id`: deshabilitar (baja lógica). Un administrador no puede deshabilitarse a sí mismo (400).
+- [x] **POST** `/usuarios/:id/habilitar`: alta lógica, rehabilita al usuario.
+- [x] Login: bloquea usuarios deshabilitados con 401 y "El usuario se encuentra deshabilitado".
 
 **Back – Estadísticas controller** (validar token de administrador)
-- [ ] Rutas **GET** necesarias para los tres gráficos, con filtro por rango de fechas.
+- [x] **GET** `/estadisticas/publicaciones-por-usuario` → `[{ usuarioId, nombreUsuario, cantidad }]`.
+- [x] **GET** `/estadisticas/comentarios` → `{ total, porDia: [{ fecha, cantidad }] }`.
+- [x] **GET** `/estadisticas/comentarios-por-publicacion` → `[{ publicacionId, titulo, cantidad }]`.
+- [x] Las tres aceptan `desde` y `hasta` (opcionales; con solo la fecha, `hasta` incluye el día entero; 400 si `desde` > `hasta`). Las dos con ranking aceptan `limit` (1-50, por defecto 10). Excluyen publicaciones dadas de baja y comentarios eliminados.
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |
@@ -306,7 +311,9 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 | POST | `/usuarios` | Alta (admin) | 4 |
 | DELETE | `/usuarios/:id` | Deshabilitar (admin) | 4 |
 | POST | `/usuarios/:id/habilitar` | Rehabilitar (admin) | 4 |
-| GET | `/estadisticas/...` | Gráficos (admin) | 4 |
+| GET | `/estadisticas/publicaciones-por-usuario?desde=&hasta=&limit=` | Publicaciones por usuario (admin) | 4 |
+| GET | `/estadisticas/comentarios?desde=&hasta=` | Total y comentarios por día (admin) | 4 |
+| GET | `/estadisticas/comentarios-por-publicacion?desde=&hasta=&limit=` | Comentarios por publicación (admin) | 4 |
 
 > Los nombres de rutas son sugeridos; el enunciado solo fija métodos y comportamiento.
 >
@@ -320,10 +327,10 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] Sin `alert()`; todo con modales.
 - [ ] Diseño uniforme en todas las pantallas.
 - [x] Validaciones y mensajes claros en formularios.
-- [ ] Contraseñas encriptadas; JWT con vencimiento a 15 minutos. _(Contraseñas hechas; falta volver `JWT_EXPIRES_IN_SEGUNDOS` a 900 en el `.env` local.)_
-- [x] Rutas protegidas por guard (front) y por JWT (back). _(Los roles llegan en el Sprint #4.)_
-- [x] Bajas lógicas (no se borra físicamente). _(Publicaciones; la de usuarios es del Sprint #4.)_
-- [ ] Deploy en hosting funcionando. _(Back verificado con Postman; falta revisar el front tras el último deploy.)_
+- [x] Contraseñas encriptadas; JWT con vencimiento a 15 minutos.
+- [x] Rutas protegidas por guard (front) y por JWT y roles (back).
+- [x] Bajas lógicas (no se borra físicamente): publicaciones y usuarios.
+- [x] Deploy en hosting funcionando. _(Sprint #3; el back del #4 aún no se deployó.)_
 
 ---
 

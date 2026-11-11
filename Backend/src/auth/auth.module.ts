@@ -31,5 +31,6 @@ import { AlmacenamientoModule } from '../almacenamiento/almacenamiento.module.js
   ],
   controllers: [AuthController],
   providers: [AuthService, PasswordHasher],
+  exports: [AuthService],
 })
 export class AuthModule {}

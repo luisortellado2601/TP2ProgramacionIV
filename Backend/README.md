@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-11
-**Sprint en curso:** #4. Back terminado y probado contra la API real en local (tests: back 44, front 20). Falta Postman, deploy del back y todo el front.
+**Sprint en curso:** #4. Back terminado y probado con Postman en local (tests: back 44, front 20). Falta deployar el back y todo el front.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -24,7 +24,7 @@
 | #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back listo (sin deployar); front sin iniciar |
 
 ### Próximo paso
-1. Probar el back del Sprint #4 con su colección de Postman y deployarlo.
+1. Deployar el back del Sprint #4 y correr su colección de Postman contra Produccion.
 2. **Front del Sprint #4**, en el orden del plan (sección 3): baja de publicaciones para admin, dashboard de usuarios, dashboard de estadísticas, pipes, directivas y PWA.
 
 ### Cómo probar
@@ -61,7 +61,7 @@ TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
 └── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios, estadisticas
     ├── Funcional.md   Descripción funcional de NextPlay
-    └── postman/       Colección de Postman (13 requests) y environments Local y Produccion
+    └── postman/       Dos colecciones de Postman (Sprint 1-3: 13 requests; Sprint 4: 34) y environments Local y Produccion
 ```
 
 **Backend** (requiere `Backend/.env` a partir de `.env.example`: `MONGODB_URI`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN_SEGUNDOS`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_BUCKET`):

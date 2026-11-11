@@ -29,7 +29,7 @@
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
-- **Postman** (`Backend/postman/`): una colección de 13 requests y dos environments, **NextPlay - Local** (`localhost:3000`) y **NextPlay - Produccion** (back de Vercel). Cada request hace el pedido principal y dispara en sus tests las variantes (400, 401, 403, 404, 409), que aparecen como "caso -> status esperado". Se corre entera en orden con "Run collection". El request 13 (token vencido) solo corre si el token dura 120 s o menos; con 900 se omite solo.
+- **Postman** (`Backend/postman/`): una colección de 13 requests y dos environments, **NextPlay - Local** (`localhost:3000`) y **NextPlay - Produccion** (back de Vercel). Cada request hace el pedido principal y dispara en sus tests las variantes (400, 401, 403, 404, 409), que aparecen como "caso -> status esperado". Se corre entera en orden con "Run collection". El request 13 (token vencido) solo corre si el token dura 120 s o menos; con 900 se omite solo. La carpeta "Pruebas rapidas (manual)" sirve para probar a mano (likes, etc.) con un único token, `{{tokenActivo}}`, que se cambia con "Usar usuario: autor/otro".
 - Las pruebas crean usuarios y publicaciones de prueba en la base real (no hay endpoint para borrarlos).
 
 ### Entorno y producción

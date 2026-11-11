@@ -105,6 +105,10 @@
       "value": ""
     },
     {
+      "key": "tokenActivo",
+      "value": ""
+    },
+    {
       "key": "publicacionId",
       "value": ""
     },
@@ -155,6 +159,7 @@
                   "  pm.expect(body.usuario.contrasena, 'no debe filtrar el hash').to.be.undefined;",
                   "  pm.collectionVariables.set('autorId', body.usuario.id);",
                   "  pm.collectionVariables.set('autorToken', body.token);",
+                  "  pm.collectionVariables.set('tokenActivo', body.token); // usuario por defecto de \"Pruebas rapidas\"",
                   "});",
                   "",
                   "const duplicado = L.cuerpoRegistro('ana', {",
@@ -867,6 +872,179 @@
                   "value": "{{tokenVencible}}",
                   "type": "string"
                 }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pruebas rapidas (manual)",
+      "description": "Para probar a mano sin mezclar usuarios. Todos los requests de esta carpeta heredan el MISMO token: {{tokenActivo}} (por defecto, el autor que crea el request 1). Para cambiar de usuario, correr \"Usar usuario: autor\" o \"Usar usuario: otro\"; desde ahi dar like, quitar like, etc. salen con ese usuario. No tienen asserts, asi que no rompen \"Run collection\". Requieren haber corrido antes el request 1 (Registro).",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{tokenActivo}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Usar usuario: autor",
+          "description": "Pone al autor como usuario activo y devuelve quien es (para confirmar con que usuario salen los siguientes requests).",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tokenActivo', pm.collectionVariables.get('autorToken'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/autorizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Usar usuario: otro",
+          "description": "Pone al segundo usuario como usuario activo y devuelve quien es.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tokenActivo', pm.collectionVariables.get('otroToken'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/autorizar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "autorizar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Nueva publicacion",
+          "description": "Crea una publicacion con el usuario activo y guarda su id en {{publicacionId}} para los requests siguientes.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set('publicacionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Publicacion de prueba\",\n  \"mensaje\": \"Probando likes a mano\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dar like",
+          "description": "POST /publicaciones/{{publicacionId}}/like con el usuario activo.",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Quitar like",
+          "description": "DELETE /publicaciones/{{publicacionId}}/like con el usuario activo (el mismo que dio el like, salvo que se haya cambiado de usuario en el medio).",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}",
+                "like"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ver publicacion",
+          "description": "Detalle de {{publicacionId}} para ver cantidadLikes.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/publicaciones/{{publicacionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "publicaciones",
+                "{{publicacionId}}"
               ]
             }
           },

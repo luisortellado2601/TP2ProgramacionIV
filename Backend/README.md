@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-12
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 44 tests, front 20). Front: baja de publicaciones para admin lista; falta el resto.
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 44 tests, front 20). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. Falta estadísticas, pipes, directivas y PWA.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,10 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (baja de publicaciones admin lista) |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (baja de publicaciones admin y dashboard de usuarios listos) |
 
 ### Próximo paso
-**Front del Sprint #4**, en el orden del plan (sección 3), en bloques chicos con un commit por bloque: dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar), dashboard de estadísticas, pipes, directivas y PWA.
+**Front del Sprint #4**, en bloques chicos con un commit por bloque: 3 pipes propias (en curso), 3 directivas propias, dashboard de estadísticas, PWA.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -249,11 +249,11 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 
 **Front**
 - [x] **Páginas Publicación y Publicaciones**: si el usuario logueado es administrador, habilitar botones para dar de baja **cualquier** publicación (la publicación y sus comentarios dejan de estar disponibles).
-- [ ] **Página dashboard/usuarios** (solo administradores)
-  - [ ] Listado de usuarios.
-  - [ ] Crear nuevos usuarios (mismos datos que el registro) con **dos radio buttons**: "usuario" / "administrador".
-  - [ ] Alta y baja lógica (habilitar/deshabilitar). Un usuario deshabilitado **no puede ingresar** y es **notificado** al intentar el login.
-  - [ ] Formulario de registro para nuevos usuarios.
+- [x] **Página dashboard/usuarios** (solo administradores)
+  - [x] Listado de usuarios.
+  - [x] Crear nuevos usuarios (mismos datos que el registro) con **dos radio buttons**: "usuario" / "administrador".
+  - [x] Alta y baja lógica (habilitar/deshabilitar). Un usuario deshabilitado **no puede ingresar** y es **notificado** al intentar el login.
+  - [x] Formulario de registro para nuevos usuarios.
 - [ ] **Página dashboard/estadísticas** (gráficos de **tipos variados**: torta, barras, líneas, etc.)
   - [ ] Cantidad de publicaciones por usuario en un lapso de tiempo (lapso elegible).
   - [ ] Cantidad de comentarios realizados en un lapso de tiempo (lapso elegible).

@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.admin-alta-usuario__bajada {
+  margin-top: 0.6rem;
+  margin-bottom: 1.75rem;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+
+.imagen-perfil {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.imagen-perfil__preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: var(--borde);
+}
+
+.imagen-perfil__acciones {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.imagen-perfil__acciones input[type='file'] {
+  align-self: stretch;
+}
+
+.radio-group {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.radio-opcion {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: capitalize;
+  font-weight: 400;
+}
+
+.radio-opcion input[type='radio'] {
+  width: auto;
+}

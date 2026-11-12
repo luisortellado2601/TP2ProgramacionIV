@@ -1,6 +1,63 @@
 <div class="page">
-  <h2>Usuarios</h2>
-  <div class="card text-center">
-    <p class="text-muted">El listado de usuarios está en construcción.</p>
+  <div class="admin-usuarios__cabecera">
+    <h2>Usuarios</h2>
+    <a class="btn btn-primary" routerLink="/admin/usuarios/nuevo">Nuevo usuario</a>
   </div>
+
+  @if (cargando()) {
+    <p class="text-muted text-center">Cargando...</p>
+  } @else if (falloCarga()) {
+    <div class="card text-center">
+      <p class="text-muted">No pudimos cargar los usuarios. Probá recargar la página.</p>
+    </div>
+  } @else if (usuarios().length === 0) {
+    <div class="card text-center">
+      <p class="text-muted">Todavía no hay usuarios.</p>
+    </div>
+  } @else {
+    <ul class="usuarios__lista">
+      @for (usuario of usuarios(); track usuario.id) {
+        <li class="usuario card">
+          @if (usuario.imagenPerfilUrl) {
+            <img
+              class="usuario__avatar"
+              [src]="usuario.imagenPerfilUrl"
+              [alt]="'Foto de ' + usuario.nombreUsuario"
+            />
+          } @else {
+            <div class="usuario__avatar">
+              {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
+            </div>
+          }
+          <div class="usuario__datos">
+            <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+            <span class="text-muted">
+              &#64;{{ usuario.nombreUsuario }} · {{ usuario.correo }}
+            </span>
+            <span class="text-muted">
+              Alta: {{ usuario.fechaAlta | date: 'dd/MM/yy' }}
+            </span>
+          </div>
+          <div class="usuario__estado">
+            <span class="etiqueta">{{ usuario.perfil }}</span>
+            <span class="etiqueta" [class.etiqueta--apagada]="!usuario.habilitado">
+              {{ usuario.habilitado ? 'Habilitado' : 'Deshabilitado' }}
+            </span>
+            @if (esUsuarioActual(usuario)) {
+              <span class="text-muted usuario__vos">(vos)</span>
+            } @else {
+              <button
+                class="btn btn-secondary usuario__alternar"
+                type="button"
+                [disabled]="actualizandoId() === usuario.id"
+                (click)="alternarHabilitado(usuario)"
+              >
+                {{ usuario.habilitado ? 'Deshabilitar' : 'Habilitar' }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
 </div>

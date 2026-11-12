@@ -44,5 +44,13 @@ export const routes: Routes = [
       import('./componentes/admin-usuarios/admin-usuarios').then((m) => m.AdminUsuarios),
     canActivate: [authGuard, adminGuard],
   },
+  {
+    path: 'admin/usuarios/nuevo',
+    loadComponent: () =>
+      import('./componentes/admin-alta-usuario/admin-alta-usuario').then(
+        (m) => m.AdminAltaUsuario,
+      ),
+    canActivate: [authGuard, adminGuard],
+  },
   { path: '**', redirectTo: 'publicaciones' },
 ];

@@ -35,7 +35,7 @@
         <img [src]="usuario.imagenPerfilUrl" [alt]="'Foto de ' + usuario.nombre" />
       } @else {
         <div class="cajon__iniciales">
-          {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
+          {{ usuario.nombre | iniciales: usuario.apellido }}
         </div>
       }
       <div>

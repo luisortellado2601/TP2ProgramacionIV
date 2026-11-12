@@ -8,7 +8,7 @@
       />
     } @else {
       <div class="publicacion__avatar">
-        {{ publicacion().autor.nombre.charAt(0) }}{{ publicacion().autor.apellido.charAt(0) }}
+        {{ publicacion().autor.nombre | iniciales: publicacion().autor.apellido }}
       </div>
     }
     <div class="publicacion__quien">

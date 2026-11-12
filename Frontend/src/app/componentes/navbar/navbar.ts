@@ -3,10 +3,11 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
 import { PerfilUsuario } from '../../models/usuario';
+import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, InicialesPipe],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })

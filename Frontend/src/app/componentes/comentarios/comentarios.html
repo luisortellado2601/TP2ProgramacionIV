@@ -41,7 +41,7 @@
             />
           } @else {
             <div class="comentario__avatar">
-              {{ comentario.autor.nombre.charAt(0) }}{{ comentario.autor.apellido.charAt(0) }}
+              {{ comentario.autor.nombre | iniciales: comentario.autor.apellido }}
             </div>
           }
           <div class="comentario__cuerpo">

@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { Publicacion } from '../../models/publicacion';
 import { PerfilUsuario } from '../../models/usuario';
+import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
 @Component({
   selector: 'app-publicacion',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, InicialesPipe],
   templateUrl: './publicacion.html',
   styleUrl: './publicacion.css',
 })

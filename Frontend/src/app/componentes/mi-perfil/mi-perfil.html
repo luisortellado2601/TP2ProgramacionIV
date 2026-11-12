@@ -9,7 +9,7 @@
         />
       } @else {
         <div class="perfil-avatar">
-          {{ usuario.nombre.charAt(0) }}{{ usuario.apellido.charAt(0) }}
+          {{ usuario.nombre | iniciales: usuario.apellido }}
         </div>
       }
 

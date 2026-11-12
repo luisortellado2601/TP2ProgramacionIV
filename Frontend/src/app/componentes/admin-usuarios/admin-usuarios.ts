@@ -6,10 +6,12 @@ import { ModalService } from '../../services/modal';
 import { UsuariosService } from '../../services/usuarios';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { Usuario } from '../../models/usuario';
+import { InicialesPipe } from '../../pipes/iniciales-pipe';
+import { EstadoUsuarioPipe } from '../../pipes/estado-usuario-pipe';
 
 @Component({
   selector: 'app-admin-usuarios',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, InicialesPipe, EstadoUsuarioPipe],
   templateUrl: './admin-usuarios.html',
   styleUrl: './admin-usuarios.css',
 })

@@ -4,12 +4,13 @@ import { PublicacionesService } from '../../services/publicaciones';
 import { Publicacion } from '../../models/publicacion';
 import { PublicacionCard } from '../publicacion/publicacion';
 import { Comentarios } from '../comentarios/comentarios';
+import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
 const CANTIDAD_ULTIMAS = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [PublicacionCard, Comentarios],
+  imports: [PublicacionCard, Comentarios, InicialesPipe],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

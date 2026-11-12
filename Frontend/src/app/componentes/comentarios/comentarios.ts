@@ -7,6 +7,7 @@ import { ModalService } from '../../services/modal';
 import { Comentario } from '../../models/comentario';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
+import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
 // Misma regla que CrearComentarioDto / ActualizarComentarioDto del back.
 const MAXIMO_CARACTERES = 500;
@@ -24,7 +25,7 @@ function nuevoControlMensaje(valor = ''): FormControl<string> {
 
 @Component({
   selector: 'app-comentarios',
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [DatePipe, ReactiveFormsModule, InicialesPipe],
   templateUrl: './comentarios.html',
   styleUrl: './comentarios.css',
 })

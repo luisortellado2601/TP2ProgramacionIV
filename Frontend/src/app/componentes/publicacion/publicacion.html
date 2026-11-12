@@ -57,7 +57,7 @@
         </svg>
         <span>{{ publicacion().cantidadLikes }}</span>
       </button>
-      @if (esMia()) {
+      @if (puedeEliminar()) {
         <button
           class="btn btn-danger publicacion__eliminar"
           type="button"

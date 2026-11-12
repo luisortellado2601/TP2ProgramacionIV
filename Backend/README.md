@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-11
-**Sprint en curso:** #4. Back terminado y probado con Postman en local (tests: back 44, front 20). Falta deployar el back y todo el front.
+**Última actualización:** 2026-11-12
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 44 tests, front 20). Front: baja de publicaciones para admin lista; falta el resto.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,11 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back listo (sin deployar); front sin iniciar |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (baja de publicaciones admin lista) |
 
 ### Próximo paso
-1. Deployar el back del Sprint #4 y correr su colección de Postman contra Produccion.
-2. **Front del Sprint #4**, en el orden del plan (sección 3): baja de publicaciones para admin, dashboard de usuarios, dashboard de estadísticas, pipes, directivas y PWA.
+**Front del Sprint #4**, en el orden del plan (sección 3), en bloques chicos con un commit por bloque: dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar), dashboard de estadísticas, pipes, directivas y PWA.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -249,7 +248,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 ### SPRINT #4 – Administrador, estadísticas, PWA, pipes y directivas
 
 **Front**
-- [ ] **Páginas Publicación y Publicaciones**: si el usuario logueado es administrador, habilitar botones para dar de baja **cualquier** publicación (la publicación y sus comentarios dejan de estar disponibles).
+- [x] **Páginas Publicación y Publicaciones**: si el usuario logueado es administrador, habilitar botones para dar de baja **cualquier** publicación (la publicación y sus comentarios dejan de estar disponibles).
 - [ ] **Página dashboard/usuarios** (solo administradores)
   - [ ] Listado de usuarios.
   - [ ] Crear nuevos usuarios (mismos datos que el registro) con **dos radio buttons**: "usuario" / "administrador".

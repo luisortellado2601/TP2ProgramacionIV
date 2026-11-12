@@ -3,6 +3,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { Publicacion } from '../../models/publicacion';
+import { PerfilUsuario } from '../../models/usuario';
 
 @Component({
   selector: 'app-publicacion',
@@ -28,4 +29,9 @@ export class PublicacionCard {
     return id !== null && this.publicacion().likes.includes(id);
   });
   protected readonly esMia = computed(() => this.publicacion().autor.id === this.usuarioId());
+  protected readonly esAdministrador = computed(
+    () => this.authService.usuarioActual()?.perfil === PerfilUsuario.ADMINISTRADOR,
+  );
+  // Un admin puede dar de baja cualquier publicación, no solo la propia.
+  protected readonly puedeEliminar = computed(() => this.esMia() || this.esAdministrador());
 }

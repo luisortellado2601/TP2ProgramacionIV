@@ -2,6 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
+import { PerfilUsuario } from '../../models/usuario';
 
 @Component({
   selector: 'app-navbar',
@@ -10,6 +11,7 @@ import { ModalService } from '../../services/modal';
   styleUrl: './navbar.css',
 })
 export class Navbar {
+  protected readonly PerfilUsuario = PerfilUsuario;
   protected readonly authService = inject(AuthService);
   private readonly modalService = inject(ModalService);
   private readonly router = inject(Router);

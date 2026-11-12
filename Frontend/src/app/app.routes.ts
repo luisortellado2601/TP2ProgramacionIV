@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth-guard';
 import { guestGuard } from './guards/guest-guard';
+import { adminGuard } from './guards/admin-guard';
 
 export const routes: Routes = [
   {
@@ -36,6 +37,12 @@ export const routes: Routes = [
     path: 'perfil',
     loadComponent: () => import('./componentes/mi-perfil/mi-perfil').then((m) => m.MiPerfil),
     canActivate: [authGuard],
+  },
+  {
+    path: 'admin/usuarios',
+    loadComponent: () =>
+      import('./componentes/admin-usuarios/admin-usuarios').then((m) => m.AdminUsuarios),
+    canActivate: [authGuard, adminGuard],
   },
   { path: '**', redirectTo: 'publicaciones' },
 ];

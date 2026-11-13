@@ -91,7 +91,7 @@
 .comentarios textarea {
   width: 100%;
   resize: vertical;
-  background: #0a0d13;
+  background: #0a0a0a;
   border: var(--borde);
   border-radius: var(--radius-sm);
   color: var(--color-text);

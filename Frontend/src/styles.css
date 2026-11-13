@@ -3,20 +3,20 @@
    reutilizan estas variables y clases en lugar de definir estilos sueltos. */
 
 :root {
-  --color-bg: #0d1017;
-  --color-surface: #161b25;
-  --color-surface-alt: #202736;
+  --color-bg: #000000;
+  --color-surface: #141414;
+  --color-surface-alt: #1e1e1e;
   --color-ink: #17120d;
-  --color-border: #3d475c;
-  --color-line: #3d475c;
+  --color-border: #383838;
+  --color-line: #383838;
 
   --color-primary: #c6f432;
   --color-primary-hover: #d8ff55;
   --color-accent: #ff5c39;
   --color-blue: #8fa0ff;
 
-  --color-text: #e8ecf4;
-  --color-text-muted: #8f9ab0;
+  --color-text: #ececec;
+  --color-text-muted: #9a9a9a;
 
   --color-success: #3ecf7a;
   --color-danger: #f0585b;
@@ -51,10 +51,20 @@ body {
   min-height: 100%;
 }
 
+/* Fondo negro con un mosaico de 300 px y 6 símbolos de PlayStation (triángulo, círculo, cruz y
+   cuadrado) en sus colores clásicos y muy tenues, repartidos en filas escalonadas y con distintas
+   rotaciones, para que no compitan con el contenido ni se vean como una grilla. Es un SVG en
+   línea dentro del CSS: no agrega ninguna petición de red. Para volver a los lunares, usar
+   --fondo-lunares en el background-image del body (y 22px 22px de tamaño). */
+:root {
+  --fondo-lunares: radial-gradient(rgba(232, 236, 244, 0.06) 1px, transparent 1px);
+  --fondo-simbolos: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300' fill='none' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='0.22'%3E%3Cpolygon points='42,24 51,41 33,41' stroke='%2300c389' transform='rotate(-14 42 34)'/%3E%3Ccircle cx='194' cy='26' r='8' stroke='%23ff4d5e'/%3E%3Cpath d='M111 127l14 14M125 127l-14 14' stroke='%235b9bff' transform='rotate(8 118 134)'/%3E%3Crect x='254' y='116' width='16' height='16' rx='1.5' stroke='%23ff7ac0' transform='rotate(14 262 124)'/%3E%3Ccircle cx='84' cy='238' r='8' stroke='%23ff4d5e'/%3E%3Cpolygon points='232,226 241,243 223,243' stroke='%2300c389' transform='rotate(20 232 236)'/%3E%3C/svg%3E");
+}
+
 body {
   background-color: var(--color-bg);
-  background-image: radial-gradient(rgba(232, 236, 244, 0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-image: var(--fondo-simbolos);
+  background-size: 300px 300px;
   color: var(--color-text);
   font-family: var(--font-base);
   line-height: 1.55;
@@ -146,7 +156,7 @@ button {
 .form-field input,
 .form-field select,
 .form-field textarea {
-  background: #0a0d13;
+  background: #0a0a0a;
   border: var(--borde);
   border-radius: var(--radius-sm);
   color: var(--color-text);

@@ -2,7 +2,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+/* Solo el título lleva fondo propio (como las tarjetas) para que se lea bien sobre el fondo de
+   símbolos; el botón "Nueva publicación" queda aparte. */
+.publicaciones-titulo {
+  padding: 0.9rem 1.25rem;
+  background: var(--color-surface);
+  border: var(--borde);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-small);
+}
+
+.publicaciones-titulo h2 {
+  margin: 0;
 }
 
 .publicaciones-orden {

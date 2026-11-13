@@ -113,6 +113,28 @@ describe('EstadisticasService', () => {
     expect(aggregateComentarios).not.toHaveBeenCalled();
   });
 
+  it('responde 400 si "hasta" es posterior a hoy (fecha sola o ISO completa)', async () => {
+    const manana = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await expect(
+      service.comentarios({ hasta: manana.toISOString().slice(0, 10) }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.comentarios({ hasta: manana.toISOString() }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(aggregateComentarios).not.toHaveBeenCalled();
+  });
+
+  it('acepta "hasta" igual a hoy', async () => {
+    devolver(aggregateComentarios, []);
+    const hoy = new Date().toISOString().slice(0, 10);
+
+    await expect(service.comentarios({ hasta: hoy })).resolves.toEqual({
+      total: 0,
+      porDia: [],
+    });
+  });
+
   it('comentarios devuelve el total y la cantidad por día', async () => {
     devolver(aggregateComentarios, [
       { _id: '2026-11-01', cantidad: 3 },

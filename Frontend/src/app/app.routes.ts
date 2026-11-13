@@ -39,6 +39,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'perfil/editar',
+    loadComponent: () =>
+      import('./componentes/editar-perfil/editar-perfil').then((m) => m.EditarPerfil),
+    canActivate: [authGuard],
+  },
+  {
     path: 'admin/usuarios',
     loadComponent: () =>
       import('./componentes/admin-usuarios/admin-usuarios').then((m) => m.AdminUsuarios),
@@ -47,9 +53,7 @@ export const routes: Routes = [
   {
     path: 'admin/usuarios/nuevo',
     loadComponent: () =>
-      import('./componentes/admin-alta-usuario/admin-alta-usuario').then(
-        (m) => m.AdminAltaUsuario,
-      ),
+      import('./componentes/admin-alta-usuario/admin-alta-usuario').then((m) => m.AdminAltaUsuario),
     canActivate: [authGuard, adminGuard],
   },
   {

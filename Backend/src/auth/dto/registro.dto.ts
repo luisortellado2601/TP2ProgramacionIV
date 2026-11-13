@@ -15,7 +15,7 @@ import { recortar, recortarYMinusculas } from './transformadores.js';
 import { FechaNacimientoValida } from './fecha-nacimiento-valida.validator.js';
 
 // Mismas reglas que el formulario de registro del front.
-const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
+export const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
 const PATRON_NOMBRE_USUARIO = /^[A-Za-z0-9._]+$/;
 const PATRON_CONTRASENA = /^(?=.*[A-Z])(?=.*\d).+$/;
 

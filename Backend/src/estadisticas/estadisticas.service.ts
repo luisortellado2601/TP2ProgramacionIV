@@ -128,6 +128,20 @@ export class EstadisticasService {
       );
     }
 
+    // "hasta" no puede ser posterior a hoy (en UTC, como el resto de las fechas).
+    // Con solo la fecha se compara el día; con fecha ISO completa, el instante.
+    if (hasta && hastaPedido) {
+      const ahora = new Date();
+      const esFutura = SOLO_FECHA.test(hasta)
+        ? hasta > ahora.toISOString().slice(0, 10)
+        : hastaPedido > ahora;
+      if (esFutura) {
+        throw new BadRequestException(
+          'La fecha "hasta" no puede ser posterior a hoy',
+        );
+      }
+    }
+
     const finInclusivo = !!hasta && !SOLO_FECHA.test(hasta);
     const fin =
       hastaPedido && !finInclusivo

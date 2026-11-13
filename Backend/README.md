@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-13
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 54). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta; lapso con Desde/Hasta que se aplican solos). PWA lista (manifest, íconos propios y service worker; probada sobre el build: instalable y abre sin conexión). Spinner único (`app-spinner`) en todas las cargas. Pendiente: verificar la instalación en producción tras el deploy.
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 80 tests, front 73). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta; lapso con Desde/Hasta que se aplican solos). PWA lista (manifest, íconos propios y service worker; probada sobre el build: instalable y abre sin conexión). Spinner único (`app-spinner`) en todas las cargas. Editar perfil probado y funcionando. El back de estadísticas rechaza un `hasta` posterior a hoy (400), igual que el front. Pendiente: deployar el back con este último cambio y verificar la instalación en producción tras el deploy.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -24,7 +24,7 @@
 | #4 Admin, estadísticas, PWA, pipes/directivas | [x] | [x] | Back deployado; front completo, falta deployarlo y verificar la PWA en producción |
 
 ### Próximo paso
-Deployar el front y comprobar la PWA en producción (abrir `/ngsw-worker.js` y `/manifest.webmanifest`, instalar la app, abrirla sin conexión). Después, pasada final de diseño (casilla "Diseño uniforme" de la sección 5) y cerrar el Sprint #4.
+**Editar el perfil** (el enunciado pide "ver y editar su perfil"): hecho en back (`PUT /usuarios/me`) y front (`/perfil/editar`, botón "Editar perfil" en Mi perfil; fecha de nacimiento visible). Se edita nombre, apellido, fecha de nacimiento, descripción y foto; correo, usuario, contraseña y perfil no se cambian. Probado en el navegador contra el back local; falta deployar. Después: verificar la PWA instalándola desde producción, pasada final de diseño (casilla "Diseño uniforme" de la sección 5) y cerrar el Sprint #4.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -176,7 +176,8 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Poder eliminar mis propias publicaciones.
   - [x] Crear publicación (título, mensaje, imagen opcional).
 - [x] **Componente Mi Perfil**
-  - [x] Mostrar todos los datos del usuario y su foto de perfil.
+  - [x] Mostrar todos los datos del usuario (incluida la fecha de nacimiento) y su foto de perfil.
+  - [x] Editar el perfil: nombre, apellido, fecha de nacimiento, descripción y foto. _(Agregado al auditar el enunciado: `PUT /usuarios/me` y `/perfil/editar`; falta deployarlo.)_
   - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 3 comentarios más recientes de cada una y un botón para ver los demás.)_
 
 **Back – Publicaciones controller**
@@ -276,7 +277,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] **GET** `/estadisticas/publicaciones-por-usuario` → `[{ usuarioId, nombreUsuario, cantidad }]`.
 - [x] **GET** `/estadisticas/comentarios` → `{ total, porDia: [{ fecha, cantidad }] }`.
 - [x] **GET** `/estadisticas/comentarios-por-publicacion` → `[{ publicacionId, titulo, cantidad }]`.
-- [x] Las tres aceptan `desde` y `hasta` (opcionales; con solo la fecha, `hasta` incluye el día entero; 400 si `desde` > `hasta`). Las dos con ranking aceptan `limit` (1-50, por defecto 10). Excluyen publicaciones dadas de baja y comentarios eliminados.
+- [x] Las tres aceptan `desde` y `hasta` (opcionales; con solo la fecha, `hasta` incluye el día entero; 400 si `desde` > `hasta` o si `hasta` es posterior a hoy en UTC). Las dos con ranking aceptan `limit` (1-50, por defecto 10). Excluyen publicaciones dadas de baja y comentarios eliminados.
 
 **Plan de trabajo diario sugerido**
 | Día | Tareas |
@@ -307,6 +308,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 | GET | `/publicaciones/:id/comentarios?offset=&limit=` | Comentarios paginados | 3 |
 | POST | `/publicaciones/:id/comentarios` | Comentar | 3 |
 | PUT | `/comentarios/:id` | Editar (modificado: true) | 3 |
+| PUT | `/usuarios/me` | Editar mi perfil (cualquier usuario con sesión; el id sale del token) | 4 |
 | GET | `/usuarios` | Listar (admin) | 4 |
 | POST | `/usuarios` | Alta (admin) | 4 |
 | DELETE | `/usuarios/:id` | Deshabilitar (admin) | 4 |

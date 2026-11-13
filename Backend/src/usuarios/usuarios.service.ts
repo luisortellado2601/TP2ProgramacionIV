@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -9,6 +10,8 @@ import { Usuario, UsuarioDocument } from './usuario.schema.js';
 import { aRespuestaUsuario } from './usuario-respuesta.js';
 import { AuthService } from '../auth/auth.service.js';
 import { RegistroDto } from '../auth/dto/registro.dto.js';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
+import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service.js';
 
 // Gestión de usuarios para administradores. Ninguna respuesta incluye el hash
 // de la contraseña (ver aRespuestaUsuario).
@@ -18,6 +21,7 @@ export class UsuariosService {
     @InjectModel(Usuario.name)
     private readonly usuarioModel: Model<UsuarioDocument>,
     private readonly authService: AuthService,
+    private readonly almacenamientoService: AlmacenamientoService,
   ) {}
 
   async listar() {
@@ -33,6 +37,48 @@ export class UsuariosService {
   async crear(dto: RegistroDto) {
     const usuario = await this.authService.crearUsuario(dto);
     return aRespuestaUsuario(usuario);
+  }
+
+  // Edición del propio perfil. Solo toca nombre, apellido, fecha de nacimiento, descripción e
+  // imagen; correo, nombre de usuario, contraseña y perfil no se pueden cambiar por acá, así que
+  // el token vigente sigue siendo válido y no hace falta emitir uno nuevo.
+  async actualizarPerfil(usuarioId: string, dto: ActualizarPerfilDto) {
+    const vigente = Types.ObjectId.isValid(usuarioId)
+      ? await this.usuarioModel
+          .findOne({ _id: usuarioId, habilitado: true })
+          .exec()
+      : null;
+    if (!vigente) {
+      throw new UnauthorizedException('La sesión ya no es válida');
+    }
+
+    const cambios: Partial<Usuario> = {
+      nombre: dto.nombre,
+      apellido: dto.apellido,
+      fechaNacimiento: new Date(dto.fechaNacimiento),
+    };
+    if (dto.descripcion !== undefined) {
+      cambios.descripcion = dto.descripcion;
+    }
+    // Se sube después de validar al usuario para no dejar imágenes huérfanas.
+    if (dto.imagenPerfil) {
+      cambios.imagenPerfilUrl = await this.almacenamientoService.subirImagen(
+        dto.imagenPerfil,
+        'perfiles',
+      );
+    }
+
+    const actualizado = await this.usuarioModel
+      .findByIdAndUpdate(
+        usuarioId,
+        { $set: cambios },
+        { returnDocument: 'after' },
+      )
+      .exec();
+    if (!actualizado) {
+      throw new UnauthorizedException('La sesión ya no es válida');
+    }
+    return aRespuestaUsuario(actualizado);
   }
 
   // Baja lógica: el usuario no se borra, queda sin poder ingresar.

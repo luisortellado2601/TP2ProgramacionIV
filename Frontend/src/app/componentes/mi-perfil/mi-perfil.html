@@ -21,9 +21,14 @@
         <h2>{{ usuario.nombre }} {{ usuario.apellido }}</h2>
         <p class="text-muted">&#64;{{ usuario.nombreUsuario }} · {{ usuario.perfil }}</p>
         <p class="text-muted">{{ usuario.correo }}</p>
+        <!-- La fecha viaja como medianoche UTC: se muestra en UTC para que no retroceda un día. -->
+        <p class="text-muted">
+          Nacimiento: {{ usuario.fechaNacimiento | date: 'dd/MM/yyyy' : 'UTC' }}
+        </p>
         @if (usuario.descripcion) {
           <p>{{ usuario.descripcion }}</p>
         }
+        <a class="btn btn-secondary perfil__editar" routerLink="/perfil/editar">Editar perfil</a>
       </div>
     </div>
 

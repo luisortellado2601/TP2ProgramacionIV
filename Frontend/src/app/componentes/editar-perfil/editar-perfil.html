@@ -1,0 +1,163 @@
+<div class="page">
+  <div class="card card--narrow">
+    <h2 class="text-center">Editar perfil</h2>
+    <p class="text-center text-muted editar-perfil__bajada">
+      Cambiá tus datos y guardá. El correo y el nombre de usuario no se pueden modificar.
+    </p>
+
+    @if (usuario(); as actual) {
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="form-field">
+          <span class="editar-perfil__etiqueta">Foto de perfil</span>
+          <div class="editar-perfil__foto">
+            @if (imagenNueva() ?? actual.imagenPerfilUrl; as imagen) {
+              <img
+                class="editar-perfil__avatar"
+                [src]="imagen"
+                [alt]="imagenNueva() ? 'Vista previa de la nueva foto' : 'Tu foto de perfil actual'"
+              />
+            } @else {
+              <div class="editar-perfil__avatar">
+                {{ actual.nombre | iniciales: actual.apellido }}
+              </div>
+            }
+            <div class="editar-perfil__acciones-foto">
+              <input
+                #inputImagen
+                id="imagenPerfil"
+                type="file"
+                aria-label="Elegir una foto de perfil nueva"
+                [accept]="tiposImagen"
+                [class.is-invalid]="errorImagen()"
+                (change)="seleccionarImagen($event)"
+              />
+              <span class="text-muted editar-perfil__ayuda">
+                JPG, PNG o WEBP · máx. 2 MB. Si no elegís otra, se conserva la actual.
+              </span>
+              @if (imagenNueva()) {
+                <button class="btn btn-link" type="button" (click)="quitarImagen(inputImagen)">
+                  Descartar foto nueva
+                </button>
+              }
+            </div>
+          </div>
+          @if (errorImagen(); as error) {
+            <span class="form-field__error">{{ error }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="nombre">Nombre</label>
+          <input
+            id="nombre"
+            type="text"
+            maxlength="50"
+            formControlName="nombre"
+            [class.is-invalid]="form.controls.nombre.invalid && form.controls.nombre.touched"
+          />
+          @if (form.controls.nombre.touched && form.controls.nombre.errors; as errores) {
+            <span class="form-field__error">
+              @if (errores['required'] || errores['soloEspacios']) {
+                El nombre es obligatorio.
+              } @else if (errores['minlength']) {
+                Debe tener al menos 2 caracteres.
+              } @else if (errores['maxlength']) {
+                No puede superar los 50 caracteres.
+              } @else if (errores['pattern']) {
+                Solo letras, espacios, apóstrofes y guiones.
+              }
+            </span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="apellido">Apellido</label>
+          <input
+            id="apellido"
+            type="text"
+            maxlength="50"
+            formControlName="apellido"
+            [class.is-invalid]="form.controls.apellido.invalid && form.controls.apellido.touched"
+          />
+          @if (form.controls.apellido.touched && form.controls.apellido.errors; as errores) {
+            <span class="form-field__error">
+              @if (errores['required'] || errores['soloEspacios']) {
+                El apellido es obligatorio.
+              } @else if (errores['minlength']) {
+                Debe tener al menos 2 caracteres.
+              } @else if (errores['maxlength']) {
+                No puede superar los 50 caracteres.
+              } @else if (errores['pattern']) {
+                Solo letras, espacios, apóstrofes y guiones.
+              }
+            </span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="correo">Correo</label>
+          <input id="correo" type="email" [value]="actual.correo" disabled />
+        </div>
+
+        <div class="form-field">
+          <label for="nombreUsuario">Nombre de usuario</label>
+          <input id="nombreUsuario" type="text" [value]="actual.nombreUsuario" disabled />
+        </div>
+
+        <div class="form-field">
+          <label for="fechaNacimiento">Fecha de nacimiento</label>
+          <input
+            id="fechaNacimiento"
+            type="date"
+            [min]="fechaMinima"
+            [max]="fechaMaxima"
+            formControlName="fechaNacimiento"
+            [class.is-invalid]="
+              form.controls.fechaNacimiento.invalid && form.controls.fechaNacimiento.touched
+            "
+          />
+          @if (
+            form.controls.fechaNacimiento.touched && form.controls.fechaNacimiento.errors;
+            as errores
+          ) {
+            <span class="form-field__error">
+              @if (errores['required']) {
+                La fecha de nacimiento es obligatoria.
+              } @else if (errores['fechaFutura']) {
+                La fecha de nacimiento no puede ser futura.
+              } @else if (errores['fechaMuyAntigua']) {
+                La fecha de nacimiento no puede ser anterior a 1900.
+              } @else {
+                Ingresá una fecha válida.
+              }
+            </span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="descripcion">Descripción breve</label>
+          <textarea
+            id="descripcion"
+            rows="3"
+            maxlength="280"
+            formControlName="descripcion"
+            [appContadorCaracteres]="280"
+            [class.is-invalid]="
+              form.controls.descripcion.invalid && form.controls.descripcion.touched
+            "
+          ></textarea>
+          @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
+            <span class="form-field__error">Máximo 280 caracteres.</span>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" [disabled]="enviando() || !hayCambios()">
+            {{ enviando() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+          <a class="btn btn-secondary" routerLink="/perfil">Cancelar</a>
+        </div>
+      </form>
+    }
+  </div>
+</div>

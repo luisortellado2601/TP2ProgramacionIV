@@ -3,7 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { LoginPayload, RegistroPayload, SesionResponse, Usuario } from '../models/usuario';
+import {
+  ActualizarPerfilPayload,
+  LoginPayload,
+  RegistroPayload,
+  SesionResponse,
+  Usuario,
+} from '../models/usuario';
 import { ModalService } from './modal';
 import { decodificarPayloadToken } from '../utils/jwt';
 import { formatearDuracion } from '../utils/formatear-duracion';
@@ -59,6 +65,14 @@ export class AuthService {
     return this.http
       .post<SesionResponse>(`${environment.apiUrl}/auth/refrescar`, {})
       .pipe(tap((respuesta) => this.guardarSesion(respuesta)));
+  }
+
+  // Edita los datos del propio usuario. El token no cambia (no incluye nada editable), así que solo
+  // se actualiza el usuario guardado: el nombre y la foto se renuevan en toda la app al instante.
+  actualizarPerfil(payload: ActualizarPerfilPayload): Observable<Usuario> {
+    return this.http
+      .put<Usuario>(`${environment.apiUrl}/usuarios/me`, payload)
+      .pipe(tap((usuario) => this.actualizarUsuario(usuario)));
   }
 
   logout(): void {

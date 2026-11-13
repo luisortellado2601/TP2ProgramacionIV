@@ -39,3 +39,13 @@ export interface LoginPayload {
   usuarioOCorreo: string;
   contrasena: string;
 }
+
+// Lo que el usuario puede cambiar de su propio perfil (PUT /usuarios/me). Correo, nombre de usuario,
+// contraseña y perfil no se editan. Sin `imagenPerfil` se conserva la foto actual.
+export interface ActualizarPerfilPayload {
+  nombre: string;
+  apellido: string;
+  fechaNacimiento: string;
+  descripcion?: string;
+  imagenPerfil?: string; // data URL en base64
+}

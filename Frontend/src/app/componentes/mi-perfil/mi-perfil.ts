@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
@@ -14,7 +15,7 @@ const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [RouterLink, PublicacionCard, Comentarios, InicialesPipe, Spinner],
+  imports: [DatePipe, RouterLink, PublicacionCard, Comentarios, InicialesPipe, Spinner],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

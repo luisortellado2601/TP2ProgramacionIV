@@ -52,7 +52,8 @@ src/
 │   │   ├── publicacion-detalle/  Página de una publicación (en grande) con sus comentarios
 │   │   ├── nueva-publicacion/  Formulario de alta con imagen opcional
 │   │   ├── comentarios/    Comentarios de una publicación (más recientes primero); en modo interactivo: comentar, "cargar más" y editar los propios
-│   │   ├── mi-perfil/      Datos del usuario, sus últimas 3 publicaciones y comentarios
+│   │   ├── mi-perfil/      Datos del usuario (con fecha de nacimiento), sus últimas 3 publicaciones y comentarios
+│   │   ├── editar-perfil/  Formulario para editar el propio perfil (nombre, apellido, fecha de nacimiento, descripción y foto; correo y usuario solo se muestran)
 │   │   ├── admin-usuarios/ Listado de usuarios para administradores: habilitar y deshabilitar
 │   │   ├── admin-alta-usuario/  Alta de usuarios para administradores (mismos datos que el registro, perfil con radios)
 │   │   ├── admin-estadisticas/  Dashboard de estadísticas para administradores: lapso con Desde/Hasta (se aplican solos) y 3 gráficos (barras, líneas, torta)
@@ -83,6 +84,7 @@ src/
 | `/publicaciones` | Publicaciones | Requiere sesión |
 | `/publicaciones/:id` | Detalle de una publicación y sus comentarios | Requiere sesión |
 | `/perfil` | Mi perfil | Requiere sesión |
+| `/perfil/editar` | Editar mi perfil | Requiere sesión |
 | `/admin/usuarios` | Listado de usuarios (habilitar / deshabilitar) | Solo administradores |
 | `/admin/usuarios/nuevo` | Alta de usuario | Solo administradores |
 | `/admin/estadisticas` | Dashboard de estadísticas | Solo administradores |

@@ -466,7 +466,7 @@ Componente **presentacional** (también llamado "tonto"): no llama al back. Reci
 **Mi perfil** (`mi-perfil.ts`) pide `listar({ orden: 'fecha', offset: 0, limit: 3, usuario: miId })`: es el **mismo endpoint** del listado, solo cambia el filtro `usuario` y el `limit`. Tiene tres estados (cargando / falló / vacío) con `@if ... @else if`. Debajo de cada publicación inserta `<app-comentarios [publicacionId]="publicacion.id" />` (3 pedidos extra por visita; se aceptó por simplicidad).
 
 **Un solo componente, dos modos** (`comentarios.ts`): `Comentarios` tiene el `input(false)` **`interactivo`**.
-- *Solo lectura* (Mi perfil): muestra los 5 más recientes y, si hay más, el botón `Ver N comentarios más` (`ocultos = total - mostrados`, un `computed`), que usa el mismo `cargarMas()` del modo interactivo. No hay caja para comentar ni botón de editar.
+- *Solo lectura* (Mi perfil): muestra los 3 más recientes y, si hay más, el botón `Ver N comentarios más` (`ocultos = total - mostrados`, un `computed`), que usa el mismo `cargarMas()` del modo interactivo. No hay caja para comentar ni botón de editar.
 - *Interactivo* (detalle): suma la caja para comentar, el botón "cargar más" y el botón "Editar" en los comentarios propios. Se reutiliza el mismo componente en vez de duplicarlo porque la lista, el avatar y la leyenda son iguales.
 - Carga con **`ngOnInit`** (los `input()` no tienen valor dentro del constructor). El título siempre muestra el total real que devuelve el back.
 
@@ -645,7 +645,7 @@ Mi perfil carga mis 3 últimas publicaciones (GET /publicaciones?usuario=&limit=
   ─► Back: id inválido 400 · publicación inexistente/eliminada 404
            countDocuments + find (sort fecha desc, skip, limit, populate autor)
   ─► 200 { total, comentarios }
-  ─► Mi perfil muestra los 5 más recientes y el botón "Ver N comentarios más" si total > 5
+  ─► Mi perfil muestra los 3 más recientes y el botón "Ver N comentarios más" si total > 3
   ─► el detalle (modo interactivo) muestra el botón "cargar más": pide offset = cargados, limit = 5 y agrega al final
 ```
 

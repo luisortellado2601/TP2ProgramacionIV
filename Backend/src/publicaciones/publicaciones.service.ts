@@ -8,6 +8,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Publicacion, PublicacionDocument } from './publicacion.schema.js';
+import { Comentario, ComentarioDocument } from '../comentarios/comentario.schema.js';
 import {
   PerfilUsuario,
   Usuario,
@@ -24,6 +25,8 @@ export class PublicacionesService {
     private readonly publicacionModel: Model<PublicacionDocument>,
     @InjectModel(Usuario.name)
     private readonly usuarioModel: Model<UsuarioDocument>,
+    @InjectModel(Comentario.name)
+    private readonly comentarioModel: Model<ComentarioDocument>,
     private readonly almacenamientoService: AlmacenamientoService,
   ) {}
 
@@ -52,6 +55,7 @@ export class PublicacionesService {
       fecha: publicacion.fecha,
       likes: [],
       cantidadLikes: 0,
+      cantidadComentarios: 0,
       autor: this.aAutor(autor),
     };
   }
@@ -76,6 +80,7 @@ export class PublicacionesService {
           { $sort: orden },
           { $skip: dto.offset },
           { $limit: dto.limit },
+          ...this.etapasCantidadComentarios(),
           {
             $lookup: {
               from: 'usuarios',
@@ -100,11 +105,12 @@ export class PublicacionesService {
       throw new BadRequestException('El id de la publicación no es válido');
     }
 
-    // Mismo pipeline que el listado (cantidadLikes y autor), para un solo documento.
+    // Mismo pipeline que el listado (cantidades y autor), para un solo documento.
     const [publicacion] = await this.publicacionModel
       .aggregate([
         { $match: { _id: new Types.ObjectId(id), eliminada: false } },
         { $addFields: { cantidadLikes: { $size: '$likes' } } },
+        ...this.etapasCantidadComentarios(),
         {
           $lookup: {
             from: 'usuarios',
@@ -210,8 +216,34 @@ export class PublicacionesService {
     return usuario;
   }
 
+  // Etapas del aggregate que agregan `cantidadComentarios`: los comentarios activos (no
+  // eliminados) de cada publicación. El $lookup usa el índice { publicacion, fecha } del
+  // esquema y el $count devuelve un solo número en vez de traer los comentarios. El nombre de
+  // la colección se pide al modelo porque Mongoose la pluraliza a su manera.
+  private etapasCantidadComentarios() {
+    return [
+      {
+        $lookup: {
+          from: this.comentarioModel.collection.name,
+          localField: '_id',
+          foreignField: 'publicacion',
+          pipeline: [{ $match: { eliminado: false } }, { $count: 'cantidad' }],
+          as: 'conteoComentarios',
+        },
+      },
+      {
+        $addFields: {
+          cantidadComentarios: {
+            $ifNull: [{ $arrayElemAt: ['$conteoComentarios.cantidad', 0] }, 0],
+          },
+        },
+      },
+      { $project: { conteoComentarios: 0 } },
+    ];
+  }
+
   // Forma de una publicación en las respuestas; `publicacion` viene de un aggregate
-  // con `cantidadLikes` calculado y el autor ya unido.
+  // con las cantidades calculadas y el autor ya unido.
   private aRespuestaPublicacion(publicacion: {
     _id: Types.ObjectId;
     titulo: string;
@@ -220,6 +252,7 @@ export class PublicacionesService {
     fecha: Date;
     likes: Types.ObjectId[];
     cantidadLikes: number;
+    cantidadComentarios: number;
     autor: UsuarioDocument;
   }) {
     return {
@@ -230,6 +263,7 @@ export class PublicacionesService {
       fecha: publicacion.fecha,
       likes: publicacion.likes.map((id) => id.toString()),
       cantidadLikes: publicacion.cantidadLikes,
+      cantidadComentarios: publicacion.cantidadComentarios,
       autor: this.aAutor(publicacion.autor),
     };
   }

@@ -9,6 +9,7 @@
         rows="3"
         [formControl]="nuevo"
         [attr.maxlength]="maximoCaracteres"
+        [appContadorCaracteres]="maximoCaracteres"
         placeholder="¿Qué opinás?"
         [class.is-invalid]="nuevo.touched && nuevo.invalid"
       ></textarea>
@@ -47,7 +48,9 @@
           <div class="comentario__cuerpo">
             <span class="comentario__meta">
               <strong>&#64;{{ comentario.autor.nombreUsuario }}</strong> ·
-              {{ comentario.fecha | date: 'dd/MM/yy HH:mm' }}
+              <span [title]="comentario.fecha | date: 'dd/MM/yy HH:mm'">
+                {{ comentario.fecha | tiempoRelativo }}
+              </span>
               @if (comentario.modificado) {
                 · <em>editado</em>
               }
@@ -63,6 +66,7 @@
                   rows="3"
                   [formControl]="edicion"
                   [attr.maxlength]="maximoCaracteres"
+                  [appContadorCaracteres]="maximoCaracteres"
                   [attr.aria-label]="'Editar tu comentario'"
                   [class.is-invalid]="edicion.touched && edicion.invalid"
                 ></textarea>
@@ -96,20 +100,29 @@
     </ul>
 
     @if (ocultos() > 0) {
-      <button
-        class="btn btn-secondary comentarios__cargar-mas"
-        type="button"
-        [disabled]="cargandoMas()"
-        (click)="cargarMas()"
-      >
-        @if (cargandoMas()) {
-          Cargando...
-        } @else if (interactivo()) {
-          Cargar más ({{ ocultos() }})
-        } @else {
+      @if (enlazarDetalle()) {
+        <a
+          class="btn btn-secondary comentarios__cargar-mas"
+          [routerLink]="['/publicaciones', publicacionId()]"
+        >
           {{ ocultos() === 1 ? 'Ver 1 comentario más' : 'Ver ' + ocultos() + ' comentarios más' }}
-        }
-      </button>
+        </a>
+      } @else {
+        <button
+          class="btn btn-secondary comentarios__cargar-mas"
+          type="button"
+          [disabled]="cargandoMas()"
+          (click)="cargarMas()"
+        >
+          @if (cargandoMas()) {
+            Cargando...
+          } @else if (interactivo()) {
+            Cargar más ({{ ocultos() }})
+          } @else {
+            {{ ocultos() === 1 ? 'Ver 1 comentario más' : 'Ver ' + ocultos() + ' comentarios más' }}
+          }
+        </button>
+      }
     }
   }
 </section>

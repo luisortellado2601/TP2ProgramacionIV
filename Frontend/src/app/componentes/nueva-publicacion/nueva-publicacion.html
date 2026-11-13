@@ -28,6 +28,7 @@
       rows="4"
       formControlName="mensaje"
       maxlength="2000"
+      [appContadorCaracteres]="2000"
       [class.is-invalid]="form.controls.mensaje.touched && form.controls.mensaje.invalid"
     ></textarea>
     @if (form.controls.mensaje.touched && form.controls.mensaje.invalid) {

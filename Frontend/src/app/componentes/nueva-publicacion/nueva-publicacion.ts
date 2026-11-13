@@ -4,6 +4,7 @@ import { ModalService } from '../../services/modal';
 import { PublicacionesService } from '../../services/publicaciones';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
+import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
 
 // Mismas reglas que el CrearPublicacionDto del back.
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
@@ -11,7 +12,7 @@ const TAMANO_MAXIMO_IMAGEN_MB = 2;
 
 @Component({
   selector: 'app-nueva-publicacion',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ContadorCaracteresDirective],
   templateUrl: './nueva-publicacion.html',
   styleUrl: './nueva-publicacion.css',
 })

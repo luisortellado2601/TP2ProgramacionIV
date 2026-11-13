@@ -44,17 +44,21 @@ src/
 │   │   ├── login/          Login por correo o nombre de usuario
 │   │   ├── registro/       Registro con validaciones por campo
 │   │   ├── publicaciones/  Listado paginado, orden por fecha o me gusta, crear y eliminar
-│   │   ├── publicacion/    Tarjeta de una publicación (presentacional, con like)
+│   │   ├── publicacion/    Tarjeta de una publicación (con like y un botón de comentarios con su cantidad, que despliega los 3 más recientes; "Ver N más" lleva al detalle)
 │   │   ├── publicacion-detalle/  Página de una publicación (en grande) con sus comentarios
 │   │   ├── nueva-publicacion/  Formulario de alta con imagen opcional
 │   │   ├── comentarios/    Comentarios de una publicación (más recientes primero); en modo interactivo: comentar, "cargar más" y editar los propios
 │   │   ├── mi-perfil/      Datos del usuario, sus últimas 3 publicaciones y comentarios
-│   │   ├── navbar/         Navegación y cierre de sesión
+│   │   ├── admin-usuarios/ Listado de usuarios para administradores: habilitar y deshabilitar
+│   │   ├── admin-alta-usuario/  Alta de usuarios para administradores (mismos datos que el registro, perfil con radios)
+│   │   ├── navbar/         Navegación y cierre de sesión (enlace a Usuarios solo para administradores)
 │   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
-│   ├── guards/             authGuard (requiere sesión) y guestGuard (solo sin sesión)
+│   ├── guards/             authGuard (requiere sesión), guestGuard (solo sin sesión) y adminGuard (solo administradores)
+│   ├── directives/         Directivas propias: `*appSoloAdmin` (muestra el elemento solo a administradores), `appPastillaPerfil` (clase de color de la pastilla según el perfil: administrador o usuario) y `appContadorCaracteres` (contador "n / máx" en campos de texto: amarillo desde el 90 %, rojo con "¡Límite alcanzado!" al completarlo)
+│   ├── pipes/              Pipes propias: `iniciales` (iniciales para el avatar), `estadoUsuario` (clase CSS según habilitado) y `tiempoRelativo` ("hace 5 min", en publicaciones y comentarios)
 │   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService y ComentariosService
+│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService, ComentariosService y UsuariosService (rutas de administrador)
 │   ├── utils/              Validadores propios, helper de mensajes de error, decodificar JWT y formatear duración
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient con el interceptor)
@@ -72,6 +76,8 @@ src/
 | `/publicaciones` | Publicaciones | Requiere sesión |
 | `/publicaciones/:id` | Detalle de una publicación y sus comentarios | Requiere sesión |
 | `/perfil` | Mi perfil | Requiere sesión |
+| `/admin/usuarios` | Listado de usuarios (habilitar / deshabilitar) | Solo administradores |
+| `/admin/usuarios/nuevo` | Alta de usuario | Solo administradores |
 | cualquier otra | redirige a `/publicaciones` | — |
 
 ## Validaciones del registro

@@ -21,6 +21,9 @@
   --color-success: #3ecf7a;
   --color-danger: #f0585b;
   --color-warning: #f2a900;
+  --color-info: #5ad1e6;
+  --color-admin: #c77dff;
+  --color-gold: #ffd54a;
 
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -349,4 +352,24 @@ h2 {
   .btn {
     padding: 0.6rem 1rem;
   }
+}
+
+/* Contador de caracteres que crea la directiva appContadorCaracteres (fuera del template,
+   por eso vive acá y no en el CSS de un componente). */
+.contador-caracteres {
+  display: block;
+  margin-top: 0.25rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.contador-caracteres--limite {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.contador-caracteres--lleno {
+  color: var(--color-danger);
+  font-weight: 700;
 }

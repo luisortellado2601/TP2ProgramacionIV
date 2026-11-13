@@ -39,7 +39,9 @@
             </span>
           </div>
           <div class="usuario__estado">
-            <span class="etiqueta usuario__pill">{{ usuario.perfil }}</span>
+            <span class="etiqueta usuario__pill" [appPastillaPerfil]="usuario.perfil">{{
+              usuario.perfil
+            }}</span>
             <button
               type="button"
               class="btn btn-secondary usuario__pill"
@@ -49,7 +51,7 @@
               {{ usuario.habilitado ? 'Habilitado' : 'Deshabilitado' }}
             </button>
             @if (esUsuarioActual(usuario)) {
-              <span class="text-muted usuario__pill usuario__vos">(vos)</span>
+              <span class="etiqueta usuario__pill usuario__pill--propio">Tu usuario</span>
             } @else {
               <button
                 class="btn btn-secondary usuario__pill"

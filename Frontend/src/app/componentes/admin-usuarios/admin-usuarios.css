@@ -107,8 +107,24 @@
   box-shadow: var(--shadow-small);
 }
 
-.usuario__vos {
-  font-size: 0.8rem;
+/* Color de la pastilla de perfil: las clases las pone la directiva appPastillaPerfil. */
+.pastilla-perfil--administrador {
+  border-color: var(--color-admin);
+  color: var(--color-admin);
+}
+
+.pastilla-perfil--usuario {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+/* "Tu usuario": dorado, para distinguir la fila de la sesión actual. */
+.usuario__pill--propio {
+  border-color: var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 16%, transparent);
+  color: var(--color-gold);
+  font-weight: 700;
+  text-transform: none;
 }
 
 @media (max-width: 480px) {

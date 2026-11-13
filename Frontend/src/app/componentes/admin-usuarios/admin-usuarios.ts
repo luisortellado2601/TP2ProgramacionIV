@@ -8,10 +8,11 @@ import { mensajeDeError } from '../../utils/mensaje-error';
 import { Usuario } from '../../models/usuario';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { EstadoUsuarioPipe } from '../../pipes/estado-usuario-pipe';
+import { PastillaPerfilDirective } from '../../directives/pastilla-perfil-directive';
 
 @Component({
   selector: 'app-admin-usuarios',
-  imports: [DatePipe, RouterLink, InicialesPipe, EstadoUsuarioPipe],
+  imports: [DatePipe, RouterLink, InicialesPipe, EstadoUsuarioPipe, PastillaPerfilDirective],
   templateUrl: './admin-usuarios.html',
   styleUrl: './admin-usuarios.css',
 })

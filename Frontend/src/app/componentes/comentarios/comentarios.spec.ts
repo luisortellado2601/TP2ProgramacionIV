@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../environments/environment';
 import { Comentario } from '../../models/comentario';
@@ -24,16 +25,17 @@ describe('Comentarios', () => {
   let backend: HttpTestingController;
 
   // Inicia el componente con la sesión de "u1" y responde la primera carga (2 de 3 comentarios).
-  function crear(interactivo: boolean): void {
+  function crear(interactivo: boolean, enlazarDetalle = false): void {
     localStorage.setItem(CLAVE_SESION, JSON.stringify({ usuario: { id: 'u1' }, token: 'x' }));
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     backend = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Comentarios);
     fixture.componentRef.setInput('publicacionId', 'p1');
     fixture.componentRef.setInput('limite', 2);
     fixture.componentRef.setInput('interactivo', interactivo);
+    fixture.componentRef.setInput('enlazarDetalle', enlazarDetalle);
     fixture.detectChanges();
 
     backend
@@ -149,5 +151,15 @@ describe('Comentarios', () => {
     expect(textos()).toEqual(['Mío', 'De otro', 'El más viejo']);
     expect(pantalla().querySelector('.comentarios__cargar-mas')).toBeNull();
     expect(pantalla().querySelector('.comentario__editar')).toBeNull();
+  });
+
+  it('en el listado, "Ver más" es un enlace al detalle y no trae comentarios ahí mismo', () => {
+    crear(false, true);
+
+    const enlace = pantalla().querySelector<HTMLAnchorElement>('a.comentarios__cargar-mas')!;
+    expect(enlace.textContent).toContain('Ver 1 comentario más');
+    expect(enlace.getAttribute('href')).toBe('/publicaciones/p1');
+    expect(pantalla().querySelector('button.comentarios__cargar-mas')).toBeNull();
+    expect(textos()).toEqual(['Mío', 'De otro']);
   });
 });

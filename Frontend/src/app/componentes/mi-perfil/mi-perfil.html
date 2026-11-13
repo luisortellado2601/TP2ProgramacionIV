@@ -39,7 +39,7 @@
         @for (publicacion of ultimas(); track publicacion.id) {
           <div class="perfil-publicacion">
             <app-publicacion [publicacion]="publicacion" [interactiva]="false" />
-            <app-comentarios [publicacionId]="publicacion.id" />
+            <app-comentarios [publicacionId]="publicacion.id" [limite]="comentariosPorPublicacion" />
           </div>
         }
       </div>

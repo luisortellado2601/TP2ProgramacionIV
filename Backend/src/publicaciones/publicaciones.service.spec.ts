@@ -6,6 +6,7 @@ import { Types } from 'mongoose';
 import { PublicacionesService } from './publicaciones.service.js';
 import { Publicacion } from './publicacion.schema.js';
 import { Usuario } from '../usuarios/usuario.schema.js';
+import { Comentario } from '../comentarios/comentario.schema.js';
 import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service.js';
 
 describe('PublicacionesService', () => {
@@ -36,6 +37,10 @@ describe('PublicacionesService', () => {
           useValue: {
             findById: jest.fn(),
           },
+        },
+        {
+          provide: getModelToken(Comentario.name),
+          useValue: { collection: { name: 'comentarios' } },
         },
         {
           provide: AlmacenamientoService,
@@ -71,6 +76,7 @@ describe('PublicacionesService', () => {
           fecha,
           likes: [autorId],
           cantidadLikes: 1,
+          cantidadComentarios: 4,
           autor: {
             _id: autorId,
             nombre: 'Ana',
@@ -90,6 +96,7 @@ describe('PublicacionesService', () => {
         fecha,
         likes: [autorId.toString()],
         cantidadLikes: 1,
+        cantidadComentarios: 4,
         autor: {
           id: autorId.toString(),
           nombre: 'Ana',
@@ -97,6 +104,23 @@ describe('PublicacionesService', () => {
           nombreUsuario: 'ana',
           imagenPerfilUrl: undefined,
         },
+      });
+    });
+
+    it('el pipeline cuenta solo los comentarios no eliminados de la publicación', async () => {
+      aggregate([]);
+      await service.obtener(new Types.ObjectId().toString()).catch(() => null);
+
+      const pipeline = publicacionModel.aggregate.mock.calls[0][0] as Record<
+        string,
+        any
+      >[];
+      const union = pipeline.find((etapa) => etapa.$lookup?.as === 'conteoComentarios');
+      expect(union?.$lookup).toMatchObject({
+        from: 'comentarios',
+        localField: '_id',
+        foreignField: 'publicacion',
+        pipeline: [{ $match: { eliminado: false } }, { $count: 'cantidad' }],
       });
     });
 

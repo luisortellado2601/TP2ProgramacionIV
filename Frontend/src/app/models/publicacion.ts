@@ -16,6 +16,7 @@ export interface Publicacion {
   fecha: string;
   likes: string[];
   cantidadLikes: number;
+  cantidadComentarios: number;
   autor: AutorPublicacion;
 }
 

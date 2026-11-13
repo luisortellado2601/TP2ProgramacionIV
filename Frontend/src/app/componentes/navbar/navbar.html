@@ -53,11 +53,14 @@
       <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">
         <small>02</small> Mi perfil
       </a>
-      @if (authService.usuarioActual()?.perfil === PerfilUsuario.ADMINISTRADOR) {
-        <a routerLink="/admin/usuarios" routerLinkActive="is-active" (click)="cerrar()">
-          <small>03</small> Usuarios
-        </a>
-      }
+      <a
+        *appSoloAdmin
+        routerLink="/admin/usuarios"
+        routerLinkActive="is-active"
+        (click)="cerrar()"
+      >
+        <small>03</small> Usuarios
+      </a>
     } @else {
       <a routerLink="/login" routerLinkActive="is-active" (click)="cerrar()">
         <small>01</small> Ingresar

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ComentariosService } from '../../services/comentarios';
 import { ModalService } from '../../services/modal';
@@ -8,6 +9,8 @@ import { Comentario } from '../../models/comentario';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
+import { TiempoRelativoPipe } from '../../pipes/tiempo-relativo-pipe';
+import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
 
 // Misma regla que CrearComentarioDto / ActualizarComentarioDto del back.
 const MAXIMO_CARACTERES = 500;
@@ -25,7 +28,14 @@ function nuevoControlMensaje(valor = ''): FormControl<string> {
 
 @Component({
   selector: 'app-comentarios',
-  imports: [DatePipe, ReactiveFormsModule, InicialesPipe],
+  imports: [
+    DatePipe,
+    RouterLink,
+    ReactiveFormsModule,
+    InicialesPipe,
+    TiempoRelativoPipe,
+    ContadorCaracteresDirective,
+  ],
   templateUrl: './comentarios.html',
   styleUrl: './comentarios.css',
 })
@@ -40,6 +50,9 @@ export class Comentarios implements OnInit {
   // En Mi perfil se muestra solo para leer; en el detalle se puede comentar,
   // "cargar más" y editar los propios.
   readonly interactivo = input(false);
+  // En el listado de inicio, "Ver N comentarios más" lleva a la página de detalle de la
+  // publicación en vez de traerlos ahí mismo (la tarjeta no crece sin límite).
+  readonly enlazarDetalle = input(false);
 
   protected readonly maximoCaracteres = MAXIMO_CARACTERES;
   protected readonly comentarios = signal<Comentario[]>([]);

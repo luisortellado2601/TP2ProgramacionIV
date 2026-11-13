@@ -129,6 +129,21 @@ button.corazon:hover {
   cursor: default;
 }
 
+/* Corazón y botón de comentarios juntos; "Eliminar" queda a la derecha. */
+.publicacion__reacciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Botón de comentarios: mismo aspecto que el corazón (ícono y cantidad). Despliega los
+   comentarios dentro de la tarjeta y queda resaltado mientras están abiertos. */
+button.corazon--comentarios:hover,
+.corazon--comentarios[aria-expanded='true'] {
+  color: var(--color-primary);
+  background: rgba(198, 244, 50, 0.1);
+}
+
 @keyframes latido {
   0% {
     transform: scale(1);

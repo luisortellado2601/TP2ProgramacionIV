@@ -1,14 +1,19 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { Publicacion } from '../../models/publicacion';
 import { PerfilUsuario } from '../../models/usuario';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
+import { TiempoRelativoPipe } from '../../pipes/tiempo-relativo-pipe';
+import { Comentarios } from '../comentarios/comentarios';
+
+// Cuántos comentarios se ven al desplegarlos en la tarjeta del listado.
+const COMENTARIOS_EN_TARJETA = 3;
 
 @Component({
   selector: 'app-publicacion',
-  imports: [DatePipe, RouterLink, InicialesPipe],
+  imports: [DatePipe, RouterLink, InicialesPipe, TiempoRelativoPipe, Comentarios],
   templateUrl: './publicacion.html',
   styleUrl: './publicacion.css',
 })
@@ -23,6 +28,10 @@ export class PublicacionCard {
 
   readonly alternarLike = output<Publicacion>();
   readonly eliminar = output<Publicacion>();
+
+  protected readonly comentariosEnTarjeta = COMENTARIOS_EN_TARJETA;
+  // Los comentarios se piden recién al desplegarlos: el listado no hace un pedido por tarjeta.
+  protected readonly comentariosAbiertos = signal(false);
 
   protected readonly usuarioId = computed(() => this.authService.usuarioActual()?.id ?? null);
   protected readonly leDiMeGusta = computed(() => {

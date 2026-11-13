@@ -7,6 +7,8 @@ import { Comentarios } from '../comentarios/comentarios';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
 const CANTIDAD_ULTIMAS = 3;
+// Comentarios que se ven de cada publicación (los más recientes); el resto, con "Ver N más".
+const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({
   selector: 'app-mi-perfil',
@@ -18,6 +20,7 @@ export class MiPerfil {
   protected readonly authService = inject(AuthService);
   private readonly publicacionesService = inject(PublicacionesService);
 
+  protected readonly comentariosPorPublicacion = COMENTARIOS_POR_PUBLICACION;
   protected readonly ultimas = signal<Publicacion[]>([]);
   protected readonly cargando = signal(true);
   protected readonly falloCarga = signal(false);

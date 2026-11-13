@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-12
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 44 tests, front 20). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. Pipes propias: 2 de 3 (`iniciales`, `estadoUsuario`); falta la tercera. Falta estadísticas, directivas y PWA.
+**Última actualización:** 2026-11-13
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 38). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Falta dashboard de estadísticas y PWA.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,10 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (admin de publicaciones y usuarios listos; 2/3 pipes) |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (admin de publicaciones y usuarios, 3 pipes y 3 directivas listos; faltan estadísticas y PWA) |
 
 ### Próximo paso
-**Front del Sprint #4**, en bloques chicos con un commit por bloque: terminar la 3ra pipe propia, 3 directivas propias, dashboard de estadísticas, PWA.
+**Front del Sprint #4**, en bloques chicos con un commit por bloque: dashboard de estadísticas, PWA.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -176,7 +176,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Crear publicación (título, mensaje, imagen opcional).
 - [x] **Componente Mi Perfil**
   - [x] Mostrar todos los datos del usuario y su foto de perfil.
-  - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 5 comentarios más recientes de cada una y un botón para ver los demás.)_
+  - [x] Mostrar mis últimas 3 publicaciones y sus comentarios. _(Muestra los 3 comentarios más recientes de cada una y un botón para ver los demás.)_
 
 **Back – Publicaciones controller**
 - [x] Alta, listado y baja lógica de publicaciones.
@@ -260,8 +260,8 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [ ] Cantidad de comentarios en cada publicación en un lapso de tiempo (lapso elegible).
 - [ ] **A nivel aplicación**
   - [ ] Implementar **PWA**.
-  - [ ] **3 pipes PROPIAS** (2/3: `iniciales`, `estadoUsuario`).
-  - [ ] **3 directivas PROPIAS**.
+  - [x] **3 pipes PROPIAS** (`iniciales`, `estadoUsuario`, `tiempoRelativo`).
+  - [x] **3 directivas PROPIAS** (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`).
 
 **Back – Usuarios controller** (validar que el token sea de administrador)
 - [x] `RolesGuard` + decorador `@Roles(...)`: 403 si el perfil no corresponde, 401 si el usuario ya no existe o fue deshabilitado. Lee el perfil de la base, no del token.

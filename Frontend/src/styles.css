@@ -64,7 +64,9 @@ body {
 body {
   background-color: var(--color-bg);
   background-image: var(--fondo-simbolos);
-  background-size: 300px 300px;
+  /* El mosaico escala con el ancho de la pantalla (símbolos y trazos incluidos): más chico en
+     el celular y más grande en un monitor, con topes para que no se vea ni diminuto ni enorme. */
+  background-size: clamp(160px, 20vw, 420px) clamp(160px, 20vw, 420px);
   color: var(--color-text);
   font-family: var(--font-base);
   line-height: 1.55;
@@ -117,7 +119,9 @@ button {
 /* ---------- Layout ---------- */
 
 .page {
-  max-width: 760px;
+  /* Mínimo 760 px (pantalla dividida o notebook); solo en monitores grandes crece con el ancho
+     (52 %), con tope en 1000 px, para que no quede como una columna angosta ni demasiado ancho. */
+  max-width: clamp(760px, 52vw, 1000px);
   margin: 0 auto;
   padding: 2.5rem 1.25rem 5rem;
 }
@@ -174,6 +178,45 @@ button {
   outline: none;
   box-shadow: var(--shadow-small);
   transform: translate(-1px, -1px);
+}
+
+/* Desplegable destacado: mismo verde flúor que btn-primary (orden de publicaciones, lapso de
+   estadísticas). Se usa como <select class="select-destacado"> dentro de un .form-field. */
+.form-field select.select-destacado {
+  appearance: none;
+  font-family: var(--font-titulo);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding-right: 2.2rem;
+  background-color: var(--color-primary);
+  color: var(--color-ink);
+  border-color: var(--color-ink);
+  box-shadow: var(--shadow-small);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-ink) 50%),
+    linear-gradient(135deg, var(--color-ink) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 55%,
+    calc(100% - 12px) 55%;
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+.form-field select.select-destacado:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.form-field select.select-destacado option {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-base);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .form-field input.is-invalid,
@@ -302,7 +345,31 @@ h2 {
   letter-spacing: 0.04em;
 }
 
+/* Título en Bungee (la fuente de la marca y del menú). Se aplica a h2 y h3 por igual para que
+   los títulos que lo usan (Publicaciones, Mis últimas publicaciones) coincidan en fuente y tamaño. */
+.titulo-marca {
+  font-family: var(--font-marca);
+  font-weight: 400;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
 /* Botón de "seleccionar archivo" con el mismo estilo que el resto de los botones. */
+/* Campos de fecha: tema oscuro para que el ícono del calendario se vea (por defecto es negro sobre
+   el fondo oscuro del campo) y el calendario que abre el navegador también sea oscuro. */
+.form-field input[type='date'] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.form-field input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+}
+
 .form-field input[type='file'] {
   padding: 0;
   color: var(--color-text-muted);
@@ -357,6 +424,10 @@ h2 {
   h2 {
     font-size: 1.5rem;
     overflow-wrap: anywhere;
+  }
+
+  .titulo-marca {
+    font-size: 1.4rem;
   }
 
   .btn {

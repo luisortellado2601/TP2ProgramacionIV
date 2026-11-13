@@ -51,14 +51,16 @@ src/
 │   │   ├── mi-perfil/      Datos del usuario, sus últimas 3 publicaciones y comentarios
 │   │   ├── admin-usuarios/ Listado de usuarios para administradores: habilitar y deshabilitar
 │   │   ├── admin-alta-usuario/  Alta de usuarios para administradores (mismos datos que el registro, perfil con radios)
-│   │   ├── navbar/         Navegación y cierre de sesión (enlace a Usuarios solo para administradores)
+│   │   ├── admin-estadisticas/  Dashboard de estadísticas para administradores: lapso elegible y 3 gráficos (barras, líneas, torta)
+│   │   ├── grafico/        Envoltorio de Chart.js (canvas) que usa el dashboard
+│   │   ├── navbar/         Navegación y cierre de sesión (enlaces a Usuarios y Estadísticas solo para administradores)
 │   │   └── modal/          Modal global de éxito / error / confirmación (reemplaza alert())
 │   ├── guards/             authGuard (requiere sesión), guestGuard (solo sin sesión) y adminGuard (solo administradores)
 │   ├── directives/         Directivas propias: `*appSoloAdmin` (muestra el elemento solo a administradores), `appPastillaPerfil` (clase de color de la pastilla según el perfil: administrador o usuario) y `appContadorCaracteres` (contador "n / máx" en campos de texto: amarillo desde el 90 %, rojo con "¡Límite alcanzado!" al completarlo)
 │   ├── pipes/              Pipes propias: `iniciales` (iniciales para el avatar), `estadoUsuario` (clase CSS según habilitado) y `tiempoRelativo` ("hace 5 min", en publicaciones y comentarios)
 │   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService, ComentariosService y UsuariosService (rutas de administrador)
+│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService, ComentariosService UsuariosService y EstadisticasService (rutas de administrador)
 │   ├── utils/              Validadores propios, helper de mensajes de error, decodificar JWT y formatear duración
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient con el interceptor)
@@ -78,6 +80,7 @@ src/
 | `/perfil` | Mi perfil | Requiere sesión |
 | `/admin/usuarios` | Listado de usuarios (habilitar / deshabilitar) | Solo administradores |
 | `/admin/usuarios/nuevo` | Alta de usuario | Solo administradores |
+| `/admin/estadisticas` | Dashboard de estadísticas | Solo administradores |
 | cualquier otra | redirige a `/publicaciones` | — |
 
 ## Validaciones del registro

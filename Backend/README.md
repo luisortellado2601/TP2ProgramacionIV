@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-13
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 38). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Falta dashboard de estadísticas y PWA.
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 47). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta, con lapso elegible). Falta PWA.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,10 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (admin de publicaciones y usuarios, 3 pipes y 3 directivas listos; faltan estadísticas y PWA) |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (admin de publicaciones, usuarios y estadísticas, 3 pipes y 3 directivas listos; falta PWA) |
 
 ### Próximo paso
-**Front del Sprint #4**, en bloques chicos con un commit por bloque: dashboard de estadísticas, PWA.
+**Front del Sprint #4**, en bloques chicos con un commit por bloque: PWA.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -254,10 +254,10 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Crear nuevos usuarios (mismos datos que el registro) con **dos radio buttons**: "usuario" / "administrador".
   - [x] Alta y baja lógica (habilitar/deshabilitar). Un usuario deshabilitado **no puede ingresar** y es **notificado** al intentar el login.
   - [x] Formulario de registro para nuevos usuarios.
-- [ ] **Página dashboard/estadísticas** (gráficos de **tipos variados**: torta, barras, líneas, etc.)
-  - [ ] Cantidad de publicaciones por usuario en un lapso de tiempo (lapso elegible).
-  - [ ] Cantidad de comentarios realizados en un lapso de tiempo (lapso elegible).
-  - [ ] Cantidad de comentarios en cada publicación en un lapso de tiempo (lapso elegible).
+- [x] **Página dashboard/estadísticas** (gráficos de **tipos variados**: torta, barras, líneas, etc.)
+  - [x] Cantidad de publicaciones por usuario en un lapso de tiempo (lapso elegible). _(Barras.)_
+  - [x] Cantidad de comentarios realizados en un lapso de tiempo (lapso elegible). _(Líneas, por día.)_
+  - [x] Cantidad de comentarios en cada publicación en un lapso de tiempo (lapso elegible). _(Torta.)_
 - [ ] **A nivel aplicación**
   - [ ] Implementar **PWA**.
   - [x] **3 pipes PROPIAS** (`iniciales`, `estadoUsuario`, `tiempoRelativo`).
@@ -329,7 +329,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
 - [x] Contraseñas encriptadas; JWT con vencimiento a 15 minutos.
 - [x] Rutas protegidas por guard (front) y por JWT y roles (back).
 - [x] Bajas lógicas (no se borra físicamente): publicaciones y usuarios.
-- [x] Deploy en hosting funcionando. _(Sprint #3; el back del #4 aún no se deployó.)_
+- [x] Deploy en hosting funcionando. _(Sprint #3; el back y el front del #4 están en producción.)_
 
 ---
 

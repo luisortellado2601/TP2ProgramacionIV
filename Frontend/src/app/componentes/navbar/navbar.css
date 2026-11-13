@@ -206,13 +206,6 @@
     padding-left 0.15s ease;
 }
 
-.cajon__links small {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--color-accent);
-}
-
 .cajon__links a:hover {
   padding-left: 1.2rem;
   color: var(--color-primary);
@@ -220,10 +213,6 @@
 
 .cajon__links a.is-active {
   background: var(--color-primary);
-  color: var(--color-ink);
-}
-
-.cajon__links a.is-active small {
   color: var(--color-ink);
 }
 

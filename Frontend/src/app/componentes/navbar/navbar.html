@@ -48,10 +48,10 @@
   <nav class="cajon__links">
     @if (authService.estaAutenticado()) {
       <a routerLink="/publicaciones" routerLinkActive="is-active" (click)="cerrar()">
-        <small>01</small> Publicaciones
+        Publicaciones
       </a>
       <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">
-        <small>02</small> Mi perfil
+        Mi perfil
       </a>
       <a
         *appSoloAdmin
@@ -59,14 +59,22 @@
         routerLinkActive="is-active"
         (click)="cerrar()"
       >
-        <small>03</small> Usuarios
+        Usuarios
+      </a>
+      <a
+        *appSoloAdmin
+        routerLink="/admin/estadisticas"
+        routerLinkActive="is-active"
+        (click)="cerrar()"
+      >
+        Estadísticas
       </a>
     } @else {
       <a routerLink="/login" routerLinkActive="is-active" (click)="cerrar()">
-        <small>01</small> Ingresar
+        Ingresar
       </a>
       <a routerLink="/registro" routerLinkActive="is-active" (click)="cerrar()">
-        <small>02</small> Crear cuenta
+        Crear cuenta
       </a>
     }
   </nav>

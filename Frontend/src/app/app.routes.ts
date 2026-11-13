@@ -52,5 +52,13 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, adminGuard],
   },
+  {
+    path: 'admin/estadisticas',
+    loadComponent: () =>
+      import('./componentes/admin-estadisticas/admin-estadisticas').then(
+        (m) => m.AdminEstadisticas,
+      ),
+    canActivate: [authGuard, adminGuard],
+  },
   { path: '**', redirectTo: 'publicaciones' },
 ];

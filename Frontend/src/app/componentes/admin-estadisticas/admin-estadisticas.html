@@ -1,0 +1,91 @@
+<div class="page">
+  <h2 class="estadisticas__titulo titulo-marca">Estadísticas</h2>
+
+  <div class="card estadisticas__lapso" [formGroup]="lapso">
+    <div class="form-field">
+      <label for="desde">Desde</label>
+      <input
+        id="desde"
+        type="date"
+        formControlName="desde"
+        (click)="abrirCalendario($event)"
+        [max]="lapso.controls.hasta.value || null"
+      />
+    </div>
+    <div class="form-field">
+      <label for="hasta">Hasta</label>
+      <input
+        id="hasta"
+        type="date"
+        formControlName="hasta"
+        (click)="abrirCalendario($event)"
+        [min]="lapso.controls.desde.value || null"
+      />
+    </div>
+    <div class="estadisticas__acciones">
+      <button class="btn btn-secondary" type="button" [disabled]="!hayLapso" (click)="limpiar()">
+        Ver todo
+      </button>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <p class="text-muted text-center">Cargando...</p>
+  } @else if (falloCarga()) {
+    <div class="card text-center">
+      <p class="text-muted">
+        No pudimos cargar las estadísticas. Probá elegir las fechas otra vez.
+      </p>
+    </div>
+  } @else {
+    <div class="estadisticas__graficos">
+      <section class="card estadisticas__grafico">
+        <h3>Publicaciones por usuario</h3>
+        @if (publicacionesPorUsuario().length === 0) {
+          <p class="text-muted">No hay publicaciones en este lapso.</p>
+        } @else {
+          <app-grafico
+            tipo="bar"
+            serie="Publicaciones"
+            descripcion="Gráfico de barras: cantidad de publicaciones por usuario"
+            [etiquetas]="usuariosEtiquetas()"
+            [valores]="usuariosValores()"
+          />
+        }
+      </section>
+
+      <section class="card estadisticas__grafico">
+        <h3>Comentarios por día</h3>
+        <p class="text-muted">
+          Total en el lapso: <strong>{{ comentarios().total }}</strong>
+        </p>
+        @if (comentarios().porDia.length === 0) {
+          <p class="text-muted">No hay comentarios en este lapso.</p>
+        } @else {
+          <app-grafico
+            tipo="line"
+            serie="Comentarios"
+            descripcion="Gráfico de líneas: cantidad de comentarios por día"
+            [etiquetas]="diasEtiquetas()"
+            [valores]="diasValores()"
+          />
+        }
+      </section>
+
+      <section class="card estadisticas__grafico">
+        <h3>Comentarios por publicación</h3>
+        @if (comentariosPorPublicacion().length === 0) {
+          <p class="text-muted">No hay comentarios en este lapso.</p>
+        } @else {
+          <app-grafico
+            tipo="pie"
+            serie="Comentarios"
+            descripcion="Gráfico de torta: cantidad de comentarios en cada publicación"
+            [etiquetas]="publicacionesEtiquetas()"
+            [valores]="publicacionesValores()"
+          />
+        }
+      </section>
+    </div>
+  }
+</div>

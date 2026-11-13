@@ -1,3 +1,8 @@
+.perfil__volver {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+}
+
 .perfil-card {
   display: flex;
   align-items: center;

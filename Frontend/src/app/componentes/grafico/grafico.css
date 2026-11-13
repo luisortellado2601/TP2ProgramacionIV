@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+/* Chart.js se adapta al tamaño de este contenedor (maintainAspectRatio: false). */
+.grafico {
+  position: relative;
+  height: 280px;
+}

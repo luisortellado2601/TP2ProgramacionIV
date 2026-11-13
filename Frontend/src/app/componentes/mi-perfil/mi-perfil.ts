@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { PublicacionesService } from '../../services/publicaciones';
 import { Publicacion } from '../../models/publicacion';
@@ -12,7 +13,7 @@ const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [PublicacionCard, Comentarios, InicialesPipe],
+  imports: [RouterLink, PublicacionCard, Comentarios, InicialesPipe],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

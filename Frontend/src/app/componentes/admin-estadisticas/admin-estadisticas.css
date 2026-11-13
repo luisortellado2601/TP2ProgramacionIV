@@ -1,0 +1,50 @@
+.estadisticas__titulo {
+  margin-bottom: 1.25rem;
+}
+
+.estadisticas__lapso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.estadisticas__lapso .form-field {
+  flex: 1 1 10rem;
+  margin-bottom: 0;
+}
+
+.estadisticas__acciones {
+  display: flex;
+}
+
+@media (max-width: 480px) {
+  .estadisticas__acciones {
+    width: 100%;
+  }
+
+  .estadisticas__acciones .btn {
+    flex: 1;
+  }
+}
+
+/* Solo en pantallas muy anchas (el contenido ya supera los ~880 px) los gráficos se reparten en
+   dos columnas; en el resto, uno debajo del otro. */
+.estadisticas__graficos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1700px) {
+  .estadisticas__graficos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.estadisticas__grafico {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

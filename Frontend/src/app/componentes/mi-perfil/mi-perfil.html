@@ -1,5 +1,9 @@
 @if (authService.usuarioActual(); as usuario) {
   <div class="page">
+    <a class="btn btn-primary perfil__volver" routerLink="/publicaciones">
+      Volver a publicaciones
+    </a>
+
     <div class="card perfil-card">
       @if (usuario.imagenPerfilUrl) {
         <img
@@ -23,7 +27,7 @@
       </div>
     </div>
 
-    <h3 class="perfil-subtitulo">Mis últimas publicaciones</h3>
+    <h3 class="perfil-subtitulo titulo-marca">Mis últimas publicaciones</h3>
     @if (cargando()) {
       <p class="text-muted text-center">Cargando...</p>
     } @else if (falloCarga()) {

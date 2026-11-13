@@ -5,7 +5,7 @@
   </div>
 
   @if (cargando()) {
-    <p class="text-muted text-center">Cargando...</p>
+    <app-spinner mensaje="Cargando usuarios..." />
   } @else if (falloCarga()) {
     <div class="card text-center">
       <p class="text-muted">No pudimos cargar los usuarios. Probá recargar la página.</p>
@@ -34,9 +34,7 @@
             <span class="text-muted">
               &#64;{{ usuario.nombreUsuario }} · {{ usuario.correo }}
             </span>
-            <span class="text-muted">
-              Alta: {{ usuario.fechaAlta | date: 'dd/MM/yy' }}
-            </span>
+            <span class="text-muted"> Alta: {{ usuario.fechaAlta | date: 'dd/MM/yy' }} </span>
           </div>
           <div class="usuario__estado">
             <span class="etiqueta usuario__pill" [appPastillaPerfil]="usuario.perfil">{{

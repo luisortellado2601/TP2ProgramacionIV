@@ -3,10 +3,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
 import { mensajeDeError } from '../../utils/mensaje-error';
+import { Spinner } from '../spinner/spinner';
 
 @Component({
   selector: 'app-cargando',
-  imports: [],
+  imports: [Spinner],
   templateUrl: './cargando.html',
   styleUrl: './cargando.css',
 })

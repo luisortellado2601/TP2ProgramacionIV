@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.carga {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 0;
+}
+
+.carga--pequeno {
+  gap: 0.6rem;
+  padding: 0.9rem 0;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid var(--color-surface-alt);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+.carga--pequeno .spinner {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* La regla global de "movimiento reducido" (styles.css) apaga todas las animaciones, y con eso un
+   spinner quieto parece una pantalla colgada. Acá se mantiene el giro, más lento: es la señal de
+   que la app está trabajando, no un adorno. (`.spinner` gana sobre el `*` global por especificidad.) */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: girar 1.6s linear infinite !important;
+  }
+}

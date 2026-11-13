@@ -13,7 +13,7 @@
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
 **Última actualización:** 2026-11-13
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 47). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta, con lapso elegible). Falta PWA.
+**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 45 tests, front 54). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta; lapso con Desde/Hasta que se aplican solos). PWA lista (manifest, íconos propios y service worker; probada sobre el build: instalable y abre sin conexión). Spinner único (`app-spinner`) en todas las cargas. Pendiente: verificar la instalación en producción tras el deploy.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,10 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [ ] | [x] | Back deployado; front en curso (admin de publicaciones, usuarios y estadísticas, 3 pipes y 3 directivas listos; falta PWA) |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [x] | [x] | Back deployado; front completo, falta deployarlo y verificar la PWA en producción |
 
 ### Próximo paso
-**Front del Sprint #4**, en bloques chicos con un commit por bloque: PWA.
+Deployar el front y comprobar la PWA en producción (abrir `/ngsw-worker.js` y `/manifest.webmanifest`, instalar la app, abrirla sin conexión). Después, pasada final de diseño (casilla "Diseño uniforme" de la sección 5) y cerrar el Sprint #4.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -46,6 +46,7 @@
 ### Pendientes y límites conocidos
 - `JwtAuthGuard` solo verifica firma y vencimiento, así que un usuario deshabilitado conserva acceso a las rutas comunes hasta que venza su token (15 min). Las rutas de administrador (`@Roles`) sí consultan la base en cada pedido, y `autorizar`/`refrescar` también.
 - Las estadísticas agrupan y filtran los días en UTC (el enunciado no pide zona horaria).
+- En el dashboard, las barras (publicaciones por usuario) y la torta (comentarios por publicación) muestran solo el top 10: el front no manda `limit` y el back usa 10 por defecto (acepta hasta 50). Sin fechas elegidas se muestra todo el histórico vigente.
 - `authGuard` del front solo mira `localStorage`; un token vencido se detecta en el primer pedido (401) o al iniciar la app en `/` (pantalla "Cargando").
 - Menor: en `darLike`/`quitarLike`, si la publicación se elimina justo entre la comprobación y la actualización, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`) y borrar la variable vieja `JWT_EXPIRES_IN_MINUTOS`, si existe.
@@ -259,7 +260,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Cantidad de comentarios realizados en un lapso de tiempo (lapso elegible). _(Líneas, por día.)_
   - [x] Cantidad de comentarios en cada publicación en un lapso de tiempo (lapso elegible). _(Torta.)_
 - [ ] **A nivel aplicación**
-  - [ ] Implementar **PWA**.
+  - [x] Implementar **PWA**. _(`@angular/pwa`: manifest, íconos propios, service worker solo en producción.)_
   - [x] **3 pipes PROPIAS** (`iniciales`, `estadoUsuario`, `tiempoRelativo`).
   - [x] **3 directivas PROPIAS** (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`).
 

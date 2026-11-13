@@ -18,8 +18,8 @@
     </select>
   </div>
 
-  @if (cargando() && publicaciones().length === 0) {
-    <p class="text-muted text-center">Cargando publicaciones...</p>
+  @if (cargando()) {
+    <app-spinner mensaje="Cargando publicaciones..." />
   } @else if (publicaciones().length === 0) {
     <div class="card text-center">
       <p class="text-muted">Todavía no hay publicaciones. ¡Sé el primero en publicar!</p>

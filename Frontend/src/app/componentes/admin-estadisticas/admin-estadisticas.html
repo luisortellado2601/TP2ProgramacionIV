@@ -9,7 +9,8 @@
         type="date"
         formControlName="desde"
         (click)="abrirCalendario($event)"
-        [max]="lapso.controls.hasta.value || null"
+        [max]="desdeMaximo"
+        [class.is-invalid]="invalido('desde')"
       />
     </div>
     <div class="form-field">
@@ -20,6 +21,8 @@
         formControlName="hasta"
         (click)="abrirCalendario($event)"
         [min]="lapso.controls.desde.value || null"
+        [max]="fechaMaxima"
+        [class.is-invalid]="invalido('hasta')"
       />
     </div>
     <div class="estadisticas__acciones">
@@ -30,7 +33,7 @@
   </div>
 
   @if (cargando()) {
-    <p class="text-muted text-center">Cargando...</p>
+    <app-spinner mensaje="Cargando estadísticas..." />
   } @else if (falloCarga()) {
     <div class="card text-center">
       <p class="text-muted">

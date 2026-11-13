@@ -9,10 +9,18 @@ import { Usuario } from '../../models/usuario';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { EstadoUsuarioPipe } from '../../pipes/estado-usuario-pipe';
 import { PastillaPerfilDirective } from '../../directives/pastilla-perfil-directive';
+import { Spinner } from '../spinner/spinner';
 
 @Component({
   selector: 'app-admin-usuarios',
-  imports: [DatePipe, RouterLink, InicialesPipe, EstadoUsuarioPipe, PastillaPerfilDirective],
+  imports: [
+    DatePipe,
+    RouterLink,
+    InicialesPipe,
+    EstadoUsuarioPipe,
+    PastillaPerfilDirective,
+    Spinner,
+  ],
   templateUrl: './admin-usuarios.html',
   styleUrl: './admin-usuarios.css',
 })

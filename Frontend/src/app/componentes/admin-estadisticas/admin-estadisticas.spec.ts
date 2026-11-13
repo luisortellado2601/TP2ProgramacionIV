@@ -105,6 +105,7 @@ describe('AdminEstadisticas', () => {
 
   function crearConTiempoFalso() {
     vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 13, 12, 0, 0)); // "hoy" = 13/11/2026
     const resultado = crear();
     responderTodo();
     resultado.fixture.detectChanges();
@@ -195,11 +196,78 @@ describe('AdminEstadisticas', () => {
     const { fixture, html } = crearConTiempoFalso();
 
     elegirFecha(html, 'desde', '2026-11-05');
-    elegirFecha(html, 'hasta', '2026-11-20');
+    elegirFecha(html, 'hasta', '2026-11-10');
     fixture.detectChanges();
 
-    expect((html.querySelector('#desde') as HTMLInputElement).max).toBe('2026-11-20');
+    expect((html.querySelector('#desde') as HTMLInputElement).max).toBe('2026-11-10');
     expect((html.querySelector('#hasta') as HTMLInputElement).min).toBe('2026-11-05');
+  });
+
+  it('no deja elegir fechas posteriores a hoy: "hasta" y "desde" tienen hoy como máximo', () => {
+    const { html } = crearConTiempoFalso();
+
+    expect((html.querySelector('#hasta') as HTMLInputElement).max).toBe('2026-11-13');
+    expect((html.querySelector('#desde') as HTMLInputElement).max).toBe('2026-11-13');
+  });
+
+  it('un "hasta" posterior a hoy avisa con un modal, se marca en rojo y no pide nada', () => {
+    const { fixture, html } = crearConTiempoFalso();
+    const error = vi.spyOn(modalService, 'error');
+
+    elegirFecha(html, 'hasta', '2026-11-14'); // mañana
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    expect(error).toHaveBeenCalledOnce();
+    expect(error).toHaveBeenCalledWith('La fecha "hasta" no puede ser posterior a hoy.');
+    expect(html.querySelector('#hasta')?.classList.contains('is-invalid')).toBe(true);
+    expect(html.querySelector('#desde')?.classList.contains('is-invalid')).toBe(false);
+    backend.expectNone((r) => r.url.startsWith(base));
+  });
+
+  it('un "hasta" igual a hoy es válido', () => {
+    const { fixture, html } = crearConTiempoFalso();
+    const error = vi.spyOn(modalService, 'error');
+
+    elegirFecha(html, 'hasta', '2026-11-13');
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    expect(error).not.toHaveBeenCalled();
+    expect(html.querySelector('#hasta')?.classList.contains('is-invalid')).toBe(false);
+    const pedido = backend.expectOne((r) => r.url === `${base}/comentarios`);
+    expect(pedido.request.params.get('hasta')).toBe('2026-11-13');
+    backend.match((r) => r.url.startsWith(base));
+  });
+
+  it('un "desde" posterior a hoy también se rechaza', () => {
+    const { fixture, html } = crearConTiempoFalso();
+    const error = vi.spyOn(modalService, 'error');
+
+    elegirFecha(html, 'desde', '2026-12-01');
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    expect(error).toHaveBeenCalledWith('La fecha "desde" no puede ser posterior a hoy.');
+    expect(html.querySelector('#desde')?.classList.contains('is-invalid')).toBe(true);
+    backend.expectNone((r) => r.url.startsWith(base));
+  });
+
+  it('corregir la fecha futura por una válida vuelve a pedir y quita el rojo', () => {
+    const { fixture, html } = crearConTiempoFalso();
+
+    elegirFecha(html, 'hasta', '2026-11-30');
+    vi.advanceTimersByTime(300);
+    backend.expectNone((r) => r.url.startsWith(base));
+
+    elegirFecha(html, 'hasta', '2026-11-12');
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    expect(html.querySelector('#hasta')?.classList.contains('is-invalid')).toBe(false);
+    const pedido = backend.expectOne((r) => r.url === `${base}/comentarios`);
+    expect(pedido.request.params.get('hasta')).toBe('2026-11-12');
+    backend.match((r) => r.url.startsWith(base));
   });
 
   it('si "desde" es posterior a "hasta" avisa con un modal y no pide nada', () => {

@@ -11,6 +11,7 @@ import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { TiempoRelativoPipe } from '../../pipes/tiempo-relativo-pipe';
 import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
+import { Spinner } from '../spinner/spinner';
 
 // Misma regla que CrearComentarioDto / ActualizarComentarioDto del back.
 const MAXIMO_CARACTERES = 500;
@@ -35,6 +36,7 @@ function nuevoControlMensaje(valor = ''): FormControl<string> {
     InicialesPipe,
     TiempoRelativoPipe,
     ContadorCaracteresDirective,
+    Spinner,
   ],
   templateUrl: './comentarios.html',
   styleUrl: './comentarios.css',
@@ -67,7 +69,9 @@ export class Comentarios implements OnInit {
   protected readonly editandoId = signal<string | null>(null);
   protected readonly guardando = signal(false);
 
-  protected readonly ocultos = computed(() => Math.max(0, this.total() - this.comentarios().length));
+  protected readonly ocultos = computed(() =>
+    Math.max(0, this.total() - this.comentarios().length),
+  );
   private readonly usuarioId = computed(() => this.authService.usuarioActual()?.id ?? null);
 
   ngOnInit(): void {

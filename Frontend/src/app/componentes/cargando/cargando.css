@@ -4,20 +4,4 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.25rem;
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 5px solid var(--color-surface-alt);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: girar 0.8s linear infinite;
-}
-
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
 }

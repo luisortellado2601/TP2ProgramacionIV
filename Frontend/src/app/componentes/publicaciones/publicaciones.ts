@@ -6,12 +6,13 @@ import { mensajeDeError } from '../../utils/mensaje-error';
 import { OrdenPublicaciones, Publicacion } from '../../models/publicacion';
 import { PublicacionCard } from '../publicacion/publicacion';
 import { NuevaPublicacion } from '../nueva-publicacion/nueva-publicacion';
+import { Spinner } from '../spinner/spinner';
 
 const PUBLICACIONES_POR_PAGINA = 5;
 
 @Component({
   selector: 'app-publicaciones',
-  imports: [PublicacionCard, NuevaPublicacion],
+  imports: [PublicacionCard, NuevaPublicacion, Spinner],
   templateUrl: './publicaciones.html',
   styleUrl: './publicaciones.css',
 })

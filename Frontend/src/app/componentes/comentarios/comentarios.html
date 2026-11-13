@@ -25,7 +25,7 @@
   }
 
   @if (cargando()) {
-    <p class="text-muted">Cargando comentarios...</p>
+    <app-spinner [pequeno]="true" mensaje="Cargando comentarios..." />
   } @else if (falloCarga()) {
     <p class="text-muted">No pudimos cargar los comentarios.</p>
   } @else if (comentarios().length === 0) {

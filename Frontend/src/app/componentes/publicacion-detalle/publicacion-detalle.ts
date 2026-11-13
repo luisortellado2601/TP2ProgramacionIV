@@ -8,13 +8,14 @@ import { Publicacion } from '../../models/publicacion';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { PublicacionCard } from '../publicacion/publicacion';
 import { Comentarios } from '../comentarios/comentarios';
+import { Spinner } from '../spinner/spinner';
 
 // Comentarios que se traen en la primera carga y en cada "cargar más".
 const COMENTARIOS_POR_CARGA = 5;
 
 @Component({
   selector: 'app-publicacion-detalle',
-  imports: [RouterLink, PublicacionCard, Comentarios],
+  imports: [RouterLink, PublicacionCard, Comentarios, Spinner],
   templateUrl: './publicacion-detalle.html',
   styleUrl: './publicacion-detalle.css',
 })
@@ -59,7 +60,9 @@ export class PublicacionDetalle {
 
     peticion.subscribe({
       next: ({ likes, cantidadLikes }) =>
-        this.publicacion.update((actual) => (actual ? { ...actual, likes, cantidadLikes } : actual)),
+        this.publicacion.update((actual) =>
+          actual ? { ...actual, likes, cantidadLikes } : actual,
+        ),
       error: (error) =>
         this.modalService.error(mensajeDeError(error, 'No pudimos actualizar tu me gusta.')),
     });

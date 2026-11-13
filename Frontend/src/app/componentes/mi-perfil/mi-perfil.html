@@ -29,7 +29,7 @@
 
     <h3 class="perfil-subtitulo titulo-marca">Mis últimas publicaciones</h3>
     @if (cargando()) {
-      <p class="text-muted text-center">Cargando...</p>
+      <app-spinner mensaje="Cargando tus publicaciones..." />
     } @else if (falloCarga()) {
       <div class="card text-center">
         <p class="text-muted">No pudimos cargar tus publicaciones. Probá recargar la página.</p>
@@ -43,7 +43,10 @@
         @for (publicacion of ultimas(); track publicacion.id) {
           <div class="perfil-publicacion">
             <app-publicacion [publicacion]="publicacion" [interactiva]="false" />
-            <app-comentarios [publicacionId]="publicacion.id" [limite]="comentariosPorPublicacion" />
+            <app-comentarios
+              [publicacionId]="publicacion.id"
+              [limite]="comentariosPorPublicacion"
+            />
           </div>
         }
       </div>

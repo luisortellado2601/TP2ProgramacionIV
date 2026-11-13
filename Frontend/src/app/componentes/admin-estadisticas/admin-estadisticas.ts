@@ -12,9 +12,18 @@ import {
   RespuestaComentarios,
 } from '../../models/estadisticas';
 import { Grafico } from '../grafico/grafico';
+import { Spinner } from '../spinner/spinner';
 
 const LARGO_MAXIMO_TITULO = 24;
 const TIEMPO_ESPERA_MS = 300;
+
+// Fecha de hoy como "YYYY-MM-DD", en la zona horaria del usuario (el formato de los campos de fecha).
+function hoy(): string {
+  const fecha = new Date();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
 
 // "2026-11-05" -> "05/11". Se arma con texto (sin `Date`) para que la zona horaria no mueva el día.
 function formatearDia(fecha: string): string {
@@ -28,7 +37,7 @@ function acortar(texto: string): string {
 
 @Component({
   selector: 'app-admin-estadisticas',
-  imports: [ReactiveFormsModule, Grafico],
+  imports: [ReactiveFormsModule, Grafico, Spinner],
   templateUrl: './admin-estadisticas.html',
   styleUrl: './admin-estadisticas.css',
 })
@@ -129,12 +138,50 @@ export class AdminEstadisticas {
     this.lapso.reset();
   }
 
-  private consultar(): void {
+  // Fecha más tardía que se puede elegir: hoy. Se calcula en cada uso para que, si la pantalla
+  // queda abierta pasada la medianoche, el límite se actualice solo.
+  protected get fechaMaxima(): string {
+    return hoy();
+  }
+
+  // "Desde" no puede pasar de "hasta" (si ya hay una) ni de hoy.
+  protected get desdeMaximo(): string {
+    const { hasta } = this.lapso.getRawValue();
+    return hasta && hasta < hoy() ? hasta : hoy();
+  }
+
+  // Para marcar en rojo el campo (o los campos) del lapso que no es válido.
+  protected invalido(campo: 'desde' | 'hasta'): boolean {
+    return this.errorDelLapso()?.campos.includes(campo) ?? false;
+  }
+
+  // Reglas del lapso, en orden: no se puede pedir un reporte de fechas que todavía no llegaron,
+  // y el comienzo no puede ser posterior al final.
+  private errorDelLapso(): { campos: ('desde' | 'hasta')[]; mensaje: string } | null {
     const { desde, hasta } = this.lapso.getRawValue();
+    const hoyTexto = hoy();
+    if (hasta && hasta > hoyTexto) {
+      return { campos: ['hasta'], mensaje: 'La fecha "hasta" no puede ser posterior a hoy.' };
+    }
+    if (desde && desde > hoyTexto) {
+      return { campos: ['desde'], mensaje: 'La fecha "desde" no puede ser posterior a hoy.' };
+    }
     if (desde && hasta && desde > hasta) {
-      this.modalService.error('La fecha "desde" no puede ser posterior a la fecha "hasta".');
+      return {
+        campos: ['desde', 'hasta'],
+        mensaje: 'La fecha "desde" no puede ser posterior a la fecha "hasta".',
+      };
+    }
+    return null;
+  }
+
+  private consultar(): void {
+    const error = this.errorDelLapso();
+    if (error) {
+      this.modalService.error(error.mensaje);
       return;
     }
+    const { desde, hasta } = this.lapso.getRawValue();
     this.pedidos.next({ desde: desde || undefined, hasta: hasta || undefined });
   }
 }

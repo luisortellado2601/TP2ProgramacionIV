@@ -1,0 +1,6 @@
+<div class="carga" [class.carga--pequeno]="pequeno()">
+  <div class="spinner" role="status" [attr.aria-label]="mensaje() || 'Cargando'"></div>
+  @if (mensaje()) {
+    <p class="text-muted">{{ mensaje() }}</p>
+  }
+</div>

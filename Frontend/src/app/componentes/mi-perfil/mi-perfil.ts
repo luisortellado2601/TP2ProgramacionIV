@@ -6,6 +6,7 @@ import { Publicacion } from '../../models/publicacion';
 import { PublicacionCard } from '../publicacion/publicacion';
 import { Comentarios } from '../comentarios/comentarios';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
+import { Spinner } from '../spinner/spinner';
 
 const CANTIDAD_ULTIMAS = 3;
 // Comentarios que se ven de cada publicación (los más recientes); el resto, con "Ver N más".
@@ -13,7 +14,7 @@ const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [RouterLink, PublicacionCard, Comentarios, InicialesPipe],
+  imports: [RouterLink, PublicacionCard, Comentarios, InicialesPipe, Spinner],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

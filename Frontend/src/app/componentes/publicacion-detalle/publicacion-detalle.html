@@ -4,7 +4,7 @@
   </a>
 
   @if (cargando()) {
-    <p class="text-muted text-center">Cargando publicación...</p>
+    <app-spinner mensaje="Cargando publicación..." />
   } @else if (error() === 'noExiste') {
     <div class="card text-center">
       <h3>Publicación no disponible</h3>
@@ -22,7 +22,11 @@
         (alternarLike)="alternarLike($event)"
         (eliminar)="eliminar($event)"
       />
-      <app-comentarios [publicacionId]="actual.id" [limite]="comentariosPorCarga" [interactivo]="true" />
+      <app-comentarios
+        [publicacionId]="actual.id"
+        [limite]="comentariosPorCarga"
+        [interactivo]="true"
+      />
     </div>
   }
 </div>

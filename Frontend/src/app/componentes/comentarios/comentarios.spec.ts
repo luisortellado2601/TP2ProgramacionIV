@@ -38,12 +38,10 @@ describe('Comentarios', () => {
     fixture.componentRef.setInput('enlazarDetalle', enlazarDetalle);
     fixture.detectChanges();
 
-    backend
-      .expectOne(`${URL_COMENTARIOS}?offset=0&limit=2`)
-      .flush({
-        total: 3,
-        comentarios: [comentario('c1', 'u1', 'Mío'), comentario('c2', 'u2', 'De otro')],
-      });
+    backend.expectOne(`${URL_COMENTARIOS}?offset=0&limit=2`).flush({
+      total: 3,
+      comentarios: [comentario('c1', 'u1', 'Mío'), comentario('c2', 'u2', 'De otro')],
+    });
     fixture.detectChanges();
   }
 

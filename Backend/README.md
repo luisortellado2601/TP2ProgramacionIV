@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-13
-**Sprint en curso:** #4. Back terminado, deployado y probado con Postman contra Producción (back 80 tests, front 73). Front: baja de publicaciones para admin y dashboard de usuarios (listado, alta con radios, habilitar/deshabilitar) listos. 3 pipes propias (`iniciales`, `estadoUsuario`, `tiempoRelativo`) y 3 directivas propias (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`) listas. Dashboard de estadísticas listo (Chart.js: barras, líneas y torta; lapso con Desde/Hasta que se aplican solos). PWA lista (manifest, íconos propios y service worker; probada sobre el build: instalable y abre sin conexión). Spinner único (`app-spinner`) en todas las cargas. Editar perfil probado y funcionando. El back de estadísticas rechaza un `hasta` posterior a hoy (400), igual que el front. Pendiente: deployar el back con este último cambio y verificar la instalación en producción tras el deploy.
+**Última actualización:** 2026-11-14
+**Sprint en curso:** #4, completo y en producción (front y back), con la PWA probada ahí (instalable y abre sin conexión). Tests: back 80 en 13 suites, front 73 en 12 archivos; build y lint en verde. Incluye admin (baja de publicaciones, usuarios, estadísticas con Chart.js), 3 pipes y 3 directivas propias, PWA y editar perfil. `JWT_EXPIRES_IN_SEGUNDOS` es 900 en local y en Vercel.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -21,10 +21,10 @@
 | #1 Registro/Login base | [x] | [x] | Cerrado y deployado |
 | #2 Publicaciones y Mi Perfil | [x] | [x] | Cerrado y deployado |
 | #3 Comentarios, JWT y sesión | [x] | [x] | Cerrado y deployado |
-| #4 Admin, estadísticas, PWA, pipes/directivas | [x] | [x] | Back deployado; front completo, falta deployarlo y verificar la PWA en producción |
+| #4 Admin, estadísticas, PWA, pipes/directivas | [x] | [x] | Completo y deployado; PWA verificada en producción |
 
 ### Próximo paso
-**Editar el perfil** (el enunciado pide "ver y editar su perfil"): hecho en back (`PUT /usuarios/me`) y front (`/perfil/editar`, botón "Editar perfil" en Mi perfil; fecha de nacimiento visible). Se edita nombre, apellido, fecha de nacimiento, descripción y foto; correo, usuario, contraseña y perfil no se cambian. Probado en el navegador contra el back local; falta deployar. Después: verificar la PWA instalándola desde producción, pasada final de diseño (casilla "Diseño uniforme" de la sección 5) y cerrar el Sprint #4.
+**Pasada final de diseño** (casilla "Diseño uniforme" de la sección 5) y cerrar el Sprint #4. Opcional: definir `CORS_ORIGIN` en el back de Vercel.
 
 ### Cómo probar
 - **Tests:** `npm test` en `Backend/` y en `Frontend/`.
@@ -50,6 +50,7 @@
 - `authGuard` del front solo mira `localStorage`; un token vencido se detecta en el primer pedido (401) o al iniciar la app en `/` (pantalla "Cargando").
 - Menor: en `darLike`/`quitarLike`, si la publicación se elimina justo entre la comprobación y la actualización, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`) y borrar la variable vieja `JWT_EXPIRES_IN_MINUTOS`, si existe.
+- PWA sin `SwUpdate`: tras un deploy, quien ya visitó el sitio puede ver la versión anterior hasta recargar una o dos veces.
 - Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 
 ---
@@ -260,7 +261,7 @@ La "Red social" es una aplicación dividida en **dos proyectos** (frontend y bac
   - [x] Cantidad de publicaciones por usuario en un lapso de tiempo (lapso elegible). _(Barras.)_
   - [x] Cantidad de comentarios realizados en un lapso de tiempo (lapso elegible). _(Líneas, por día.)_
   - [x] Cantidad de comentarios en cada publicación en un lapso de tiempo (lapso elegible). _(Torta.)_
-- [ ] **A nivel aplicación**
+- [x] **A nivel aplicación**
   - [x] Implementar **PWA**. _(`@angular/pwa`: manifest, íconos propios, service worker solo en producción.)_
   - [x] **3 pipes PROPIAS** (`iniciales`, `estadoUsuario`, `tiempoRelativo`).
   - [x] **3 directivas PROPIAS** (`appSoloAdmin`, `appPastillaPerfil`, `appContadorCaracteres`).

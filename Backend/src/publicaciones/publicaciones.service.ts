@@ -161,6 +161,9 @@ export class PublicacionesService {
       )
       .exec();
     if (!publicacion) {
+      // Sin coincidencia: o ya había like, o la baja ocurrió entre la comprobación y la
+      // actualización. Se vuelve a comprobar para responder 404 en el segundo caso.
+      await this.obtenerActivaOFallar(id);
       throw new ConflictException('Ya le diste me gusta a esta publicación');
     }
 
@@ -180,6 +183,7 @@ export class PublicacionesService {
       )
       .exec();
     if (!publicacion) {
+      await this.obtenerActivaOFallar(id);
       throw new ConflictException('No le diste me gusta a esta publicación');
     }
 

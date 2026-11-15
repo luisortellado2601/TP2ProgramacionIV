@@ -1,5 +1,9 @@
 import { jest } from '@jest/globals';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
@@ -16,7 +20,9 @@ describe('PublicacionesService', () => {
     findById: jest.Mock;
     aggregate: jest.Mock;
     countDocuments: jest.Mock;
+    findOneAndUpdate: jest.Mock;
   };
+  let usuarioModel: { findById: jest.Mock };
 
   beforeEach(async () => {
     publicacionModel = {
@@ -24,7 +30,9 @@ describe('PublicacionesService', () => {
       findById: jest.fn(),
       aggregate: jest.fn(),
       countDocuments: jest.fn(),
+      findOneAndUpdate: jest.fn(),
     };
+    usuarioModel = { findById: jest.fn() };
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PublicacionesService,
@@ -34,9 +42,7 @@ describe('PublicacionesService', () => {
         },
         {
           provide: getModelToken(Usuario.name),
-          useValue: {
-            findById: jest.fn(),
-          },
+          useValue: usuarioModel,
         },
         {
           provide: getModelToken(Comentario.name),
@@ -137,6 +143,61 @@ describe('PublicacionesService', () => {
       await expect(
         service.obtener(new Types.ObjectId().toString()),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe.each([
+    ['darLike', 'Ya le diste me gusta a esta publicación'],
+    ['quitarLike', 'No le diste me gusta a esta publicación'],
+  ] as const)('%s', (metodo, mensajeConflicto) => {
+    const usuarioId = new Types.ObjectId().toString();
+    const publicacionId = new Types.ObjectId().toString();
+
+    // `findById` devuelve, en orden, lo que se indique en cada consulta.
+    const publicacionesEncontradas = (...eliminadas: boolean[]) => {
+      for (const eliminada of eliminadas) {
+        publicacionModel.findById.mockReturnValueOnce({
+          exec: jest.fn().mockResolvedValue({ eliminada }),
+        });
+      }
+    };
+    const actualizacion = (resultado: unknown) =>
+      publicacionModel.findOneAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(resultado),
+      });
+
+    beforeEach(() => {
+      usuarioModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({ _id: usuarioId }),
+      });
+    });
+
+    it('responde 404 si la publicación está dada de baja', async () => {
+      publicacionesEncontradas(true);
+
+      await expect(service[metodo](publicacionId, usuarioId)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(publicacionModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('responde 409 si la publicación sigue activa pero el like no corresponde', async () => {
+      publicacionesEncontradas(false, false);
+      actualizacion(null);
+
+      const promesa = service[metodo](publicacionId, usuarioId);
+
+      await expect(promesa).rejects.toBeInstanceOf(ConflictException);
+      await expect(promesa).rejects.toThrow(mensajeConflicto);
+    });
+
+    it('responde 404 (y no 409) si la baja ocurre entre la comprobación y la actualización', async () => {
+      publicacionesEncontradas(false, true);
+      actualizacion(null);
+
+      await expect(service[metodo](publicacionId, usuarioId)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });

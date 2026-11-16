@@ -78,6 +78,23 @@ describe('AuthService: vencimiento de la sesión', () => {
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
+  it('con el reloj de la PC adelantado respecto del servidor igual avisa a un tercio del final', () => {
+    // El token lo firmó un servidor cuyo reloj va 78 s atrás: su exp ya "pasó" según la PC.
+    const iat = Math.floor(Date.now() / 1000) - 78;
+    const payload = btoa(JSON.stringify({ sub: 'u1', iat, exp: iat + 60 }));
+    authService.login({ usuarioOCorreo: 'ana', contrasena: 'x' }).subscribe();
+    backend
+      .expectOne(`${environment.apiUrl}/auth/login`)
+      .flush({ usuario: { id: 'u1', nombre: 'Ana' }, token: `cabecera.${payload}.firma` });
+
+    vi.advanceTimersByTime(39_000);
+    expect(modalService.estado()).toBeNull();
+    vi.advanceTimersByTime(2_000); // pasan los 40 s: quedan 20 s de los 60
+
+    expect(modalService.estado()?.titulo).toBe('Sesión por vencer');
+    expect(authService.estaAutenticado()).toBe(true);
+  });
+
   it('al cerrar sesión a mano no queda ningún aviso pendiente', () => {
     authService.logout();
     vi.advanceTimersByTime(60_000);

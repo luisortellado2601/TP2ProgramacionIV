@@ -15,6 +15,10 @@ import { decodificarPayloadToken } from '../utils/jwt';
 import { formatearDuracion } from '../utils/formatear-duracion';
 
 const CLAVE_SESION = 'nextplay_sesion';
+// Hora local (ms) en que llegó el token guardado. El vencimiento se mide desde acá y no contra
+// el `exp` del token, porque `exp` está en la hora del servidor y el reloj de la PC puede estar
+// adelantado o atrasado: con tokens cortos eso hacía que el aviso nunca apareciera.
+const CLAVE_TOKEN_RECIBIDO = 'nextplay_token_recibido';
 
 // Aviso que se muestra cuando la sesión venció (por el temporizador o por un 401).
 export const MENSAJE_SESION_EXPIRADA =
@@ -35,7 +39,10 @@ export class AuthService {
   constructor() {
     const sesionGuardada = this.sesion();
     if (sesionGuardada) {
-      this.iniciarContadorSesion(sesionGuardada.token);
+      this.iniciarContadorSesion(
+        sesionGuardada.token,
+        this.leerTokenRecibido(sesionGuardada.token),
+      );
     }
   }
 
@@ -78,6 +85,7 @@ export class AuthService {
   logout(): void {
     this.sesion.set(null);
     localStorage.removeItem(CLAVE_SESION);
+    localStorage.removeItem(CLAVE_TOKEN_RECIBIDO);
     this.cancelarContadorSesion();
   }
 
@@ -88,7 +96,20 @@ export class AuthService {
   private guardarSesion(respuesta: SesionResponse): void {
     this.sesion.set(respuesta);
     localStorage.setItem(CLAVE_SESION, JSON.stringify(respuesta));
-    this.iniciarContadorSesion(respuesta.token);
+    const recibidoEn = Date.now();
+    localStorage.setItem(CLAVE_TOKEN_RECIBIDO, String(recibidoEn));
+    this.iniciarContadorSesion(respuesta.token, recibidoEn);
+  }
+
+  // Hora local en que se recibió el token guardado. Si falta (sesión de una versión anterior),
+  // se usa el `iat` del token como mejor aproximación.
+  private leerTokenRecibido(token: string): number {
+    const guardado = Number(localStorage.getItem(CLAVE_TOKEN_RECIBIDO));
+    if (Number.isFinite(guardado) && guardado > 0) {
+      return guardado;
+    }
+    const payload = decodificarPayloadToken(token);
+    return payload ? payload.iat * 1000 : Date.now();
   }
 
   // Actualiza solo los datos del usuario (p. ej. tras `autorizar`), sin tocar
@@ -117,16 +138,18 @@ export class AuthService {
   }
 
   // El aviso aparece cuando queda un tercio de la vida del token (p. ej. a los
-  // 10 min de un token de 15, o a los 20 s de uno de prueba de 30): la
+  // 10 min de un token de 15, o a los 20 s de uno de prueba de 60): la
   // proporción escala sola en vez de depender de un valor fijo en minutos.
-  private iniciarContadorSesion(token: string): void {
+  // Solo se usa la duración (`exp - iat`) del token; el vencimiento se mide desde `recibidoEn`
+  // (hora local), así no importa si el reloj de la PC no coincide con el del servidor.
+  private iniciarContadorSesion(token: string, recibidoEn: number): void {
     this.cancelarContadorSesion();
     const payload = decodificarPayloadToken(token);
     if (!payload) {
       return;
     }
-    const vencimientoMs = payload.exp * 1000;
-    const duracionMs = vencimientoMs - payload.iat * 1000;
+    const duracionMs = (payload.exp - payload.iat) * 1000;
+    const vencimientoMs = recibidoEn + duracionMs;
     const avisoEnMs = vencimientoMs - duracionMs / 3 - Date.now();
     if (vencimientoMs - Date.now() <= 0) {
       return; // ya venció: el próximo pedido lo cierra el interceptor

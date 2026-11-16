@@ -29,7 +29,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
   controllers: [AppController],
   providers: [
     AppService,
-    // Guard global: toda ruta exige JWT salvo las marcadas con @Public().
+    // Guard global: toda ruta exige JWT salvo las marcadas con @Public()
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })

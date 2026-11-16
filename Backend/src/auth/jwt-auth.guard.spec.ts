@@ -2,6 +2,8 @@ import { jest } from '@jest/globals';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { Model, Types } from 'mongoose';
+import type { UsuarioDocument } from '../usuarios/usuario.schema.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { Public } from './decoradores/public.decorator.js';
 import type { RequestAutenticada } from './payload-token.js';
@@ -26,12 +28,22 @@ function contexto(
 }
 
 describe('JwtAuthGuard', () => {
+  const idValido = new Types.ObjectId().toString();
   const verifyAsync = jest.fn<(token: string) => Promise<unknown>>();
-  const guard = new JwtAuthGuard(new Reflector(), {
-    verifyAsync,
-  } as unknown as JwtService);
+  const exec = jest.fn<() => Promise<unknown>>();
+  const select = jest.fn(() => ({ exec }));
+  const findOne = jest.fn((_filtro: unknown) => ({ select }));
+  const guard = new JwtAuthGuard(
+    new Reflector(),
+    { verifyAsync } as unknown as JwtService,
+    { findOne } as unknown as Model<UsuarioDocument>,
+  );
 
-  beforeEach(() => verifyAsync.mockReset());
+  beforeEach(() => {
+    verifyAsync.mockReset();
+    exec.mockReset().mockResolvedValue({ _id: idValido });
+    findOne.mockClear();
+  });
 
   it('deja pasar las rutas @Public() sin token', async () => {
     await expect(
@@ -61,8 +73,32 @@ describe('JwtAuthGuard', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('con token válido deja pasar y guarda el payload en la request', async () => {
-    const payload = { sub: 'abc123', perfil: 'usuario' };
+  it('responde 401 si el usuario fue deshabilitado o borrado, aunque su token siga vigente', async () => {
+    verifyAsync.mockResolvedValue({ sub: idValido, perfil: 'usuario' });
+    exec.mockResolvedValue(null);
+    const request: Partial<RequestAutenticada> = {
+      headers: { authorization: 'Bearer vigente' },
+    };
+
+    await expect(
+      guard.canActivate(contexto(RutaPrivada, request)),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(findOne).toHaveBeenCalledWith({ _id: idValido, habilitado: true });
+    expect(request.usuario).toBeUndefined();
+  });
+
+  it('responde 401 si el sub del token no es un id válido, sin consultar la base', async () => {
+    verifyAsync.mockResolvedValue({ sub: 'abc123', perfil: 'usuario' });
+    const request = { headers: { authorization: 'Bearer raro' } };
+
+    await expect(
+      guard.canActivate(contexto(RutaPrivada, request)),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(findOne).not.toHaveBeenCalled();
+  });
+
+  it('con token válido y usuario habilitado deja pasar y guarda el payload en la request', async () => {
+    const payload = { sub: idValido, perfil: 'usuario' };
     verifyAsync.mockResolvedValue(payload);
     const request: Partial<RequestAutenticada> = {
       headers: { authorization: 'Bearer valido' },

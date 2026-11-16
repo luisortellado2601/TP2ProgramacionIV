@@ -44,7 +44,7 @@
 - Backend en ESM: los imports relativos terminan en `.js`.
 
 ### Pendientes y límites conocidos
-- `JwtAuthGuard` solo verifica firma y vencimiento, así que un usuario deshabilitado conserva acceso a las rutas comunes hasta que venza su token (15 min). Las rutas de administrador (`@Roles`) sí consultan la base en cada pedido, y `autorizar`/`refrescar` también.
+- `JwtAuthGuard` verifica firma y vencimiento y además consulta en la base que el usuario siga existiendo y habilitado: un usuario deshabilitado recibe 401 en su próximo pedido (el front cierra la sesión). Si está inactivo, se entera recién al hacer un pedido.
 - Las estadísticas agrupan y filtran los días en UTC (el enunciado no pide zona horaria).
 - En el dashboard, las barras (publicaciones por usuario) y la torta (comentarios por publicación) muestran solo el top 10: el front no manda `limit` y el back usa 10 por defecto (acepta hasta 50). Sin fechas elegidas se muestra todo el histórico vigente.
 - `authGuard` del front solo mira `localStorage`; un token vencido se detecta en el primer pedido (401) o al iniciar la app en `/` (pantalla "Cargando").

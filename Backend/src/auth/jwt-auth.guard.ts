@@ -6,6 +6,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Usuario, UsuarioDocument } from '../usuarios/usuario.schema.js';
 import { ES_PUBLICA } from './decoradores/public.decorator.js';
 import type { PayloadToken, RequestAutenticada } from './payload-token.js';
 
@@ -14,6 +17,8 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
+    @InjectModel(Usuario.name)
+    private readonly usuarioModel: Model<UsuarioDocument>,
   ) {}
 
   async canActivate(contexto: ExecutionContext): Promise<boolean> {
@@ -31,13 +36,32 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Falta el token de autenticación');
     }
 
+    let payload: PayloadToken;
     try {
       // Verifica la firma y el vencimiento (lanza si no se cumplen).
-      request.usuario = await this.jwtService.verifyAsync<PayloadToken>(token);
+      payload = await this.jwtService.verifyAsync<PayloadToken>(token);
     } catch {
       throw new UnauthorizedException('El token es inválido o está vencido');
     }
+
+    // Un token vigente no alcanza: si el usuario fue deshabilitado (o borrado) después de
+    // iniciar sesión, deja de valer en el acto en vez de esperar a que venza el JWT.
+    await this.exigirUsuarioHabilitado(payload.sub);
+
+    request.usuario = payload;
     return true;
+  }
+
+  private async exigirUsuarioHabilitado(usuarioId: string): Promise<void> {
+    const usuario = Types.ObjectId.isValid(usuarioId)
+      ? await this.usuarioModel
+          .findOne({ _id: usuarioId, habilitado: true })
+          .select('_id')
+          .exec()
+      : null;
+    if (!usuario) {
+      throw new UnauthorizedException('La sesión ya no es válida');
+    }
   }
 
   // Espera el encabezado `Authorization: Bearer <token>`.

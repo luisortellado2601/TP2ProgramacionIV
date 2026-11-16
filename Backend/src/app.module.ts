@@ -11,6 +11,7 @@ import { ComentariosModule } from './comentarios/comentarios.module.js';
 import { EstadisticasModule } from './estadisticas/estadisticas.module.js';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
+import { Usuario, UsuarioSchema } from './usuarios/usuario.schema.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -20,6 +21,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     MongooseModule.forRoot(
       process.env.MONGODB_URI ?? 'mongodb://localhost/tp2-progra-iv',
     ),
+    // JwtAuthGuard (guard global) consulta el estado del usuario en cada pedido.
+    MongooseModule.forFeature([{ name: Usuario.name, schema: UsuarioSchema }]),
     UsuariosModule,
     AuthModule,
     PublicacionesModule,

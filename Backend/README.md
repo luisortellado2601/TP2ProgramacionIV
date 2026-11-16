@@ -12,8 +12,8 @@
 
 ## 0. Estado actual (ACTUALIZAR EN CADA SESIÓN)
 
-**Última actualización:** 2026-11-14
-**Sprint en curso:** #4, completo y en producción (front y back), con la PWA probada ahí (instalable y abre sin conexión). Tests: back 80 en 13 suites, front 73 en 12 archivos; build y lint en verde. Incluye admin (baja de publicaciones, usuarios, estadísticas con Chart.js), 3 pipes y 3 directivas propias, PWA y editar perfil. `JWT_EXPIRES_IN_SEGUNDOS` es 900 en local y en Vercel.
+**Última actualización:** 2026-11-15
+**Sprint en curso:** #4, completo y en producción (front y back), con la PWA probada ahí (instalable y abre sin conexión). Tests: back 80 en 13 suites, front 73 en 12 archivos; build y lint en verde. Incluye admin (baja de publicaciones, usuarios, estadísticas con Chart.js), 3 pipes y 3 directivas propias, PWA y editar perfil. `JWT_EXPIRES_IN_SEGUNDOS` queda en **60** (no se vuelve a 900) a propósito, para que el profesor pueda ver fácilmente el vencimiento de token y el refresco.
 
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
@@ -38,7 +38,7 @@
 - En Windows, `nest start --watch` puede dejar procesos `node` colgados en el puerto 3000 (`EADDRINUSE`). Buscar el PID con `Get-NetTCPConnection -LocalPort 3000` y matarlo con `Stop-Process`.
 
 ### Decisiones vigentes
-- **Sesión:** el token dura `JWT_EXPIRES_IN_SEGUNDOS` (900 por defecto, que es lo que pide el enunciado). El front decodifica el JWT y avisa cuando queda un tercio de su vida (a los 10 min con 900 s), con un modal que no se cierra al hacer clic afuera. Si se ignora, la sesión se cierra sola al vencer el token.
+- **Sesión:** el token dura `JWT_EXPIRES_IN_SEGUNDOS` (900 por defecto según el enunciado, pero se entrega en **60** a propósito para que el profesor pueda ver el vencimiento y el refresco sin esperar 15 minutos). El front decodifica el JWT y avisa cuando queda un tercio de su vida (a los 20 s con 60 s), con un modal que no se cierra al hacer clic afuera. Si se ignora, la sesión se cierra sola al vencer el token.
 - **401** en una ruta protegida: el interceptor cierra la sesión, muestra "Sesión expirada" y manda a `/login`. En login y registro el 401 significa credenciales incorrectas y lo muestra la propia pantalla.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage.
 - Backend en ESM: los imports relativos terminan en `.js`.

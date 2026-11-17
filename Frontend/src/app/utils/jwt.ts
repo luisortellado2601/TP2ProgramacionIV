@@ -1,6 +1,3 @@
-// Un JWT es header.payload.firma en base64url; el payload se puede leer sin la
-// clave (no hace falta validarlo acá, eso ya lo hizo el back). Sirve para saber
-// cuándo vence el token y programar el aviso de "sesión por vencer".
 export interface PayloadToken {
   sub: string;
   correo: string;

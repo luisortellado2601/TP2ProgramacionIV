@@ -38,14 +38,11 @@ export class JwtAuthGuard implements CanActivate {
 
     let payload: PayloadToken;
     try {
-      // Verifica la firma y el vencimiento (lanza si no se cumplen).
       payload = await this.jwtService.verifyAsync<PayloadToken>(token);
     } catch {
       throw new UnauthorizedException('El token es inválido o está vencido');
     }
 
-    // Un token vigente no alcanza: si el usuario fue deshabilitado (o borrado) después de
-    // iniciar sesión, deja de valer en el acto en vez de esperar a que venza el JWT.
     await this.exigirUsuarioHabilitado(payload.sub);
 
     request.usuario = payload;
@@ -64,7 +61,6 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  // Espera el encabezado `Authorization: Bearer <token>`.
   private extraerToken(request: RequestAutenticada): string | undefined {
     const [tipo, token] = request.headers.authorization?.split(' ') ?? [];
     return tipo === 'Bearer' && token ? token : undefined;

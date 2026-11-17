@@ -22,7 +22,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     MongooseModule.forRoot(
       process.env.MONGODB_URI ?? 'mongodb://localhost/tp2-progra-iv',
     ),
-    // JwtAuthGuard (guard global) consulta el estado del usuario en cada pedido.
     MongooseModule.forFeature([{ name: Usuario.name, schema: UsuarioSchema }]),
     UsuariosModule,
     AuthModule,
@@ -34,7 +33,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
   controllers: [AppController],
   providers: [
     AppService,
-    // Guard global: toda ruta exige JWT salvo las marcadas con @Public()
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })

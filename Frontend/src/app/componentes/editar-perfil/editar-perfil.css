@@ -56,7 +56,6 @@
   font-size: 0.8rem;
 }
 
-/* Los campos que no se pueden cambiar se ven apagados, para que se entienda por qué no responden. */
 .form-field input:disabled {
   opacity: 0.55;
   cursor: not-allowed;

@@ -6,7 +6,6 @@ import { mensajeDeError } from '../../utils/mensaje-error';
 import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
 import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
 
-// Mismas reglas que el CrearPublicacionDto del back.
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
 const TAMANO_MAXIMO_IMAGEN_MB = 2;
 

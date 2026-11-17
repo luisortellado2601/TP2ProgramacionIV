@@ -29,8 +29,6 @@
   }
 }
 
-/* Solo en pantallas muy anchas (el contenido ya supera los ~880 px) los gráficos se reparten en
-   dos columnas; en el resto, uno debajo del otro. */
 .estadisticas__graficos {
   display: grid;
   grid-template-columns: 1fr;

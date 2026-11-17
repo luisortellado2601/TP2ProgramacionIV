@@ -8,8 +8,6 @@ function plural(cantidad: number, singular: string, plural: string): string {
   return `${cantidad} ${cantidad === 1 ? singular : plural}`;
 }
 
-// Fecha como texto relativo: "hace un momento", "hace 5 min", "hace 3 h", "hace 2 días".
-// Pasada una semana muestra la fecha (dd/MM/yy). `ahora` se puede pasar para probarla.
 @Pipe({ name: 'tiempoRelativo' })
 export class TiempoRelativoPipe implements PipeTransform {
   transform(fecha: string | Date | null | undefined, ahora: number = Date.now()): string {
@@ -21,7 +19,6 @@ export class TiempoRelativoPipe implements PipeTransform {
       return '';
     }
 
-    // Si la fecha quedó apenas en el futuro (relojes desfasados), se trata como "recién".
     const diferencia = Math.max(0, ahora - instante.getTime());
 
     if (diferencia < MINUTO) {

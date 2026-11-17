@@ -12,10 +12,6 @@ import { recortar } from '../../auth/dto/transformadores.js';
 import { FechaNacimientoValida } from '../../auth/dto/fecha-nacimiento-valida.validator.js';
 import { PATRON_NOMBRE } from '../../auth/dto/registro.dto.js';
 
-// Datos que un usuario puede cambiar de su propio perfil, con las mismas reglas que el registro.
-// Quedan afuera a propósito: correo y nombre de usuario (identifican al usuario y viajan dentro
-// del token), contraseña, perfil/rol y habilitado. Como el ValidationPipe global rechaza los campos
-// que no están acá (forbidNonWhitelisted), mandarlos devuelve 400 y no se pueden modificar.
 export class ActualizarPerfilDto {
   @Transform(recortar)
   @IsString({ message: 'El nombre es obligatorio' })
@@ -45,7 +41,6 @@ export class ActualizarPerfilDto {
   })
   fechaNacimiento: string;
 
-  // Si no viene, la descripción actual no se toca; con texto vacío se borra.
   @IsOptional()
   @Transform(recortar)
   @IsString({ message: 'La descripción debe ser un texto' })
@@ -54,7 +49,6 @@ export class ActualizarPerfilDto {
   })
   descripcion?: string;
 
-  // Imagen nueva como data URL en base64; si no viene, se conserva la actual.
   @IsOptional()
   @IsString({ message: 'La imagen de perfil no es válida' })
   @Matches(/^data:image\/(jpeg|png|webp);base64,/, {

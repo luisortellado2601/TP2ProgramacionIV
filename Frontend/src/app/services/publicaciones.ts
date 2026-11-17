@@ -34,7 +34,6 @@ export class PublicacionesService {
     return this.http.post<Publicacion>(this.url, payload);
   }
 
-  // Quién actúa lo identifica el back con el token que agrega el interceptor.
   eliminar(id: string): Observable<{ id: string; eliminada: boolean }> {
     return this.http.delete<{ id: string; eliminada: boolean }>(`${this.url}/${id}`);
   }

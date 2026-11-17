@@ -21,7 +21,6 @@ describe('UsuariosController', () => {
       controllers: [UsuariosController],
       providers: [
         { provide: UsuariosService, useValue: usuariosService },
-        // Lo necesita RolesGuard, que @Roles() instancia en este módulo.
         { provide: getModelToken(Usuario.name), useValue: {} },
       ],
     }).compile();

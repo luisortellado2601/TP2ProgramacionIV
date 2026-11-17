@@ -9,8 +9,6 @@ import {
   RespuestaComentarios,
 } from '../models/estadisticas';
 
-// Rutas de administrador (el back responde 403 si el perfil no corresponde).
-// `desde` y `hasta` son opcionales: sin ellos no se acota ese extremo del lapso.
 @Service()
 export class EstadisticasService {
   private readonly http = inject(HttpClient);

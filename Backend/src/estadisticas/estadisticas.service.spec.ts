@@ -16,7 +16,6 @@ describe('EstadisticasService', () => {
   const devolver = (mock: jest.Mock, filas: unknown[]) =>
     mock.mockReturnValue({ exec: () => Promise.resolve(filas) });
 
-  // Primera etapa ($match) del pipeline con que se llamó al aggregate.
   const primerMatch = (mock: jest.Mock) =>
     (mock.mock.calls[0][0] as { $match: Record<string, unknown> }[])[0].$match;
 

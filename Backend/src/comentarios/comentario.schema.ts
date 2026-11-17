@@ -26,5 +26,4 @@ export class Comentario {
 
 export const ComentarioSchema = SchemaFactory.createForClass(Comentario);
 
-// Los comentarios siempre se piden por publicación, del más reciente al más viejo.
 ComentarioSchema.index({ publicacion: 1, fecha: -1 });

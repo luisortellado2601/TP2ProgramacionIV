@@ -105,7 +105,6 @@ export class PublicacionesService {
       throw new BadRequestException('El id de la publicación no es válido');
     }
 
-    // Mismo pipeline que el listado (cantidades y autor), para un solo documento.
     const [publicacion] = await this.publicacionModel
       .aggregate([
         { $match: { _id: new Types.ObjectId(id), eliminada: false } },
@@ -152,7 +151,6 @@ export class PublicacionesService {
     await this.obtenerActivaOFallar(id);
     const idUsuario = new Types.ObjectId(usuarioId);
 
-    // Operación atómica: el filtro y el cambio se resuelven juntos en Mongo.
     const publicacion = await this.publicacionModel
       .findOneAndUpdate(
         { _id: id, eliminada: false, likes: { $ne: idUsuario } },
@@ -161,8 +159,6 @@ export class PublicacionesService {
       )
       .exec();
     if (!publicacion) {
-      // Sin coincidencia: o ya había like, o la baja ocurrió entre la comprobación y la
-      // actualización. Se vuelve a comprobar para responder 404 en el segundo caso.
       await this.obtenerActivaOFallar(id);
       throw new ConflictException('Ya le diste me gusta a esta publicación');
     }
@@ -220,10 +216,6 @@ export class PublicacionesService {
     return usuario;
   }
 
-  // Etapas del aggregate que agregan `cantidadComentarios`: los comentarios activos (no
-  // eliminados) de cada publicación. El $lookup usa el índice { publicacion, fecha } del
-  // esquema y el $count devuelve un solo número en vez de traer los comentarios. El nombre de
-  // la colección se pide al modelo porque Mongoose la pluraliza a su manera.
   private etapasCantidadComentarios() {
     return [
       {
@@ -246,8 +238,6 @@ export class PublicacionesService {
     ];
   }
 
-  // Forma de una publicación en las respuestas; `publicacion` viene de un aggregate
-  // con las cantidades calculadas y el autor ya unido.
   private aRespuestaPublicacion(publicacion: {
     _id: Types.ObjectId;
     titulo: string;

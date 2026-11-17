@@ -2,9 +2,6 @@ import { Directive, EmbeddedViewRef, TemplateRef, ViewContainerRef, effect, inje
 import { AuthService } from '../services/auth';
 import { PerfilUsuario } from '../models/usuario';
 
-// Directiva estructural: `<a *appSoloAdmin>` dibuja el elemento solo si el usuario logueado es
-// administrador, y lo saca o lo agrega solo si la sesión cambia. Es comodidad de interfaz: la
-// regla real la hace cumplir el back (RolesGuard).
 @Directive({ selector: '[appSoloAdmin]' })
 export class SoloAdminDirective {
   private readonly authService = inject(AuthService);

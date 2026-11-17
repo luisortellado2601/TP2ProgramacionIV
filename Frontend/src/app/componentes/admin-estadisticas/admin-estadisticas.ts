@@ -17,7 +17,6 @@ import { Spinner } from '../spinner/spinner';
 const LARGO_MAXIMO_TITULO = 24;
 const TIEMPO_ESPERA_MS = 300;
 
-// Fecha de hoy como "YYYY-MM-DD", en la zona horaria del usuario (el formato de los campos de fecha).
 function hoy(): string {
   const fecha = new Date();
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -25,7 +24,6 @@ function hoy(): string {
   return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
 
-// "2026-11-05" -> "05/11". Se arma con texto (sin `Date`) para que la zona horaria no mueva el día.
 function formatearDia(fecha: string): string {
   const [, mes, dia] = fecha.split('-');
   return `${dia}/${mes}`;
@@ -45,7 +43,6 @@ export class AdminEstadisticas {
   private readonly estadisticasService = inject(EstadisticasService);
   private readonly modalService = inject(ModalService);
 
-  // Lapso elegible: sin fechas es "todo el tiempo"; con una sola, queda abierto del otro lado.
   protected readonly lapso = new FormGroup({
     desde: new FormControl('', { nonNullable: true }),
     hasta: new FormControl('', { nonNullable: true }),
@@ -57,7 +54,6 @@ export class AdminEstadisticas {
   protected readonly comentarios = signal<RespuestaComentarios>({ total: 0, porDia: [] });
   protected readonly comentariosPorPublicacion = signal<ComentariosPorPublicacion[]>([]);
 
-  // Etiquetas y valores que consume cada gráfico.
   protected readonly usuariosEtiquetas = computed(() =>
     this.publicacionesPorUsuario().map((u) => `@${u.nombreUsuario}`),
   );
@@ -75,8 +71,6 @@ export class AdminEstadisticas {
     this.comentariosPorPublicacion().map((p) => p.cantidad),
   );
 
-  // Cada lapso a consultar entra por acá; `switchMap` descarta el pedido anterior si todavía no
-  // terminó, así que un cambio rápido de fechas nunca deja datos viejos en pantalla.
   private readonly pedidos = new Subject<RangoFechas>();
 
   constructor() {
@@ -86,7 +80,6 @@ export class AdminEstadisticas {
           this.cargando.set(true);
           this.falloCarga.set(false);
         }),
-        // Los tres pedidos van juntos con el mismo lapso, para que los gráficos sean comparables.
         switchMap((rango) =>
           forkJoin({
             porUsuario: this.estadisticasService.publicacionesPorUsuario(rango),
@@ -110,8 +103,6 @@ export class AdminEstadisticas {
         this.cargando.set(false);
       });
 
-    // Las fechas se aplican solas al elegirlas. El pequeño retraso evita un pedido por cada
-    // dígito mientras se escribe una fecha a mano.
     this.lapso.valueChanges
       .pipe(debounceTime(TIEMPO_ESPERA_MS), takeUntilDestroyed())
       .subscribe(() => this.consultar());
@@ -124,13 +115,10 @@ export class AdminEstadisticas {
     return !!desde || !!hasta;
   }
 
-  // El navegador solo abre el calendario desde su ícono; así se abre con un clic en cualquier parte
-  // del campo. Si el navegador no lo permite, queda el ícono y el teclado.
   protected abrirCalendario(evento: Event): void {
     try {
       (evento.target as HTMLInputElement).showPicker?.();
     } catch {
-      // showPicker puede rechazarse (p. ej. si ya está abierto); no es un error para el usuario.
     }
   }
 
@@ -138,25 +126,19 @@ export class AdminEstadisticas {
     this.lapso.reset();
   }
 
-  // Fecha más tardía que se puede elegir: hoy. Se calcula en cada uso para que, si la pantalla
-  // queda abierta pasada la medianoche, el límite se actualice solo.
   protected get fechaMaxima(): string {
     return hoy();
   }
 
-  // "Desde" no puede pasar de "hasta" (si ya hay una) ni de hoy.
   protected get desdeMaximo(): string {
     const { hasta } = this.lapso.getRawValue();
     return hasta && hasta < hoy() ? hasta : hoy();
   }
 
-  // Para marcar en rojo el campo (o los campos) del lapso que no es válido.
   protected invalido(campo: 'desde' | 'hasta'): boolean {
     return this.errorDelLapso()?.campos.includes(campo) ?? false;
   }
 
-  // Reglas del lapso, en orden: no se puede pedir un reporte de fechas que todavía no llegaron,
-  // y el comienzo no puede ser posterior al final.
   private errorDelLapso(): { campos: ('desde' | 'hasta')[]; mensaje: string } | null {
     const { desde, hasta } = this.lapso.getRawValue();
     const hoyTexto = hoy();

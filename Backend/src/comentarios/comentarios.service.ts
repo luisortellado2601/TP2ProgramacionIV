@@ -84,7 +84,6 @@ export class ComentariosService {
     if (!comentario || comentario.eliminado) {
       throw new NotFoundException('Comentario no encontrado');
     }
-    // Si la publicación fue dada de baja, sus comentarios dejan de estar disponibles.
     await this.obtenerPublicacionActivaOFallar(comentario.publicacion.toString());
 
     if (comentario.usuario.toString() !== usuarioId) {

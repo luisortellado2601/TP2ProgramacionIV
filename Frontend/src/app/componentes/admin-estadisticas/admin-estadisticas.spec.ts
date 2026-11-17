@@ -8,8 +8,6 @@ import { ModalService } from '../../services/modal';
 import { Grafico } from '../grafico/grafico';
 import { AdminEstadisticas } from './admin-estadisticas';
 
-// jsdom no tiene canvas, así que Chart.js no puede dibujar: se reemplaza por un doble
-// que solo deja ver qué datos recibe cada gráfico.
 @Component({
   selector: 'app-grafico',
   template: `<div class="grafico-falso" [attr.data-tipo]="tipo()">
@@ -105,7 +103,7 @@ describe('AdminEstadisticas', () => {
 
   function crearConTiempoFalso() {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 10, 13, 12, 0, 0)); // "hoy" = 13/11/2026
+    vi.setSystemTime(new Date(2026, 10, 13, 12, 0, 0));
     const resultado = crear();
     responderTodo();
     resultado.fixture.detectChanges();
@@ -123,7 +121,6 @@ describe('AdminEstadisticas', () => {
   });
 
   it('un clic en cualquier parte del campo de fecha abre el calendario del navegador', () => {
-    // jsdom no implementa showPicker: se define para comprobar que se lo invoca.
     const showPicker = vi.fn();
     Object.defineProperty(HTMLInputElement.prototype, 'showPicker', {
       value: showPicker,
@@ -151,7 +148,7 @@ describe('AdminEstadisticas', () => {
 
     elegirFecha(html, 'desde', '2026-11-01');
     elegirFecha(html, 'hasta', '2026-11-13');
-    backend.expectNone((r) => r.url.startsWith(base)); // todavía dentro del retraso
+    backend.expectNone((r) => r.url.startsWith(base));
     vi.advanceTimersByTime(300);
 
     for (const ruta of [
@@ -189,7 +186,7 @@ describe('AdminEstadisticas', () => {
     const pedidos = backend.match((r) => r.url === `${base}/comentarios`);
     expect(pedidos.length).toBe(1);
     expect(pedidos[0].request.params.get('desde')).toBe('2026-11-02');
-    backend.match((r) => r.url.startsWith(base)); // descarta los otros dos
+    backend.match((r) => r.url.startsWith(base));
   });
 
   it('cada campo limita al otro (desde <= hasta) en el selector', () => {
@@ -214,7 +211,7 @@ describe('AdminEstadisticas', () => {
     const { fixture, html } = crearConTiempoFalso();
     const error = vi.spyOn(modalService, 'error');
 
-    elegirFecha(html, 'hasta', '2026-11-14'); // mañana
+    elegirFecha(html, 'hasta', '2026-11-14');
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
 
@@ -313,7 +310,6 @@ describe('AdminEstadisticas', () => {
     backend
       .expectOne((r) => r.url === `${base}/publicaciones-por-usuario`)
       .flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
-    // forkJoin cancela los otros dos al fallar el primero: se confirma y se descartan.
     const cancelados = backend.match((r) => r.url.startsWith(base));
     expect(cancelados.length).toBe(2);
     expect(cancelados.every((c) => c.cancelled)).toBe(true);

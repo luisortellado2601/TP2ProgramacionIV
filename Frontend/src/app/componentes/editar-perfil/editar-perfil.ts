@@ -14,7 +14,6 @@ import { ActualizarPerfilPayload } from '../../models/usuario';
 import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 
-// Mismas reglas que el ActualizarPerfilDto del back (que repite las del registro).
 const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
 const TAMANO_MAXIMO_IMAGEN_MB = 2;
@@ -31,12 +30,10 @@ export class EditarPerfil {
   private readonly modalService = inject(ModalService);
   private readonly router = inject(Router);
 
-  // Datos de la sesión: sirven para completar el formulario y para saber si hubo cambios.
   protected readonly usuario = this.authService.usuarioActual;
   private readonly original = {
     nombre: this.usuario()?.nombre ?? '',
     apellido: this.usuario()?.apellido ?? '',
-    // Llega como medianoche UTC ("1999-05-20T00:00:00.000Z"): el día es lo que va antes de la "T".
     fechaNacimiento: (this.usuario()?.fechaNacimiento ?? '').slice(0, 10),
     descripcion: this.usuario()?.descripcion ?? '',
   };
@@ -46,7 +43,6 @@ export class EditarPerfil {
   protected readonly fechaMaxima = fechaDeHoy();
   protected readonly tiposImagen = TIPOS_IMAGEN.join(',');
 
-  // La foto nueva es opcional y se maneja fuera del form: se envía como data URL.
   protected readonly imagenNueva = signal<string | null>(null);
   protected readonly errorImagen = signal<string | null>(null);
 
@@ -78,7 +74,6 @@ export class EditarPerfil {
     descripcion: [this.original.descripcion, [Validators.maxLength(280)]],
   });
 
-  // El botón "Guardar" se habilita solo si hay algo distinto de lo guardado.
   protected hayCambios(): boolean {
     const { nombre, apellido, fechaNacimiento, descripcion } = this.form.getRawValue();
     return (

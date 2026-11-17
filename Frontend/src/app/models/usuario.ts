@@ -32,7 +32,7 @@ export interface RegistroPayload {
   fechaNacimiento: string;
   descripcion?: string;
   perfil?: PerfilUsuario;
-  imagenPerfil?: string; // data URL en base64
+  imagenPerfil?: string;
 }
 
 export interface LoginPayload {
@@ -40,12 +40,10 @@ export interface LoginPayload {
   contrasena: string;
 }
 
-// Lo que el usuario puede cambiar de su propio perfil (PUT /usuarios/me). Correo, nombre de usuario,
-// contraseña y perfil no se editan. Sin `imagenPerfil` se conserva la foto actual.
 export interface ActualizarPerfilPayload {
   nombre: string;
   apellido: string;
   fechaNacimiento: string;
   descripcion?: string;
-  imagenPerfil?: string; // data URL en base64
+  imagenPerfil?: string;
 }

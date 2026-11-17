@@ -41,5 +41,5 @@ export interface FiltrosPublicaciones {
 export interface CrearPublicacionPayload {
   titulo: string;
   mensaje: string;
-  imagen?: string; // data URL en base64
+  imagen?: string;
 }

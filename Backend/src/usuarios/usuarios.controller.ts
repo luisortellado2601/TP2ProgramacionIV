@@ -14,7 +14,6 @@ import { RegistroDto } from '../auth/dto/registro.dto.js';
 import { Roles } from '../auth/decoradores/roles.decorator.js';
 import { UsuarioActual } from '../auth/decoradores/usuario-actual.decorator.js';
 
-// Solo administradores (RolesGuard consulta el perfil real en la base).
 @Roles(PerfilUsuario.ADMINISTRADOR)
 @Controller('usuarios')
 export class UsuariosController {
@@ -30,7 +29,6 @@ export class UsuariosController {
     return this.usuariosService.crear(dto);
   }
 
-  // Baja lógica (deshabilitar).
   @Delete(':id')
   deshabilitar(
     @Param('id') id: string,
@@ -39,7 +37,6 @@ export class UsuariosController {
     return this.usuariosService.deshabilitar(id, solicitanteId);
   }
 
-  // Alta lógica: rehabilita un usuario deshabilitado.
   @Post(':id/habilitar')
   @HttpCode(HttpStatus.OK)
   habilitar(@Param('id') id: string) {

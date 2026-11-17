@@ -16,12 +16,10 @@ export class ComentariosService {
     });
   }
 
-  // El autor lo identifica el back con el token que agrega el interceptor.
   crear(publicacionId: string, mensaje: string): Observable<Comentario> {
     return this.http.post<Comentario>(`${this.url}/${publicacionId}/comentarios`, { mensaje });
   }
 
-  // Solo el autor puede editar; el back marca el comentario como `modificado`.
   editar(comentarioId: string, mensaje: string): Observable<Comentario> {
     return this.http.put<Comentario>(`${environment.apiUrl}/comentarios/${comentarioId}`, {
       mensaje,

@@ -14,7 +14,6 @@ import { PerfilUsuario } from '../../usuarios/usuario.schema.js';
 import { recortar, recortarYMinusculas } from './transformadores.js';
 import { FechaNacimientoValida } from './fecha-nacimiento-valida.validator.js';
 
-// Mismas reglas que el formulario de registro del front.
 export const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
 const PATRON_NOMBRE_USUARIO = /^[A-Za-z0-9._]+$/;
 const PATRON_CONTRASENA = /^(?=.*[A-Z])(?=.*\d).+$/;
@@ -98,7 +97,6 @@ export class RegistroDto {
   })
   perfil?: PerfilUsuario;
 
-  // Imagen como data URL en base64; tipo y tamaño se validan al subirla.
   @IsOptional()
   @IsString({ message: 'La imagen de perfil no es válida' })
   @Matches(/^data:image\/(jpeg|png|webp);base64,/, {

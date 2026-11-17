@@ -29,8 +29,6 @@ export class AuthService {
     return this.construirRespuesta(usuario);
   }
 
-  // Valida y guarda un usuario nuevo. Lo usan el registro público y el alta
-  // desde el panel de administración.
   async crearUsuario(dto: RegistroDto): Promise<UsuarioDocument> {
     if (dto.contrasena !== dto.repetirContrasena) {
       throw new BadRequestException('Las contraseñas no coinciden');
@@ -49,7 +47,6 @@ export class AuthService {
       );
     }
 
-    // Se sube después de validar duplicados para no dejar imágenes huérfanas.
     const imagenPerfilUrl = dto.imagenPerfil
       ? await this.almacenamientoService.subirImagen(
           dto.imagenPerfil,
@@ -74,7 +71,6 @@ export class AuthService {
     const usuario = await this.usuarioModel
       .findOne({
         $or: [
-          // Los correos se guardan en minúsculas; el nombre de usuario se respeta tal cual.
           { correo: dto.usuarioOCorreo.toLowerCase() },
           { nombreUsuario: dto.usuarioOCorreo },
         ],
@@ -97,13 +93,11 @@ export class AuthService {
     return this.construirRespuesta(usuario);
   }
 
-  // Confirma que el dueño del token siga existiendo y habilitado; devuelve sus datos.
   async autorizar(usuarioId: string) {
     const usuario = await this.obtenerVigenteOFallar(usuarioId);
     return { usuario: aRespuestaUsuario(usuario) };
   }
 
-  // Emite un token nuevo (misma payload, vencimiento renovado) para el usuario vigente.
   async refrescar(usuarioId: string) {
     const usuario = await this.obtenerVigenteOFallar(usuarioId);
     return this.construirRespuesta(usuario);

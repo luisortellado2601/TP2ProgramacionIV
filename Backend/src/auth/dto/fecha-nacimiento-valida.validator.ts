@@ -2,7 +2,6 @@ import { ValidationOptions, registerDecorator } from 'class-validator';
 
 const FECHA_MINIMA = new Date('1900-01-01');
 
-// La fecha de nacimiento no puede ser futura ni anterior a 1900.
 export function FechaNacimientoValida(opciones?: ValidationOptions) {
   return (objeto: object, propiedad: string) => {
     registerDecorator({

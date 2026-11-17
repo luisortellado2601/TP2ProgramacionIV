@@ -17,7 +17,7 @@ const usuario = {
   apellido: 'Gómez',
   correo: 'ana@mail.com',
   nombreUsuario: 'ana',
-  fechaNacimiento: '1999-05-20T00:00:00.000Z', // así llega del back: medianoche UTC
+  fechaNacimiento: '1999-05-20T00:00:00.000Z',
   descripcion: 'Me gustan los RPG',
   perfil: 'usuario',
   habilitado: true,
@@ -97,7 +97,7 @@ describe('EditarPerfil', () => {
     escribir('nombre', 'Ana María');
     expect(guardar().disabled).toBe(false);
 
-    escribir('nombre', 'Ana'); // vuelve al valor original
+    escribir('nombre', 'Ana');
     expect(guardar().disabled).toBe(true);
   });
 
@@ -123,7 +123,6 @@ describe('EditarPerfil', () => {
 
     const pedido = backend.expectOne(URL_PERFIL);
     expect(pedido.request.method).toBe('PUT');
-    // Sin correo, nombre de usuario, contraseña ni perfil: no se pueden cambiar.
     expect(pedido.request.body).toEqual({
       nombre: 'Ana María',
       apellido: 'Gómez',
@@ -135,7 +134,7 @@ describe('EditarPerfil', () => {
     expect(auth.usuarioActual()?.nombre).toBe('Ana María');
     const guardada = JSON.parse(localStorage.getItem(CLAVE_SESION)!);
     expect(guardada.usuario.nombre).toBe('Ana María');
-    expect(guardada.token).toBe('a.b.c'); // el token no cambia
+    expect(guardada.token).toBe('a.b.c');
     expect(modalService.exito).toHaveBeenCalledWith('Tu perfil se actualizó correctamente.');
     expect(router.navigateByUrl).toHaveBeenCalledWith('/perfil');
   });
@@ -157,7 +156,7 @@ describe('EditarPerfil', () => {
     expect(modalService.error).toHaveBeenCalledWith('La fecha de nacimiento no es válida');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
     expect(auth.usuarioActual()?.nombre).toBe('Ana');
-    expect(guardar().disabled).toBe(false); // se puede reintentar
+    expect(guardar().disabled).toBe(false);
   });
 
   it('rechaza una foto que no sea JPG, PNG o WEBP', () => {
@@ -188,7 +187,7 @@ describe('EditarPerfil', () => {
       fixture.detectChanges();
       expect(html.querySelector('img.editar-perfil__avatar')).not.toBeNull();
     });
-    expect(guardar().disabled).toBe(false); // solo cambió la foto y alcanza para guardar
+    expect(guardar().disabled).toBe(false);
 
     enviar();
     const pedido = backend.expectOne(URL_PERFIL);

@@ -153,7 +153,6 @@ describe('PublicacionesService', () => {
     const usuarioId = new Types.ObjectId().toString();
     const publicacionId = new Types.ObjectId().toString();
 
-    // `findById` devuelve, en orden, lo que se indique en cada consulta.
     const publicacionesEncontradas = (...eliminadas: boolean[]) => {
       for (const eliminada of eliminadas) {
         publicacionModel.findById.mockReturnValueOnce({

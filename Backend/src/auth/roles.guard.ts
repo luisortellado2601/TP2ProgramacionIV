@@ -15,13 +15,8 @@ import {
 } from '../usuarios/usuario.schema.js';
 import type { RequestAutenticada } from './payload-token.js';
 
-// Clave de metadata donde @Roles() guarda los perfiles permitidos.
 export const ROLES = 'roles';
 
-// Se ejecuta después de JwtAuthGuard (que ya dejó el payload en la request).
-// El perfil y el estado se leen de la base y no del token: así, quitarle el
-// rol a un administrador o deshabilitarlo surte efecto en el acto, sin esperar
-// a que venza su JWT.
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(

@@ -13,7 +13,6 @@ const usuario = {
   apellido: 'Gómez',
   correo: 'ana@mail.com',
   nombreUsuario: 'ana',
-  // Así llega del back: medianoche UTC del día de nacimiento.
   fechaNacimiento: '1999-05-20T00:00:00.000Z',
   descripcion: 'Me gustan los RPG',
   perfil: 'usuario',

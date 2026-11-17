@@ -24,7 +24,6 @@ describe('Comentarios', () => {
   let fixture: ComponentFixture<Comentarios>;
   let backend: HttpTestingController;
 
-  // Inicia el componente con la sesión de "u1" y responde la primera carga (2 de 3 comentarios).
   function crear(interactivo: boolean, enlazarDetalle = false): void {
     localStorage.setItem(CLAVE_SESION, JSON.stringify({ usuario: { id: 'u1' }, token: 'x' }));
     TestBed.configureTestingModule({
@@ -102,7 +101,7 @@ describe('Comentarios', () => {
   it('solo permite editar los propios y anuncia que fue editado', () => {
     crear(true);
     const botones = pantalla().querySelectorAll<HTMLButtonElement>('.comentario__editar');
-    expect(botones.length).toBe(1); // solo el comentario de u1
+    expect(botones.length).toBe(1);
 
     botones[0].click();
     fixture.detectChanges();

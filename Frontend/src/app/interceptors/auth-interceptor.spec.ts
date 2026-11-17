@@ -18,7 +18,6 @@ describe('authInterceptor', () => {
   let modalService: ModalService;
   let router: Router;
 
-  // La sesión se lee de localStorage al crear AuthService, así que se carga antes de inyectar.
   function configurar(conSesion: boolean): void {
     localStorage.clear();
     if (conSesion) {
@@ -106,7 +105,6 @@ describe('authInterceptor', () => {
     http.get(`${environment.apiUrl}/lenta`).subscribe();
     const lenta = backend.expectOne(`${environment.apiUrl}/lenta`);
 
-    // Mientras tanto el usuario volvió a iniciar sesión con otro token.
     localStorage.setItem(CLAVE_SESION, JSON.stringify({ ...SESION, token: 'token-nuevo' }));
     (authService as unknown as { sesion: { set: (valor: unknown) => void } }).sesion.set({
       ...SESION,

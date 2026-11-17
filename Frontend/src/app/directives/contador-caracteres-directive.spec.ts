@@ -67,7 +67,6 @@ describe('ContadorCaracteresDirective', () => {
     expect(contador()?.classList.contains('contador-caracteres--limite')).toBe(false);
     expect(contador()?.textContent).toBe('10 / 10 · ¡Límite alcanzado!');
 
-    // Si se borra algo, vuelve al estado normal.
     fixture.componentInstance.control.setValue('12345');
     expect(contador()?.classList.contains('contador-caracteres--lleno')).toBe(false);
     expect(contador()?.textContent).toBe('5 / 10');
@@ -77,7 +76,6 @@ describe('ContadorCaracteresDirective', () => {
     const { fixture, contador } = crear();
     expect(contador()).not.toBeNull();
 
-    // Se destruye solo el campo (no su contenedor): el contador, que es su hermano, no puede quedar.
     fixture.componentInstance.visible.set(false);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();

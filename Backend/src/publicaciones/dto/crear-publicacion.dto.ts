@@ -25,7 +25,6 @@ export class CrearPublicacionDto {
   })
   mensaje: string;
 
-  // Imagen opcional como data URL en base64; tipo y tamaño se validan al subirla.
   @IsOptional()
   @IsString({ message: 'La imagen no es válida' })
   @Matches(/^data:image\/(jpeg|png|webp);base64,/, {

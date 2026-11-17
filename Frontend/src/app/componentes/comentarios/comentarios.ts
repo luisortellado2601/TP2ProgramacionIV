@@ -13,7 +13,6 @@ import { TiempoRelativoPipe } from '../../pipes/tiempo-relativo-pipe';
 import { ContadorCaracteresDirective } from '../../directives/contador-caracteres-directive';
 import { Spinner } from '../spinner/spinner';
 
-// Misma regla que CrearComentarioDto / ActualizarComentarioDto del back.
 const MAXIMO_CARACTERES = 500;
 
 function nuevoControlMensaje(valor = ''): FormControl<string> {
@@ -47,13 +46,8 @@ export class Comentarios implements OnInit {
   private readonly modalService = inject(ModalService);
 
   readonly publicacionId = input.required<string>();
-  // Cuántos comentarios (los más recientes) se traen en cada carga.
   readonly limite = input(5);
-  // En Mi perfil se muestra solo para leer; en el detalle se puede comentar,
-  // "cargar más" y editar los propios.
   readonly interactivo = input(false);
-  // En el listado de inicio, "Ver N comentarios más" lleva a la página de detalle de la
-  // publicación en vez de traerlos ahí mismo (la tarjeta no crece sin límite).
   readonly enlazarDetalle = input(false);
 
   protected readonly maximoCaracteres = MAXIMO_CARACTERES;
@@ -96,14 +90,12 @@ export class Comentarios implements OnInit {
     });
   }
 
-  // Trae los siguientes y los suma a los que ya están (no los reemplaza).
   protected cargarMas(): void {
     this.cargandoMas.set(true);
     this.comentariosService
       .listar(this.publicacionId(), this.comentarios().length, this.limite())
       .subscribe({
         next: ({ total, comentarios }) => {
-          // Si alguien comentó mientras tanto, la página puede repetir alguno: se descarta.
           const yaMostrados = new Set(this.comentarios().map((c) => c.id));
           const nuevos = comentarios.filter((c) => !yaMostrados.has(c.id));
           this.comentarios.update((lista) => [...lista, ...nuevos]);
@@ -128,7 +120,6 @@ export class Comentarios implements OnInit {
     this.enviando.set(true);
     this.comentariosService.crear(this.publicacionId(), this.nuevo.value.trim()).subscribe({
       next: (comentario) => {
-        // Es el más reciente, así que va arriba.
         this.comentarios.update((lista) => [comentario, ...lista]);
         this.total.update((total) => total + 1);
         this.nuevo.reset('');
@@ -159,7 +150,6 @@ export class Comentarios implements OnInit {
     }
 
     const mensaje = this.edicion.value.trim();
-    // Sin cambios no se llama al back: si no, quedaría marcado "editado" sin estarlo.
     if (mensaje === comentario.mensaje) {
       this.cancelarEdicion();
       return;

@@ -13,7 +13,6 @@ import {
   fechaNacimientoValidator,
 } from '../../utils/fecha-nacimiento-validator';
 
-// Mismas reglas que el RegistroDto del back.
 const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
 const PATRON_NOMBRE_USUARIO = /^[A-Za-z0-9._]+$/;
 const PATRON_CONTRASENA = /^(?=.*[A-Z])(?=.*\d).+$/;
@@ -38,7 +37,6 @@ export class Registro {
   protected readonly fechaMaxima = fechaDeHoy();
   protected readonly tiposImagen = TIPOS_IMAGEN.join(',');
 
-  // La imagen es opcional y se maneja fuera del form: se envía como data URL.
   protected readonly imagenPerfil = signal<string | null>(null);
   protected readonly errorImagen = signal<string | null>(null);
 

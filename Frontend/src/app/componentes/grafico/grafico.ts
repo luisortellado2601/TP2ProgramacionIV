@@ -26,7 +26,6 @@ import {
 } from 'chart.js';
 import { TemaService } from '../../services/tema';
 
-// Se registra solo lo que se usa (barras, líneas y torta), para no cargar todo Chart.js.
 Chart.register(
   ArcElement,
   BarController,
@@ -55,8 +54,6 @@ function conTransparencia(hex: string, alfa: number): string {
   return `rgba(${(valor >> 16) & 255}, ${(valor >> 8) & 255}, ${valor & 255}, ${alfa})`;
 }
 
-// Gráfico de un solo conjunto de datos: dibuja un <canvas> con Chart.js y lo actualiza
-// cuando cambian las etiquetas o los valores.
 @Component({
   selector: 'app-grafico',
   templateUrl: './grafico.html',
@@ -67,7 +64,6 @@ export class Grafico {
   readonly tipo = input.required<TipoGrafico>();
   readonly etiquetas = input.required<string[]>();
   readonly valores = input.required<number[]>();
-  // Nombre de lo que se cuenta (aparece en el tooltip y en la leyenda).
   readonly serie = input.required<string>();
   readonly descripcion = input('');
 

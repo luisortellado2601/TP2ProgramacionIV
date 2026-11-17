@@ -10,7 +10,6 @@ import { ModalService } from './modal';
 const CLAVE_SESION = 'nextplay_sesion';
 const VIDA_TOKEN_S = 30;
 
-// JWT de prueba: solo importa el payload (iat/exp), la firma no se valida en el front.
 function tokenDeVidaCorta(): string {
   const iat = Math.floor(Date.now() / 1000);
   const payload = btoa(JSON.stringify({ sub: 'u1', iat, exp: iat + VIDA_TOKEN_S }));
@@ -55,14 +54,22 @@ describe('AuthService: vencimiento de la sesión', () => {
     expect(authService.estaAutenticado()).toBe(true);
   });
 
-  it('si no extiende, al vencer cierra la sesión, avisa y va al login sin esperar un 401', () => {
-    vi.advanceTimersByTime(20_000); // aparece el aviso y se ignora
-    vi.advanceTimersByTime(10_000); // llega el vencimiento
+  it('si no extiende, al vencer solo cierra el aviso: no cierra la sesión ni va al login', () => {
+    vi.advanceTimersByTime(20_000);
+    vi.advanceTimersByTime(10_000);
 
-    expect(authService.estaAutenticado()).toBe(false);
-    expect(localStorage.getItem(CLAVE_SESION)).toBeNull();
-    expect(modalService.estado()?.titulo).toBe('Sesión expirada');
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+    expect(modalService.estado()).toBeNull();
+    expect(authService.estaAutenticado()).toBe(true);
+    expect(localStorage.getItem(CLAVE_SESION)).not.toBeNull();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('al vencer no cierra un modal que no sea el aviso de sesión', () => {
+    vi.advanceTimersByTime(20_000);
+    modalService.error('otro', 'Otro');
+    vi.advanceTimersByTime(10_000);
+
+    expect(modalService.estado()?.titulo).toBe('Otro');
   });
 
   it('si extiende, el vencimiento viejo se cancela y no cierra la sesión', () => {
@@ -72,14 +79,13 @@ describe('AuthService: vencimiento de la sesión', () => {
       .expectOne(`${environment.apiUrl}/auth/refrescar`)
       .flush({ usuario: { id: 'u1', nombre: 'Ana' }, token: tokenDeVidaCorta() });
 
-    vi.advanceTimersByTime(10_000); // acá habría vencido el token anterior
+    vi.advanceTimersByTime(10_000);
 
     expect(authService.estaAutenticado()).toBe(true);
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('con el reloj de la PC adelantado respecto del servidor igual avisa a un tercio del final', () => {
-    // El token lo firmó un servidor cuyo reloj va 78 s atrás: su exp ya "pasó" según la PC.
     const iat = Math.floor(Date.now() / 1000) - 78;
     const payload = btoa(JSON.stringify({ sub: 'u1', iat, exp: iat + 60 }));
     authService.login({ usuarioOCorreo: 'ana', contrasena: 'x' }).subscribe();
@@ -89,7 +95,7 @@ describe('AuthService: vencimiento de la sesión', () => {
 
     vi.advanceTimersByTime(39_000);
     expect(modalService.estado()).toBeNull();
-    vi.advanceTimersByTime(2_000); // pasan los 40 s: quedan 20 s de los 60
+    vi.advanceTimersByTime(2_000);
 
     expect(modalService.estado()?.titulo).toBe('Sesión por vencer');
     expect(authService.estaAutenticado()).toBe(true);

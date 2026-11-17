@@ -49,7 +49,6 @@ export class Publicaciones {
 
   publicacionCreada(): void {
     this.creando.set(false);
-    // Las nuevas aparecen primero cuando se ordena por fecha.
     this.orden.set('fecha');
     this.irAPagina(1);
   }
@@ -83,7 +82,6 @@ export class Publicaciones {
       () =>
         this.publicacionesService.eliminar(publicacion.id).subscribe({
           next: () => {
-            // Si era la única de la última página, volvemos a la anterior.
             const quedaVacia = this.publicaciones().length === 1 && this.pagina() > 1;
             this.irAPagina(quedaVacia ? this.pagina() - 1 : this.pagina());
             this.modalService.exito('La publicación fue eliminada.', 'Publicación eliminada');

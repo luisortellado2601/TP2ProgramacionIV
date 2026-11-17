@@ -1,4 +1,3 @@
-// Lapso elegible: fechas "YYYY-MM-DD" (con solo la fecha, el back incluye el día entero en `hasta`).
 export interface RangoFechas {
   desde?: string;
   hasta?: string;

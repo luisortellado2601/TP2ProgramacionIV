@@ -1,6 +1,5 @@
 import { Service, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
@@ -15,20 +14,17 @@ import { decodificarPayloadToken } from '../utils/jwt';
 import { formatearDuracion } from '../utils/formatear-duracion';
 
 const CLAVE_SESION = 'nextplay_sesion';
-// Hora local (ms) en que llegó el token guardado. El vencimiento se mide desde acá y no contra
-// el `exp` del token, porque `exp` está en la hora del servidor y el reloj de la PC puede estar
-// adelantado o atrasado: con tokens cortos eso hacía que el aviso nunca apareciera.
 const CLAVE_TOKEN_RECIBIDO = 'nextplay_token_recibido';
 
-// Aviso que se muestra cuando la sesión venció (por el temporizador o por un 401).
+const TITULO_SESION_POR_VENCER = 'Sesión por vencer';
+
 export const MENSAJE_SESION_EXPIRADA =
-  'Tu sesión venció o ya no es válida. Iniciá sesión nuevamente para continuar.';
+  'Tu token venció o ya no es válido, por lo que no tenés autorización para realizar esta operación. Iniciá sesión nuevamente para continuar.';
 
 @Service()
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly modalService = inject(ModalService);
-  private readonly router = inject(Router);
   private readonly sesion = signal<SesionResponse | null>(this.leerSesionGuardada());
   private temporizadorAviso: ReturnType<typeof setTimeout> | null = null;
   private temporizadorVencimiento: ReturnType<typeof setTimeout> | null = null;
@@ -58,24 +54,18 @@ export class AuthService {
       .pipe(tap((respuesta) => this.guardarSesion(respuesta)));
   }
 
-  // Confirma contra el back que el token guardado sigue valiendo y trae los
-  // datos vigentes del usuario (lo usa la pantalla "Cargando" al iniciar la app).
   autorizar(): Observable<{ usuario: Usuario }> {
     return this.http
       .post<{ usuario: Usuario }>(`${environment.apiUrl}/auth/autorizar`, {})
       .pipe(tap(({ usuario }) => this.actualizarUsuario(usuario)));
   }
 
-  // Pide un token nuevo con el mismo vencimiento desde ahora; lo usa el aviso
-  // de "sesión por vencer" cuando el usuario decide extenderla.
   refrescar(): Observable<SesionResponse> {
     return this.http
       .post<SesionResponse>(`${environment.apiUrl}/auth/refrescar`, {})
       .pipe(tap((respuesta) => this.guardarSesion(respuesta)));
   }
 
-  // Edita los datos del propio usuario. El token no cambia (no incluye nada editable), así que solo
-  // se actualiza el usuario guardado: el nombre y la foto se renuevan en toda la app al instante.
   actualizarPerfil(payload: ActualizarPerfilPayload): Observable<Usuario> {
     return this.http
       .put<Usuario>(`${environment.apiUrl}/usuarios/me`, payload)
@@ -101,8 +91,6 @@ export class AuthService {
     this.iniciarContadorSesion(respuesta.token, recibidoEn);
   }
 
-  // Hora local en que se recibió el token guardado. Si falta (sesión de una versión anterior),
-  // se usa el `iat` del token como mejor aproximación.
   private leerTokenRecibido(token: string): number {
     const guardado = Number(localStorage.getItem(CLAVE_TOKEN_RECIBIDO));
     if (Number.isFinite(guardado) && guardado > 0) {
@@ -112,8 +100,6 @@ export class AuthService {
     return payload ? payload.iat * 1000 : Date.now();
   }
 
-  // Actualiza solo los datos del usuario (p. ej. tras `autorizar`), sin tocar
-  // el token ni reprogramar el aviso de vencimiento.
   private actualizarUsuario(usuario: Usuario): void {
     const sesionActual = this.sesion();
     if (!sesionActual) {
@@ -137,11 +123,6 @@ export class AuthService {
     }
   }
 
-  // El aviso aparece cuando queda un tercio de la vida del token (p. ej. a los
-  // 10 min de un token de 15, o a los 20 s de uno de prueba de 60): la
-  // proporción escala sola en vez de depender de un valor fijo en minutos.
-  // Solo se usa la duración (`exp - iat`) del token; el vencimiento se mide desde `recibidoEn`
-  // (hora local), así no importa si el reloj de la PC no coincide con el del servidor.
   private iniciarContadorSesion(token: string, recibidoEn: number): void {
     this.cancelarContadorSesion();
     const payload = decodificarPayloadToken(token);
@@ -152,14 +133,12 @@ export class AuthService {
     const vencimientoMs = recibidoEn + duracionMs;
     const avisoEnMs = vencimientoMs - duracionMs / 3 - Date.now();
     if (vencimientoMs - Date.now() <= 0) {
-      return; // ya venció: el próximo pedido lo cierra el interceptor
+      return;
     }
     this.temporizadorAviso = setTimeout(
       () => this.avisarVencimientoProximo(vencimientoMs),
       Math.max(avisoEnMs, 0),
     );
-    // Si el usuario ignora o cancela el aviso, al llegar el vencimiento la sesión
-    // se cierra sola en vez de esperar a que un pedido devuelva 401.
     this.temporizadorVencimiento = setTimeout(
       () => this.expirarSesion(),
       vencimientoMs - Date.now(),
@@ -178,9 +157,10 @@ export class AuthService {
   }
 
   private expirarSesion(): void {
-    this.logout();
-    this.modalService.error(MENSAJE_SESION_EXPIRADA, 'Sesión expirada');
-    void this.router.navigateByUrl('/login');
+    this.temporizadorVencimiento = null;
+    if (this.modalService.estado()?.titulo === TITULO_SESION_POR_VENCER) {
+      this.modalService.cerrar();
+    }
   }
 
   private avisarVencimientoProximo(vencimientoMs: number): void {
@@ -190,11 +170,10 @@ export class AuthService {
       () => {
         this.refrescar().subscribe({
           error: () => {
-            // Si falla, el próximo pedido real lo maneja el interceptor (401 → login).
           },
         });
       },
-      'Sesión por vencer',
+      TITULO_SESION_POR_VENCER,
       true,
     );
   }

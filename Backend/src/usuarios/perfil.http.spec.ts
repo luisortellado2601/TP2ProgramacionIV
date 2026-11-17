@@ -20,8 +20,6 @@ import { RolesGuard } from '../auth/roles.guard.js';
 import { AlmacenamientoService } from '../almacenamiento/almacenamiento.service.js';
 import type { RequestAutenticada } from '../auth/payload-token.js';
 
-// Reproduce lo que hace la app real: ValidationPipe global y guards globales (primero el de JWT,
-// acá reemplazado por uno que deja pasar con un usuario fijo, y después RolesGuard de verdad).
 describe('PUT /usuarios/me (HTTP)', () => {
   const id = new Types.ObjectId();
   const usuario = {
@@ -32,7 +30,7 @@ describe('PUT /usuarios/me (HTTP)', () => {
     nombreUsuario: 'ana',
     contrasena: 'hash-secreto',
     fechaNacimiento: new Date('1999-05-20'),
-    perfil: 'usuario', // un usuario COMÚN, no administrador
+    perfil: 'usuario',
     habilitado: true,
   };
   const exec = (valor: unknown) => ({ exec: () => Promise.resolve(valor) });
@@ -108,7 +106,6 @@ describe('PUT /usuarios/me (HTTP)', () => {
       nombre: 'Ana María',
     });
     expect(respuesta.body).not.toHaveProperty('contrasena');
-    // El id que se actualiza es el del token, no uno que mande el cliente.
     expect(findByIdAndUpdate.mock.calls[0][0]).toBe(id.toString());
   });
 

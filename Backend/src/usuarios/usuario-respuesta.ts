@@ -1,6 +1,5 @@
 import type { UsuarioDocument } from './usuario.schema.js';
 
-// Forma pública de un usuario: nunca incluye el hash de la contraseña.
 export function aRespuestaUsuario(usuario: UsuarioDocument) {
   return {
     id: usuario._id.toString(),

@@ -11,7 +11,6 @@ import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { Spinner } from '../spinner/spinner';
 
 const CANTIDAD_ULTIMAS = 3;
-// Comentarios que se ven de cada publicación (los más recientes); el resto, con "Ver N más".
 const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({

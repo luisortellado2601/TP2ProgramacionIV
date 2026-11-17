@@ -23,8 +23,6 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  // El guard global ya validó el token (firma y vencimiento); acá además se
-  // confirma que el usuario siga existiendo y habilitado.
   @Post('autorizar')
   @HttpCode(HttpStatus.OK)
   autorizar(@UsuarioActual() usuarioId: string) {

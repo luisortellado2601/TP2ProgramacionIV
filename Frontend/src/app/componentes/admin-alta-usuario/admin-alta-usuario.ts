@@ -13,7 +13,6 @@ import {
   fechaNacimientoValidator,
 } from '../../utils/fecha-nacimiento-validator';
 
-// Mismas reglas que el RegistroDto del back (ver también componentes/registro/registro.ts).
 const PATRON_NOMBRE = /^[\p{L}' -]+$/u;
 const PATRON_NOMBRE_USUARIO = /^[A-Za-z0-9._]+$/;
 const PATRON_CONTRASENA = /^(?=.*[A-Z])(?=.*\d).+$/;

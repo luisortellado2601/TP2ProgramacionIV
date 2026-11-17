@@ -14,8 +14,6 @@ import { CrearPublicacionDto } from './dto/crear-publicacion.dto.js';
 import { ListarPublicacionesDto } from './dto/listar-publicaciones.dto.js';
 import { UsuarioActual } from '../auth/decoradores/usuario-actual.decorator.js';
 
-// El actor (autor, quien da like o elimina) sale siempre del token validado
-// por el JwtAuthGuard global, nunca del body ni de la query.
 @Controller('publicaciones')
 export class PublicacionesController {
   constructor(private readonly publicacionesService: PublicacionesService) {}

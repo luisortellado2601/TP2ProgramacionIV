@@ -7,7 +7,6 @@ import {
 import { PerfilUsuario } from '../usuarios/usuario.schema.js';
 import { Roles } from '../auth/decoradores/roles.decorator.js';
 
-// Solo administradores. Todas las rutas aceptan `desde` y `hasta` (lapso).
 @Roles(PerfilUsuario.ADMINISTRADOR)
 @Controller('estadisticas')
 export class EstadisticasController {

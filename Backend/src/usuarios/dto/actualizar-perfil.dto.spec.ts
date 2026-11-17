@@ -1,7 +1,6 @@
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ActualizarPerfilDto } from './actualizar-perfil.dto.js';
 
-// Mismo ValidationPipe que usa main.ts, para probar el comportamiento real de la ruta.
 const pipe = new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,

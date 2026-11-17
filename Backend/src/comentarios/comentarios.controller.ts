@@ -13,8 +13,6 @@ import { ActualizarComentarioDto } from './dto/actualizar-comentario.dto.js';
 import { ListarComentariosDto } from './dto/listar-comentarios.dto.js';
 import { UsuarioActual } from '../auth/decoradores/usuario-actual.decorator.js';
 
-// Sin prefijo: las rutas se escriben completas en cada decorador porque
-// mezclan `publicaciones/:id/comentarios` y `comentarios/:id`.
 @Controller()
 export class ComentariosController {
   constructor(private readonly comentariosService: ComentariosService) {}

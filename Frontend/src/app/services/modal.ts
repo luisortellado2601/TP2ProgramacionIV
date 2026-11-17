@@ -10,7 +10,6 @@ export interface EstadoModal {
   onCancelar?: () => void;
   textoConfirmar?: string;
   textoCancelar?: string;
-  // Si es true, un clic en el fondo no lo cierra: hay que elegir un botón.
   persistente?: boolean;
 }
 

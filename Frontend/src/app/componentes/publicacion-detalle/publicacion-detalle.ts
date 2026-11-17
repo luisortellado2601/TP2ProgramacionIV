@@ -10,7 +10,6 @@ import { PublicacionCard } from '../publicacion/publicacion';
 import { Comentarios } from '../comentarios/comentarios';
 import { Spinner } from '../spinner/spinner';
 
-// Comentarios que se traen en la primera carga y en cada "cargar más".
 const COMENTARIOS_POR_CARGA = 5;
 
 @Component({
@@ -28,7 +27,6 @@ export class PublicacionDetalle {
   protected readonly comentariosPorCarga = COMENTARIOS_POR_CARGA;
   protected readonly publicacion = signal<Publicacion | null>(null);
   protected readonly cargando = signal(true);
-  // 'noExiste' cubre el 404 (inexistente o dada de baja) y el 400 (id mal formado).
   protected readonly error = signal<'noExiste' | 'falla' | null>(null);
 
   constructor() {

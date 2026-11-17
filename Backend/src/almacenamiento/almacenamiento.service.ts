@@ -15,10 +15,8 @@ const EXTENSIONES: Record<string, string> = {
   'image/webp': 'webp',
 };
 
-// data:image/png;base64,AAAA...
 const PATRON_DATA_URL = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/;
 
-// Sube imágenes a Supabase Storage usando su API REST (sin Multer ni SDK).
 @Injectable()
 export class AlmacenamientoService {
   private readonly url: string;
@@ -31,7 +29,6 @@ export class AlmacenamientoService {
     this.bucket = configService.getOrThrow<string>('SUPABASE_BUCKET');
   }
 
-  // Recibe la imagen como data URL en base64 y devuelve su URL pública.
   async subirImagen(dataUrl: string, carpeta: string): Promise<string> {
     const coincidencia = PATRON_DATA_URL.exec(dataUrl);
     const tipo = coincidencia?.[1];

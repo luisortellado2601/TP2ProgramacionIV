@@ -9,8 +9,6 @@ import { RangoFechasDto } from './dto/rango-fechas.dto.js';
 const SOLO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
 
-// Todas las estadísticas excluyen publicaciones dadas de baja y los comentarios
-// eliminados o de publicaciones dadas de baja. Los días se cuentan en UTC.
 @Injectable()
 export class EstadisticasService {
   constructor(
@@ -22,7 +20,6 @@ export class EstadisticasService {
     private readonly usuarioModel: Model<UsuarioDocument>,
   ) {}
 
-  // Publicaciones por usuario en el lapso, de más a menos (gráfico de barras).
   async publicacionesPorUsuario(rango: RangoFechasDto, limit: number) {
     const resultado = await this.publicacionModel
       .aggregate<{ _id: Types.ObjectId; cantidad: number; nombreUsuario: string }>([
@@ -50,7 +47,6 @@ export class EstadisticasService {
     }));
   }
 
-  // Comentarios realizados en el lapso: total y cantidad por día (gráfico de líneas).
   async comentarios(rango: RangoFechasDto) {
     const porDia = await this.comentarioModel
       .aggregate<{ _id: string; cantidad: number }>([
@@ -73,7 +69,6 @@ export class EstadisticasService {
     };
   }
 
-  // Comentarios por publicación en el lapso, de más a menos (gráfico de torta).
   async comentariosPorPublicacion(rango: RangoFechasDto, limit: number) {
     const resultado = await this.comentarioModel
       .aggregate<{ _id: Types.ObjectId; cantidad: number; titulo: string }>([
@@ -92,8 +87,6 @@ export class EstadisticasService {
     }));
   }
 
-  // Trae la publicación de cada fila y descarta las dadas de baja. Con
-  // `conTitulo` deja el título en la fila (para los rankings).
   private soloDePublicacionesActivas(
     campo: string,
     conTitulo: boolean,
@@ -116,8 +109,6 @@ export class EstadisticasService {
     return etapas;
   }
 
-  // Filtro `{ fecha: { $gte, $lt|$lte } }` según el lapso pedido. Si `hasta`
-  // viene solo como fecha, el día completo queda incluido.
   private filtroFecha({ desde, hasta }: RangoFechasDto) {
     const inicio = desde ? new Date(desde) : undefined;
     const hastaPedido = hasta ? new Date(hasta) : undefined;
@@ -128,8 +119,6 @@ export class EstadisticasService {
       );
     }
 
-    // "hasta" no puede ser posterior a hoy (en UTC, como el resto de las fechas).
-    // Con solo la fecha se compara el día; con fecha ISO completa, el instante.
     if (hasta && hastaPedido) {
       const ahora = new Date();
       const esFutura = SOLO_FECHA.test(hasta)

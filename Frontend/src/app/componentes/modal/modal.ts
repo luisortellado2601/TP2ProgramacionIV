@@ -20,7 +20,6 @@ export class Modal {
     this.modalService.cerrar();
   }
 
-  // Clic en el fondo: cierra, salvo que el modal sea persistente.
   cerrarPorFondo(): void {
     if (!this.modalService.estado()?.persistente) {
       this.cerrar();

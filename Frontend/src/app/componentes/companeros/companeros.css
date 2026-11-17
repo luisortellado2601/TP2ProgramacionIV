@@ -116,12 +116,6 @@
   font-weight: 700;
 }
 
-.busqueda__chips .busqueda__chip--juego {
-  background: var(--color-primary);
-  border-color: var(--contorno-tecla);
-  color: var(--color-ink);
-}
-
 .busqueda__descripcion {
   white-space: pre-line;
   overflow-wrap: anywhere;
@@ -167,8 +161,12 @@
   padding-bottom: 4px;
 }
 
-.busqueda__acciones .btn {
-  padding: 0.35rem 0.9rem;
+.busqueda__acciones .btn,
+.contacto__acciones .btn,
+.companeros__botones .btn,
+.companeros__acciones .btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
 }
 
 .contacto {
@@ -236,4 +234,8 @@
     height: 150px;
     object-position: center 20%;
   }
+}
+
+.companeros__acciones .btn {
+  min-width: 7.5rem;
 }

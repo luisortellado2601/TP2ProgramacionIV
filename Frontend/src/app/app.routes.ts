@@ -34,6 +34,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'juegos/:id',
+    loadComponent: () =>
+      import('./componentes/juego-detalle/juego-detalle').then((m) => m.JuegoDetalle),
+    canActivate: [authGuard],
+  },
+  {
     path: 'perfil',
     loadComponent: () => import('./componentes/mi-perfil/mi-perfil').then((m) => m.MiPerfil),
     canActivate: [authGuard],

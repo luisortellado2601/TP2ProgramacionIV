@@ -6,8 +6,12 @@
 
       <div class="modal-actions">
         @if (estado.tipo === 'confirmacion') {
-          <button class="btn btn-secondary" type="button" (click)="cerrar()">Cancelar</button>
-          <button class="btn btn-primary" type="button" (click)="confirmar()">Confirmar</button>
+          <button class="btn btn-secondary" type="button" (click)="cerrar()">
+            {{ estado.textoCancelar ?? 'Cancelar' }}
+          </button>
+          <button class="btn btn-primary" type="button" (click)="confirmar()">
+            {{ estado.textoConfirmar ?? 'Confirmar' }}
+          </button>
         } @else {
           <button class="btn btn-primary" type="button" (click)="cerrar()">Aceptar</button>
         }

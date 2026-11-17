@@ -1,0 +1,107 @@
+.detalle__volver {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.juego {
+  display: grid;
+  grid-template-columns: minmax(180px, 270px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.juego__portada {
+  --corte: 20px;
+  background: var(--color-surface-alt);
+  aspect-ratio: 2 / 3;
+}
+
+.juego__portada img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.juego__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.juego__autor {
+  margin-top: 0.6rem;
+  font-size: 1.05rem;
+}
+
+.juego__cuerpo h3 {
+  margin-bottom: 0.5rem;
+}
+
+.juego__sinopsis {
+  max-width: 68ch;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.juego__ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.4rem 1.75rem;
+  margin: 0;
+}
+
+.juego__dato dt {
+  margin-bottom: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.juego__dato dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.juego__peso {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--color-hud);
+}
+
+.juego__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.juego__chips li {
+  padding: 0.1rem 0.65rem;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .juego {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .juego__portada {
+    --corte: 14px;
+    width: min(240px, 70%);
+    margin-inline: auto;
+  }
+
+  .juego__peso {
+    font-size: 2.1rem;
+  }
+}

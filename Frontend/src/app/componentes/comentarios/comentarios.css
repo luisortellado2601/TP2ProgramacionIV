@@ -80,19 +80,16 @@
 }
 
 .comentarios__etiqueta {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
 .comentarios textarea {
   width: 100%;
   resize: vertical;
-  background: #0a0a0a;
-  border: var(--borde);
+  background: var(--color-field);
+  border: 2px solid var(--color-line-strong);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   padding: 0.65rem 0.8rem;
@@ -101,13 +98,14 @@
 }
 
 .comentarios textarea:focus {
-  outline: none;
-  box-shadow: var(--shadow-small);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
 }
 
 .comentarios textarea.is-invalid {
   border-color: var(--color-danger);
-  box-shadow: 3px 3px 0 var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 
 .comentarios__error {

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { Publicacion } from '../../models/publicacion';
@@ -19,6 +19,7 @@ const COMENTARIOS_EN_TARJETA = 3;
 })
 export class PublicacionCard {
   private readonly authService = inject(AuthService);
+  private temporizadorRafaga: ReturnType<typeof setTimeout> | null = null;
 
   readonly publicacion = input.required<Publicacion>();
   // En Mi perfil se muestra solo para leer.
@@ -29,6 +30,7 @@ export class PublicacionCard {
   readonly alternarLike = output<Publicacion>();
   readonly eliminar = output<Publicacion>();
 
+  protected readonly rafaga = signal(false);
   protected readonly comentariosEnTarjeta = COMENTARIOS_EN_TARJETA;
   // Los comentarios se piden recién al desplegarlos: el listado no hace un pedido por tarjeta.
   protected readonly comentariosAbiertos = signal(false);
@@ -44,4 +46,24 @@ export class PublicacionCard {
   );
   // Un admin puede dar de baja cualquier publicación, no solo la propia.
   protected readonly puedeEliminar = computed(() => this.esMia() || this.esAdministrador());
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      if (this.temporizadorRafaga) {
+        clearTimeout(this.temporizadorRafaga);
+      }
+    });
+  }
+
+  protected reaccionar(): void {
+    if (!this.leDiMeGusta()) {
+      this.rafaga.set(false);
+      setTimeout(() => this.rafaga.set(true));
+      if (this.temporizadorRafaga) {
+        clearTimeout(this.temporizadorRafaga);
+      }
+      this.temporizadorRafaga = setTimeout(() => this.rafaga.set(false), 800);
+    }
+    this.alternarLike.emit(this.publicacion());
+  }
 }

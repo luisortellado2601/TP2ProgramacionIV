@@ -1,3 +1,35 @@
-<div class="pantalla-carga">
-  <app-spinner mensaje="Cargando NextPlay..." />
-</div>
+@if (conArranque) {
+  <div class="arranque" (click)="saltar()">
+    <div class="arranque__centro">
+      <svg class="arranque__simbolos" viewBox="0 0 160 160" aria-hidden="true">
+        <polygon class="simbolo simbolo--triangulo" points="80,14 98,46 62,46" />
+        <circle class="simbolo simbolo--circulo" cx="128" cy="80" r="16" />
+        <path class="simbolo simbolo--cruz" d="M66 114 94 142M94 114 66 142" />
+        <rect class="simbolo simbolo--cuadrado" x="18" y="66" width="28" height="28" rx="2" />
+      </svg>
+
+      <h1 class="arranque__logo" aria-label="NextPlay">
+        @for (letra of letras; track $index) {
+          <span class="arranque__letra" aria-hidden="true" [style.--i]="$index">{{ letra }}</span>
+        }
+      </h1>
+
+      <p class="arranque__lema">{{ lema }}</p>
+
+      @if (listo() && !conSesion) {
+        <button #empezar class="arranque__empezar" type="button">Presioná para empezar</button>
+      } @else {
+        <div class="arranque__estado" role="status">
+          <div class="arranque__barra" aria-hidden="true"><span></span></div>
+          <p class="text-muted">
+            {{ conSesion ? 'Validando tu sesión...' : 'Cargando...' }}
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="pantalla-carga">
+    <app-spinner mensaje="Cargando NextPlay..." />
+  </div>
+}

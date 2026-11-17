@@ -24,6 +24,7 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
+import { TemaService } from '../../services/tema';
 
 // Se registra solo lo que se usa (barras, líneas y torta), para no cargar todo Chart.js.
 Chart.register(
@@ -43,10 +44,16 @@ Chart.register(
 
 export type TipoGrafico = 'bar' | 'line' | 'pie';
 
-// Colores del sistema de diseño (styles.css): Chart.js dibuja en canvas y no lee variables CSS.
-const PALETA = ['#c6f432', '#ff5c39', '#8fa0ff', '#5ad1e6', '#c77dff', '#ffd54a', '#3ecf7a', '#f2a900'];
-const COLOR_TEXTO = '#ececec';
-const COLOR_LINEA = '#383838';
+const VARIABLES_PALETA = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `--grafico-${n}`);
+
+function leerColor(variable: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+}
+
+function conTransparencia(hex: string, alfa: number): string {
+  const valor = parseInt(hex.slice(1), 16);
+  return `rgba(${(valor >> 16) & 255}, ${(valor >> 8) & 255}, ${valor & 255}, ${alfa})`;
+}
 
 // Gráfico de un solo conjunto de datos: dibuja un <canvas> con Chart.js y lo actualiza
 // cuando cambian las etiquetas o los valores.
@@ -64,6 +71,7 @@ export class Grafico {
   readonly serie = input.required<string>();
   readonly descripcion = input('');
 
+  private readonly temaService = inject(TemaService);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private grafico?: Chart;
 
@@ -81,6 +89,10 @@ export class Grafico {
     const etiquetas = this.etiquetas();
     const valores = this.valores();
     const esTorta = tipo === 'pie';
+    this.temaService.tema();
+    const paleta = VARIABLES_PALETA.map(leerColor);
+    const colorTexto = leerColor('--color-text');
+    const colorLinea = leerColor('--color-line');
 
     return {
       type: tipo,
@@ -91,11 +103,11 @@ export class Grafico {
             label: this.serie(),
             data: valores,
             backgroundColor: esTorta
-              ? etiquetas.map((_, i) => PALETA[i % PALETA.length])
+              ? etiquetas.map((_, i) => paleta[i % paleta.length])
               : tipo === 'line'
-                ? 'rgba(198, 244, 50, 0.15)'
-                : PALETA[0],
-            borderColor: esTorta ? '#000000' : PALETA[0],
+                ? conTransparencia(paleta[0], 0.15)
+                : paleta[0],
+            borderColor: esTorta ? leerColor('--color-surface') : paleta[0],
             borderWidth: esTorta ? 2 : tipo === 'line' ? 3 : 0,
             fill: tipo === 'line',
             tension: 0.3,
@@ -106,16 +118,16 @@ export class Grafico {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: esTorta, position: 'bottom', labels: { color: COLOR_TEXTO } },
+          legend: { display: esTorta, position: 'bottom', labels: { color: colorTexto } },
         },
         scales: esTorta
           ? {}
           : {
-              x: { ticks: { color: COLOR_TEXTO }, grid: { color: COLOR_LINEA } },
+              x: { ticks: { color: colorTexto }, grid: { color: colorLinea } },
               y: {
                 beginAtZero: true,
-                ticks: { color: COLOR_TEXTO, precision: 0 },
-                grid: { color: COLOR_LINEA },
+                ticks: { color: colorTexto, precision: 0 },
+                grid: { color: colorLinea },
               },
             },
       },

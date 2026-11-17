@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-tema="oscuro">
   <head>
     <meta charset="utf-8" />
     <title>NextPlay</title>
@@ -9,15 +9,29 @@
       name="description"
       content="NextPlay: red social de videojuegos para compartir reseñas y encontrar equipo."
     />
-    <meta name="theme-color" content="#141414" />
+    <meta name="theme-color" content="#0e1019" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <script>
+      (function () {
+        var tema = 'oscuro';
+        try {
+          var guardado = localStorage.getItem('nextplay_tema');
+          if (guardado === 'claro' || guardado === 'oscuro') {
+            tema = guardado;
+          } else if (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) {
+            tema = 'claro';
+          }
+        } catch (e) {}
+        document.documentElement.setAttribute('data-tema', tema);
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Goldman:wght@700&family=Hanken+Grotesk:wght@400;500;600;700&family=Oxanium:wght@500;600;700;800&display=swap"
     />
   </head>
   <body>

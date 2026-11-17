@@ -1,43 +1,133 @@
-/* Sistema de diseño global de NextPlay: estética "arcade impreso" — papel crema,
-   tinta negra, bordes gruesos y sombras duras. Las pantallas y componentes
-   reutilizan estas variables y clases en lugar de definir estilos sueltos. */
+:root,
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+
+  --color-bg: #07080e;
+  --color-surface: #0e1019;
+  --color-surface-alt: #171a28;
+  --color-field: #090a11;
+  --color-line: #262a40;
+  --color-line-strong: #5d6791;
+  --color-border: var(--color-line);
+  --color-ink: #07080e;
+
+  --color-primary: #fcee0a;
+  --color-primary-hover: #fff45e;
+  --color-primary-edge: #a39a00;
+  --color-accent: #ff2e88;
+  --color-blue: #00e5ff;
+  --color-hud: #fcee0a;
+
+  --color-text: #eaedff;
+  --color-text-muted: #9aa3c9;
+
+  --color-success: #39ff88;
+  --color-danger: #ff3b5c;
+  --color-warning: #ffb020;
+  --color-info: #00e5ff;
+  --color-admin: #b46bff;
+  --color-gold: #ffd400;
+
+  --borde: 1px solid var(--color-line);
+  --contorno-tecla: transparent;
+  --tecla-secundaria: #171a28;
+  --tecla-secundaria-borde: #343a5c;
+  --tecla-peligro-texto: #07080e;
+  --tecla-peligro-borde: #9c1431;
+  --brillo-primario: 0 0 24px -6px rgb(252 238 10 / 0.6);
+  --overlay: rgb(3 4 10 / 0.8);
+  --barrido: rgb(93 103 145 / 0.14);
+  --scrim: rgb(3 4 10 / 0.94);
+
+  --simbolo-1: #fcee0a;
+  --simbolo-2: #ff3b5c;
+  --simbolo-3: #00e5ff;
+  --simbolo-4: #ff2e88;
+
+  --grafico-1: #fcee0a;
+  --grafico-2: #00e5ff;
+  --grafico-3: #ff2e88;
+  --grafico-4: #39ff88;
+  --grafico-5: #b46bff;
+  --grafico-6: #ffb020;
+  --grafico-7: #ff3b5c;
+  --grafico-8: #6aa6ff;
+
+  --fondo-patron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M30 22v16M22 30h16' stroke='%2300e5ff'/%3E%3Cpath d='M150 46l12-12M160 56l12-12M170 66l12-12' stroke='%23fcee0a'/%3E%3Crect x='168' y='150' width='12' height='12' stroke='%23ff2e88'/%3E%3Cpath d='M70 150l9 9-9 9' stroke='%2300e5ff'/%3E%3Cpath d='M20 190h26M20 196h14' stroke='%23ff2e88'/%3E%3Ccircle cx='108' cy='96' r='2.5' stroke='%23fcee0a'/%3E%3C/svg%3E");
+}
+
+:root[data-tema='claro'] {
+  color-scheme: light;
+
+  --color-bg: #e7eaf3;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f0f2fa;
+  --color-field: #ffffff;
+  --color-line: #c4c9de;
+  --color-line-strong: #12142a;
+  --color-border: var(--color-line);
+  --color-ink: #12142a;
+
+  --color-primary: #ffe600;
+  --color-primary-hover: #ffd500;
+  --color-primary-edge: #12142a;
+  --color-accent: #ff2e88;
+  --color-blue: #0a3fff;
+  --color-hud: #ff2e88;
+
+  --color-text: #0d1024;
+  --color-text-muted: #4b5278;
+
+  --color-success: #00804a;
+  --color-danger: #d4002c;
+  --color-warning: #a65a00;
+  --color-info: #006b8a;
+  --color-admin: #7424d6;
+  --color-gold: #8a6500;
+
+  --borde: 2px solid var(--color-line-strong);
+  --contorno-tecla: #12142a;
+  --tecla-secundaria: #ffffff;
+  --tecla-secundaria-borde: #12142a;
+  --tecla-peligro-texto: #ffffff;
+  --tecla-peligro-borde: #12142a;
+  --brillo-primario: 0 0 0 0 transparent;
+  --overlay: rgb(18 20 42 / 0.55);
+  --barrido: rgb(18 20 42 / 0.04);
+  --scrim: rgb(8 9 22 / 0.92);
+
+  --simbolo-1: #12142a;
+  --simbolo-2: #d4002c;
+  --simbolo-3: #0a3fff;
+  --simbolo-4: #ff2e88;
+
+  --grafico-1: #0a3fff;
+  --grafico-2: #ff2e88;
+  --grafico-3: #00a8c4;
+  --grafico-4: #00a05a;
+  --grafico-5: #7424d6;
+  --grafico-6: #f08a00;
+  --grafico-7: #d4002c;
+  --grafico-8: #12142a;
+
+  --fondo-patron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='0.22'%3E%3Cpath d='M30 22v16M22 30h16' stroke='%2312142a'/%3E%3Cpath d='M150 46l12-12M160 56l12-12M170 66l12-12' stroke='%23ff2e88'/%3E%3Crect x='168' y='150' width='12' height='12' stroke='%230a3fff'/%3E%3Cpath d='M70 150l9 9-9 9' stroke='%2312142a'/%3E%3Cpath d='M20 190h26M20 196h14' stroke='%230a3fff'/%3E%3Ccircle cx='108' cy='96' r='2.5' stroke='%2312142a'/%3E%3C/svg%3E");
+}
 
 :root {
-  --color-bg: #000000;
-  --color-surface: #141414;
-  --color-surface-alt: #1e1e1e;
-  --color-ink: #17120d;
-  --color-border: #383838;
-  --color-line: #383838;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
-  --color-primary: #c6f432;
-  --color-primary-hover: #d8ff55;
-  --color-accent: #ff5c39;
-  --color-blue: #8fa0ff;
+  --shadow-small: 0 3px 0 rgb(0 0 0 / 0.45);
+  --shadow-elevated: 0 18px 40px -18px rgb(0 0 0 / 0.7);
 
-  --color-text: #ececec;
-  --color-text-muted: #9a9a9a;
-
-  --color-success: #3ecf7a;
-  --color-danger: #f0585b;
-  --color-warning: #f2a900;
-  --color-info: #5ad1e6;
-  --color-admin: #c77dff;
-  --color-gold: #ffd54a;
-
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-
-  --borde: 2px solid var(--color-line);
-  --shadow-elevated: 5px 5px 0 #000;
-  --shadow-small: 3px 3px 0 #000;
-
-  --font-display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
-  --font-base: 'Figtree', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-marca: 'Bungee', 'Trebuchet MS', sans-serif;
+  --font-display: 'Oxanium', 'Segoe UI', sans-serif;
+  --font-base: 'Hanken Grotesk', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-marca: 'Goldman', 'Oxanium', sans-serif;
   --font-titulo: var(--font-display);
   --font-mono: var(--font-base);
+
+  --corte: 16px;
 }
 
 * {
@@ -51,22 +141,14 @@ body {
   min-height: 100%;
 }
 
-/* Fondo negro con un mosaico de 300 px y 6 símbolos de PlayStation (triángulo, círculo, cruz y
-   cuadrado) en sus colores clásicos y muy tenues, repartidos en filas escalonadas y con distintas
-   rotaciones, para que no compitan con el contenido ni se vean como una grilla. Es un SVG en
-   línea dentro del CSS: no agrega ninguna petición de red. Para volver a los lunares, usar
-   --fondo-lunares en el background-image del body (y 22px 22px de tamaño). */
-:root {
-  --fondo-lunares: radial-gradient(rgba(232, 236, 244, 0.06) 1px, transparent 1px);
-  --fondo-simbolos: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300' fill='none' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='0.22'%3E%3Cpolygon points='42,24 51,41 33,41' stroke='%2300c389' transform='rotate(-14 42 34)'/%3E%3Ccircle cx='194' cy='26' r='8' stroke='%23ff4d5e'/%3E%3Cpath d='M111 127l14 14M125 127l-14 14' stroke='%235b9bff' transform='rotate(8 118 134)'/%3E%3Crect x='254' y='116' width='16' height='16' rx='1.5' stroke='%23ff7ac0' transform='rotate(14 262 124)'/%3E%3Ccircle cx='84' cy='238' r='8' stroke='%23ff4d5e'/%3E%3Cpolygon points='232,226 241,243 223,243' stroke='%2300c389' transform='rotate(20 232 236)'/%3E%3C/svg%3E");
+html {
+  scrollbar-color: var(--color-line-strong) var(--color-bg);
 }
 
 body {
   background-color: var(--color-bg);
-  background-image: var(--fondo-simbolos);
-  /* El mosaico escala con el ancho de la pantalla (símbolos y trazos incluidos): más chico en
-     el celular y más grande en un monitor, con topes para que no se vea ni diminuto ni enorme. */
-  background-size: clamp(160px, 20vw, 420px) clamp(160px, 20vw, 420px);
+  background-image: var(--fondo-patron);
+  background-size: clamp(170px, 16vw, 260px) clamp(170px, 16vw, 260px);
   color: var(--color-text);
   font-family: var(--font-base);
   line-height: 1.55;
@@ -85,13 +167,26 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 
-h2 {
-  font-size: 2rem;
+h3 {
+  font-size: 1.4rem;
+}
+
+h2,
+.titulo-marca {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4.2vw, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  transform: skewX(-6deg);
+  transform-origin: 0 100%;
+  overflow-wrap: anywhere;
 }
 
 a {
@@ -116,22 +211,40 @@ button {
   outline-offset: 2px;
 }
 
-/* ---------- Layout ---------- */
-
 .page {
-  /* Mínimo 760 px (pantalla dividida o notebook); solo en monitores grandes crece con el ancho
-     (52 %), con tope en 1000 px, para que no quede como una columna angosta ni demasiado ancho. */
   max-width: clamp(760px, 52vw, 1000px);
   margin: 0 auto;
   padding: 2.5rem 1.25rem 5rem;
 }
 
 .card {
-  background: var(--color-surface);
+  position: relative;
+  background-color: var(--color-surface);
+  background-image:
+    linear-gradient(
+      225deg,
+      transparent 0 calc(var(--corte) * 0.7071),
+      var(--color-hud) 0 calc(var(--corte) * 0.7071 + 2px),
+      transparent 0
+    ),
+    linear-gradient(
+      45deg,
+      transparent 0 calc(var(--corte) * 0.7071),
+      var(--color-line-strong) 0 calc(var(--corte) * 0.7071 + 2px),
+      transparent 0
+    );
+  background-origin: border-box;
   border: var(--borde);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   padding: 2rem;
-  box-shadow: var(--shadow-elevated);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--corte)) 0,
+    100% var(--corte),
+    100% 100%,
+    var(--corte) 100%,
+    0 calc(100% - var(--corte))
+  );
 }
 
 .card--narrow {
@@ -139,62 +252,99 @@ button {
   margin-inline: auto;
 }
 
-/* ---------- Formularios ---------- */
+.panel-imagen {
+  --hud: var(--color-hud);
+  position: relative;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--corte)) 0,
+    100% var(--corte),
+    100% 100%,
+    var(--corte) 100%,
+    0 calc(100% - var(--corte))
+  );
+}
+
+.panel-imagen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      225deg,
+      transparent 0 calc(var(--corte) * 0.7071),
+      var(--hud) 0 calc(var(--corte) * 0.7071 + 2px),
+      transparent 0
+    ),
+    linear-gradient(
+      45deg,
+      transparent 0 calc(var(--corte) * 0.7071),
+      var(--color-line-strong) 0 calc(var(--corte) * 0.7071 + 2px),
+      transparent 0
+    );
+}
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.4rem;
   margin-bottom: 1.1rem;
 }
 
 .form-field label {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
 .form-field input,
 .form-field select,
 .form-field textarea {
-  background: #0a0a0a;
-  border: var(--borde);
+  background: var(--color-field);
+  border: 2px solid var(--color-line-strong);
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  padding: 0.65rem 0.8rem;
+  padding: 0.65rem 0.85rem;
   font-size: 1rem;
   font-family: inherit;
   transition:
-    box-shadow 0.12s ease,
-    transform 0.12s ease;
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
-  outline: none;
-  box-shadow: var(--shadow-small);
-  transform: translate(-1px, -1px);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
 }
 
-/* Desplegable destacado: mismo verde flúor que btn-primary (orden de publicaciones, lapso de
-   estadísticas). Se usa como <select class="select-destacado"> dentro de un .form-field. */
+:root[data-tema='claro'] .form-field input:focus,
+:root[data-tema='claro'] .form-field select:focus,
+:root[data-tema='claro'] .form-field textarea:focus {
+  outline-color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
 .form-field select.select-destacado {
   appearance: none;
-  font-family: var(--font-titulo);
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   cursor: pointer;
+  line-height: 1.5;
+  padding-block: 0.7rem;
   padding-right: 2.2rem;
   background-color: var(--color-primary);
   color: var(--color-ink);
-  border-color: var(--color-ink);
-  box-shadow: var(--shadow-small);
+  border-color: var(--contorno-tecla);
+  box-shadow:
+    0 4px 0 var(--color-primary-edge),
+    var(--brillo-primario);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-ink) 50%),
     linear-gradient(135deg, var(--color-ink) 50%, transparent 50%);
@@ -211,10 +361,16 @@ button {
   background-color: var(--color-primary-hover);
 }
 
+.form-field select.select-destacado:focus {
+  outline-color: var(--color-blue);
+  border-color: var(--contorno-tecla);
+}
+
 .form-field select.select-destacado option {
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-base);
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
 }
@@ -223,12 +379,12 @@ button {
 .form-field select.is-invalid,
 .form-field textarea.is-invalid {
   border-color: var(--color-danger);
-  box-shadow: 3px 3px 0 var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 
 .form-field__error {
   color: var(--color-danger);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
@@ -239,61 +395,74 @@ button {
   margin-top: 1.5rem;
 }
 
-/* ---------- Botones ---------- */
-
 .btn {
+  --tecla: var(--tecla-secundaria);
+  --tecla-texto: var(--color-text);
+  --tecla-borde: var(--tecla-secundaria-borde);
+  --brillo: 0 0 0 0 transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: var(--borde);
+  border: 2px solid var(--contorno-tecla);
   border-radius: var(--radius-sm);
-  padding: 0.65rem 1.25rem;
-  font-size: 0.85rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.95rem;
   font-family: var(--font-display);
   font-weight: 700;
+  line-height: 1.25;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-small);
+  letter-spacing: 0.06em;
+  color: var(--tecla-texto);
+  background: var(--tecla);
+  box-shadow:
+    0 4px 0 var(--tecla-borde),
+    var(--brillo);
   cursor: pointer;
   text-decoration: none;
   transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease;
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.12s ease;
 }
 
 .btn:not(:disabled):hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 #000;
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 var(--tecla-borde),
+    var(--brillo);
+  filter: brightness(1.08);
 }
 
 .btn:not(:disabled):active {
-  transform: translate(3px, 3px);
-  box-shadow: 0 0 0 var(--color-ink);
+  transform: translateY(4px);
+  box-shadow:
+    0 0 0 var(--tecla-borde),
+    var(--brillo);
+  filter: none;
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
-  box-shadow: none;
+  box-shadow: 0 2px 0 var(--tecla-borde);
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-ink);
-  border-color: var(--color-ink);
+  --tecla: var(--color-primary);
+  --tecla-texto: var(--color-ink);
+  --tecla-borde: var(--color-primary-edge);
+  --brillo: var(--brillo-primario);
 }
 
 .btn-secondary {
-  background: var(--color-surface);
+  --tecla: var(--tecla-secundaria);
 }
 
 .btn-danger {
-  background: var(--color-danger);
-  color: #fff;
-  border-color: #000;
+  --tecla: var(--color-danger);
+  --tecla-texto: var(--tecla-peligro-texto);
+  --tecla-borde: var(--tecla-peligro-borde);
 }
 
 .btn-link {
@@ -302,6 +471,10 @@ button {
   box-shadow: none;
   color: var(--color-blue);
   padding: 0;
+  font-family: var(--font-base);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -310,9 +483,8 @@ button {
 .btn-link:not(:disabled):active {
   transform: none;
   box-shadow: none;
+  filter: none;
 }
-
-/* ---------- Textos de apoyo ---------- */
 
 .text-muted {
   color: var(--color-text-muted);
@@ -336,32 +508,7 @@ button {
   }
 }
 
-/* Títulos de pantalla: tipografía propia, distinta de la de las tarjetas. */
-h2 {
-  font-family: var(--font-titulo);
-  font-weight: 700;
-  font-size: 2rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* Título en Bungee (la fuente de la marca y del menú). Se aplica a h2 y h3 por igual para que
-   los títulos que lo usan (Publicaciones, Mis últimas publicaciones) coincidan en fuente y tamaño. */
-.titulo-marca {
-  font-family: var(--font-marca);
-  font-weight: 400;
-  font-size: 1.75rem;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-  text-transform: none;
-  overflow-wrap: anywhere;
-}
-
-/* Botón de "seleccionar archivo" con el mismo estilo que el resto de los botones. */
-/* Campos de fecha: tema oscuro para que el ícono del calendario se vea (por defecto es negro sobre
-   el fondo oscuro del campo) y el calendario que abre el navegador también sea oscuro. */
 .form-field input[type='date'] {
-  color-scheme: dark;
   cursor: pointer;
 }
 
@@ -378,71 +525,70 @@ h2 {
   width: auto;
   background: transparent;
   border: none;
-  box-shadow: none;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.form-field input[type='file']:focus {
+  border-color: transparent;
+}
+
 .form-field input[type='file']::file-selector-button {
   margin-right: 0.85rem;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   background: var(--color-primary);
   color: var(--color-ink);
-  border: 2px solid var(--color-ink);
+  border: 2px solid var(--contorno-tecla);
   border-radius: var(--radius-sm);
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 0 3px 0 var(--color-primary-edge);
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease;
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
 }
 
 .form-field input[type='file']::file-selector-button:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0 #000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--color-primary-edge);
 }
 
-/* ---------- Celulares ---------- */
-
 @media (max-width: 560px) {
+  :root {
+    --corte: 12px;
+  }
+
   .page {
     padding: 1.5rem 1rem 4rem;
   }
 
   .card {
     padding: 1.25rem;
-    box-shadow: 4px 4px 0 #000;
   }
 
-  h2 {
-    font-size: 1.5rem;
-    overflow-wrap: anywhere;
-  }
-
+  h2,
   .titulo-marca {
-    font-size: 1.4rem;
+    font-size: 1.75rem;
   }
 
   .btn {
-    padding: 0.6rem 1rem;
+    padding: 0.5rem 1rem;
   }
 }
 
-/* Contador de caracteres que crea la directiva appContadorCaracteres (fuera del template,
-   por eso vive acá y no en el CSS de un componente). */
 .contador-caracteres {
   display: block;
   margin-top: 0.25rem;
   text-align: right;
   font-size: 0.75rem;
   color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .contador-caracteres--limite {

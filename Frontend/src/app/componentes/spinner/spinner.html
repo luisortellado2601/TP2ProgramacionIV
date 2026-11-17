@@ -1,5 +1,20 @@
 <div class="carga" [class.carga--pequeno]="pequeno()">
-  <div class="spinner" role="status" [attr.aria-label]="mensaje() || 'Cargando'"></div>
+  <svg
+    class="spinner"
+    viewBox="0 0 64 44"
+    role="status"
+    [attr.aria-label]="mensaje() || 'Cargando'"
+  >
+    <path
+      class="spinner__cuerpo"
+      d="M18 7H46C52 7 55 10 57 16L61 30C62 35 59 38 55 38C51 38 49 36 47 33L45 30H19L17 33C15 36 13 38 9 38C5 38 2 35 3 30L7 16C9 10 12 7 18 7Z"
+    />
+    <path class="spinner__cruceta" d="M19 14v11M13.5 19.5h11" />
+    <circle class="spinner__boton" cx="47" cy="14.5" r="2.4" />
+    <circle class="spinner__boton" cx="52" cy="19.5" r="2.4" />
+    <circle class="spinner__boton" cx="47" cy="24.5" r="2.4" />
+    <circle class="spinner__boton" cx="42" cy="19.5" r="2.4" />
+  </svg>
   @if (mensaje()) {
     <p class="text-muted">{{ mensaje() }}</p>
   }

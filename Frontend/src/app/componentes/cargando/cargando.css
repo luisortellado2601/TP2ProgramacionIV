@@ -5,3 +5,198 @@
   align-items: center;
   justify-content: center;
 }
+
+.arranque {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: var(--color-bg);
+  background-image: var(--fondo-patron);
+  background-size: clamp(170px, 16vw, 260px) clamp(170px, 16vw, 260px);
+}
+
+.arranque::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, var(--barrido) 0 1px, transparent 1px 4px);
+}
+
+.arranque__centro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  text-align: center;
+}
+
+.arranque__simbolos {
+  width: clamp(120px, 26vw, 180px);
+  overflow: visible;
+  animation: golpe 0.4s ease-out 1.3s;
+}
+
+.simbolo {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: llegar 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.15) var(--retraso) both;
+}
+
+.simbolo--triangulo {
+  stroke: var(--simbolo-1);
+  --dx: 0px;
+  --dy: -230px;
+  --retraso: 0.15s;
+}
+
+.simbolo--circulo {
+  stroke: var(--simbolo-2);
+  --dx: 230px;
+  --dy: 0px;
+  --retraso: 0.3s;
+}
+
+.simbolo--cruz {
+  stroke: var(--simbolo-3);
+  --dx: 0px;
+  --dy: 230px;
+  --retraso: 0.45s;
+}
+
+.simbolo--cuadrado {
+  stroke: var(--simbolo-4);
+  --dx: -230px;
+  --dy: 0px;
+  --retraso: 0.6s;
+}
+
+@keyframes llegar {
+  from {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(-140deg) scale(1.8);
+  }
+}
+
+@keyframes golpe {
+  from {
+    transform: scale(1.14);
+  }
+}
+
+.arranque__logo {
+  display: flex;
+  justify-content: center;
+  font-family: var(--font-marca);
+  font-weight: 700;
+  font-size: clamp(2.3rem, 10.5vw, 6.4rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transform: skewX(-7deg);
+}
+
+.arranque__letra {
+  display: inline-block;
+  animation: letra 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(1.1s + var(--i) * 70ms) both;
+}
+
+@keyframes letra {
+  from {
+    opacity: 0;
+    transform: translateY(35%);
+    clip-path: inset(0 0 100% 0);
+    text-shadow:
+      7px 0 var(--simbolo-2),
+      -7px 0 var(--simbolo-3);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(-15% -15% -15% -15%);
+    text-shadow:
+      0 0 0 var(--simbolo-2),
+      0 0 0 var(--simbolo-3);
+  }
+}
+
+.arranque__lema {
+  max-width: 36ch;
+  text-wrap: balance;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  animation: aparecer 0.6s ease-out 2s both;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.arranque__estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.arranque__barra {
+  width: clamp(200px, 50vw, 340px);
+  height: 18px;
+  padding: 3px;
+  border: 2px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.arranque__barra span {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--color-primary) 0 14px, transparent 14px 18px);
+  animation: llenar 1.6s steps(14) 0.9s both;
+}
+
+@keyframes llenar {
+  from {
+    width: 0;
+  }
+}
+
+.arranque__empezar {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: none;
+  color: var(--color-hud);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: parpadeo 1.3s steps(1, end) infinite;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (max-width: 560px) {
+  .arranque__lema {
+    font-size: 1rem;
+  }
+}

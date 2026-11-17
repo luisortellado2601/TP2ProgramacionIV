@@ -51,7 +51,7 @@
           type="button"
           [attr.aria-pressed]="leDiMeGusta()"
           [attr.aria-label]="leDiMeGusta() ? 'Quitar me gusta' : 'Dar me gusta'"
-          (click)="alternarLike.emit(publicacion())"
+          (click)="reaccionar()"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -59,6 +59,22 @@
             />
           </svg>
           <span>{{ publicacion().cantidadLikes }}</span>
+          @if (rafaga()) {
+            <span class="rafaga" aria-hidden="true">
+              <svg class="rafaga__simbolo rafaga__simbolo--1" viewBox="0 0 24 24">
+                <path d="M12 4 20 19H4z" />
+              </svg>
+              <svg class="rafaga__simbolo rafaga__simbolo--2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="7" />
+              </svg>
+              <svg class="rafaga__simbolo rafaga__simbolo--3" viewBox="0 0 24 24">
+                <path d="m5 5 14 14M19 5 5 19" />
+              </svg>
+              <svg class="rafaga__simbolo rafaga__simbolo--4" viewBox="0 0 24 24">
+                <rect x="5" y="5" width="14" height="14" />
+              </svg>
+            </span>
+          }
         </button>
         @if (!grande()) {
           <!-- En el detalle (grande) los comentarios ya están debajo: el botón sobra. -->

@@ -1,0 +1,89 @@
+<section
+  class="juegos"
+  aria-labelledby="juegos-titulo"
+  (mouseenter)="entrar()"
+  (mouseleave)="salir()"
+  (focusin)="entrar()"
+  (focusout)="salir()"
+  (touchstart)="pausarTemporalmente()"
+  (pointerdown)="pausarTemporalmente()"
+>
+  <div class="juegos__cabecera">
+    <h3 id="juegos-titulo" class="titulo-marca juegos__titulo">Juegos populares</h3>
+
+    <div class="juegos__controles">
+      <button
+        class="btn btn-secondary"
+        type="button"
+        [attr.aria-label]="
+          pausadoPorUsuario()
+            ? 'Reanudar el desplazamiento automático'
+            : 'Pausar el desplazamiento automático'
+        "
+        [attr.aria-pressed]="pausadoPorUsuario()"
+        (click)="alternarPausa()"
+      >
+        @if (pausadoPorUsuario()) {
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path class="relleno" d="M8 5v14l11-7z" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M8 5v14M16 5v14" />
+          </svg>
+        }
+      </button>
+      <div class="juegos__flechas">
+        <button
+          class="btn btn-secondary"
+          type="button"
+          aria-label="Ver juegos anteriores"
+          [disabled]="alInicio()"
+          (click)="mover(-1)"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M15 5 8 12l7 7" />
+          </svg>
+        </button>
+        <button
+          class="btn btn-secondary"
+          type="button"
+          aria-label="Ver más juegos"
+          [disabled]="alFinal()"
+          (click)="mover(1)"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ul
+    class="juegos__pista"
+    [class.juegos__pista--libre]="avanzando()"
+    #pista
+    (scroll)="actualizarExtremos()"
+  >
+    @for (juego of juegos; track juego.id) {
+      <li class="juegos__item">
+        <a class="juego-tarjeta panel-imagen" [routerLink]="['/juegos', juego.id]">
+          <img
+            class="juego-tarjeta__imagen"
+            [src]="portada(juego)"
+            alt=""
+            width="300"
+            height="450"
+            loading="lazy"
+            (error)="ocultarImagen($event)"
+          />
+          <span class="juego-tarjeta__info">
+            <strong class="juego-tarjeta__titulo">{{ juego.titulo }}</strong>
+            <span class="juego-tarjeta__genero">{{ juego.generos[0] }}</span>
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+</section>

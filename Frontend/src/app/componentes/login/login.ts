@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
+import { reiniciarArranque } from '../../utils/arranque';
 import { mensajeDeError } from '../../utils/mensaje-error';
 import { sinSoloEspaciosValidator } from '../../utils/sin-espacios-validator';
 
@@ -46,7 +47,8 @@ export class Login {
     this.authService.login(payload).subscribe({
       next: () => {
         this.enviando.set(false);
-        this.router.navigateByUrl('/publicaciones');
+        reiniciarArranque();
+        this.router.navigateByUrl('/');
       },
       error: (error: unknown) => {
         this.enviando.set(false);

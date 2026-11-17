@@ -3,14 +3,10 @@
   flex-direction: column;
   gap: 0.8rem;
   padding: 1.4rem;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
 }
 
 .publicacion:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 #000;
+  --color-hud: var(--color-blue);
 }
 
 .publicacion__autor {
@@ -88,6 +84,7 @@
 /* ---------- Corazón estilo "me gusta" ---------- */
 
 .corazon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -113,7 +110,7 @@
 
 button.corazon:hover {
   color: var(--color-danger);
-  background: rgba(229, 56, 59, 0.1);
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
 }
 
 .corazon--activo {
@@ -141,7 +138,7 @@ button.corazon:hover {
 button.corazon--comentarios:hover,
 .corazon--comentarios[aria-expanded='true'] {
   color: var(--color-primary);
-  background: rgba(198, 244, 50, 0.1);
+  background: color-mix(in srgb, var(--color-hud) 14%, transparent);
 }
 
 @keyframes latido {
@@ -167,7 +164,7 @@ button.corazon--comentarios:hover,
 
 .publicacion__eliminar:not(:disabled):hover {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--tecla-peligro-texto);
   box-shadow: none;
   transform: none;
 }
@@ -175,11 +172,6 @@ button.corazon--comentarios:hover,
 @media (max-width: 560px) {
   .publicacion {
     padding: 1rem;
-  }
-
-  .publicacion:hover {
-    transform: none;
-    box-shadow: var(--shadow-elevated);
   }
 
   .publicacion h3 {
@@ -210,11 +202,6 @@ button.corazon--comentarios:hover,
   gap: 1.1rem;
 }
 
-.publicacion--grande:hover {
-  transform: none;
-  box-shadow: var(--shadow-elevated);
-}
-
 .publicacion--grande h3 {
   font-size: 2rem;
 }
@@ -243,5 +230,65 @@ button.corazon--comentarios:hover,
 
   .publicacion--grande .publicacion__marco img {
     max-height: 420px;
+  }
+}
+
+.rafaga {
+  position: absolute;
+  left: 17px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.corazon .rafaga__simbolo {
+  transition: none;
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: disparo 0.75s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+}
+
+.corazon .rafaga__simbolo--1 {
+  stroke: var(--simbolo-1);
+  --dx: -26px;
+  --dy: -34px;
+}
+
+.corazon .rafaga__simbolo--2 {
+  stroke: var(--simbolo-2);
+  --dx: 30px;
+  --dy: -28px;
+}
+
+.corazon .rafaga__simbolo--3 {
+  stroke: var(--simbolo-3);
+  --dx: 36px;
+  --dy: 12px;
+}
+
+.corazon .rafaga__simbolo--4 {
+  stroke: var(--simbolo-4);
+  --dx: -8px;
+  --dy: -42px;
+}
+
+@keyframes disparo {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4) rotate(0);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(140deg);
   }
 }

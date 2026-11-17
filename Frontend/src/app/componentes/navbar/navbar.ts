@@ -2,6 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ModalService } from '../../services/modal';
+import { TemaService } from '../../services/tema';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { SoloAdminDirective } from '../../directives/solo-admin-directive';
 
@@ -13,6 +14,7 @@ import { SoloAdminDirective } from '../../directives/solo-admin-directive';
 })
 export class Navbar {
   protected readonly authService = inject(AuthService);
+  protected readonly temaService = inject(TemaService);
   private readonly modalService = inject(ModalService);
   private readonly router = inject(Router);
 

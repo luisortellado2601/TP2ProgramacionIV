@@ -10,13 +10,59 @@
   </button>
 
   <a class="marca" routerLink="/" (click)="cerrar()">
-    <span class="marca__logo">N</span>
+    <svg class="marca__logo" viewBox="0 0 64 64" aria-hidden="true">
+      <polygon class="marca__fondo" points="4,4 48,4 60,16 60,60 16,60 4,48" />
+      <polygon class="marca__play" points="25,19 46,32 25,45" />
+      <path class="marca__luz marca__luz--arriba" d="M48 4 60 16" />
+      <path class="marca__luz marca__luz--abajo" d="M4 48 16 60" />
+    </svg>
     <span class="marca__nombre">NextPlay</span>
   </a>
 
-  @if (authService.usuarioActual(); as usuario) {
-    <a class="topbar__usuario" routerLink="/perfil">&#64;{{ usuario.nombreUsuario }}</a>
-  }
+  <nav class="topbar__nav" aria-label="Principal">
+    @if (authService.estaAutenticado()) {
+      <a routerLink="/publicaciones" routerLinkActive="is-active">Publicaciones</a>
+      <a routerLink="/perfil" routerLinkActive="is-active">Mi perfil</a>
+      <a *appSoloAdmin routerLink="/admin/usuarios" routerLinkActive="is-active">Usuarios</a>
+      <a *appSoloAdmin routerLink="/admin/estadisticas" routerLinkActive="is-active">
+        Estadísticas
+      </a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="is-active">Ingresar</a>
+      <a routerLink="/registro" routerLinkActive="is-active">Crear cuenta</a>
+    }
+  </nav>
+
+  <div class="topbar__acciones">
+    <button
+      class="btn btn-secondary topbar__tema"
+      type="button"
+      [attr.aria-label]="
+        temaService.tema() === 'oscuro' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
+      "
+      (click)="temaService.alternar()"
+    >
+      @if (temaService.tema() === 'oscuro') {
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"
+          />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+        </svg>
+      }
+    </button>
+
+    @if (authService.usuarioActual(); as usuario) {
+      <a class="topbar__usuario" routerLink="/perfil">&#64;{{ usuario.nombreUsuario }}</a>
+      <button class="btn btn-secondary topbar__salir" type="button" (click)="cerrarSesion()">
+        Salir
+      </button>
+    }
+  </div>
 </header>
 
 <div class="cortina" [class.cortina--visible]="abierto()" (click)="cerrar()"></div>
@@ -50,15 +96,8 @@
       <a routerLink="/publicaciones" routerLinkActive="is-active" (click)="cerrar()">
         Publicaciones
       </a>
-      <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">
-        Mi perfil
-      </a>
-      <a
-        *appSoloAdmin
-        routerLink="/admin/usuarios"
-        routerLinkActive="is-active"
-        (click)="cerrar()"
-      >
+      <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">Mi perfil</a>
+      <a *appSoloAdmin routerLink="/admin/usuarios" routerLinkActive="is-active" (click)="cerrar()">
         Usuarios
       </a>
       <a
@@ -70,12 +109,8 @@
         Estadísticas
       </a>
     } @else {
-      <a routerLink="/login" routerLinkActive="is-active" (click)="cerrar()">
-        Ingresar
-      </a>
-      <a routerLink="/registro" routerLinkActive="is-active" (click)="cerrar()">
-        Crear cuenta
-      </a>
+      <a routerLink="/login" routerLinkActive="is-active" (click)="cerrar()">Ingresar</a>
+      <a routerLink="/registro" routerLinkActive="is-active" (click)="cerrar()">Crear cuenta</a>
     }
   </nav>
 

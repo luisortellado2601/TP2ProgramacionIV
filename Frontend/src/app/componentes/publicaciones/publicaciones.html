@@ -10,6 +10,8 @@
     <app-nueva-publicacion (creada)="publicacionCreada()" (cancelada)="creando.set(false)" />
   }
 
+  <app-juegos-destacados />
+
   <div class="publicaciones-orden form-field">
     <label for="orden">Ordenar por</label>
     <select id="orden" class="select-destacado" [value]="orden()" (change)="cambiarOrden($event)">

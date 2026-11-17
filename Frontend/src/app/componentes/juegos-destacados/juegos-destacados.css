@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.juegos__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.juegos__titulo {
+  font-size: 1.8rem;
+}
+
+.juegos__controles {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.juegos__flechas {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.juegos__controles .btn {
+  padding: 0.35rem 0.7rem;
+}
+
+.juegos__controles svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.juegos__controles svg .relleno {
+  fill: currentColor;
+}
+
+.juegos__pista {
+  display: flex;
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0.25rem 0 0.9rem;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.juegos__pista--libre {
+  scroll-snap-type: none;
+}
+
+.juegos__pista::-webkit-scrollbar {
+  display: none;
+}
+
+.juegos__item {
+  flex: 0 0 clamp(132px, 22%, 170px);
+  scroll-snap-align: start;
+}
+
+.juego-tarjeta {
+  --corte: 14px;
+  --hud: var(--color-line-strong);
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+  text-decoration: none;
+}
+
+.juego-tarjeta:hover,
+.juego-tarjeta:focus-visible {
+  --hud: var(--color-hud);
+}
+
+.juego-tarjeta:focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: -3px;
+}
+
+.juego-tarjeta__imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.juego-tarjeta__info {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 2.2rem 0.7rem 0.65rem;
+  background: linear-gradient(to top, var(--scrim) 35%, transparent);
+}
+
+.juego-tarjeta__titulo {
+  color: #f4f6ff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.juego-tarjeta__genero {
+  color: #b7bedf;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 560px) {
+  .juegos__titulo {
+    font-size: 1.5rem;
+  }
+
+  .juegos__flechas {
+    display: none;
+  }
+
+  .juegos__item {
+    flex-basis: 38%;
+  }
+}

@@ -86,6 +86,23 @@ describe('authInterceptor', () => {
     expect(alError).not.toHaveBeenCalled();
   });
 
+  it('ante un 401 por usuario deshabilitado muestra ese motivo y cierra la sesión', () => {
+    configurar(true);
+    http.get(`${environment.apiUrl}/publicaciones`).subscribe();
+
+    backend
+      .expectOne(`${environment.apiUrl}/publicaciones`)
+      .flush(
+        { message: 'El usuario se encuentra deshabilitado' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+
+    expect(modalService.estado()?.titulo).toBe('Usuario deshabilitado');
+    expect(modalService.estado()?.mensaje).toBe('El usuario se encuentra deshabilitado');
+    expect(authService.estaAutenticado()).toBe(false);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+  });
+
   it('si fallan varias peticiones a la vez con 401, avisa una sola vez y ninguna propaga el error', () => {
     configurar(true);
     const alError = vi.fn();

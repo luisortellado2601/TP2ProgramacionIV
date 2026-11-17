@@ -6,6 +6,8 @@ import { environment } from '../../environments/environment';
 import { AuthService, MENSAJE_SESION_EXPIRADA } from '../services/auth';
 import { ModalService } from '../services/modal';
 
+const MENSAJE_USUARIO_DESHABILITADO = 'El usuario se encuentra deshabilitado';
+
 const RUTAS_PUBLICAS = ['/auth/login', '/auth/registro'];
 
 export const authInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
@@ -37,7 +39,13 @@ export const authInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
 
       if (authService.obtenerToken() === token) {
         authService.logout();
-        modalService.error(MENSAJE_SESION_EXPIRADA, 'Sesión expirada');
+        const deshabilitado =
+          (error as HttpErrorResponse).error?.message === MENSAJE_USUARIO_DESHABILITADO;
+        if (deshabilitado) {
+          modalService.error(MENSAJE_USUARIO_DESHABILITADO, 'Usuario deshabilitado');
+        } else {
+          modalService.error(MENSAJE_SESION_EXPIRADA, 'Sesión expirada');
+        }
         void router.navigateByUrl('/login');
       }
       return EMPTY;

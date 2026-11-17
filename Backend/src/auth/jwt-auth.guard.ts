@@ -52,12 +52,15 @@ export class JwtAuthGuard implements CanActivate {
   private async exigirUsuarioHabilitado(usuarioId: string): Promise<void> {
     const usuario = Types.ObjectId.isValid(usuarioId)
       ? await this.usuarioModel
-          .findOne({ _id: usuarioId, habilitado: true })
-          .select('_id')
+          .findOne({ _id: usuarioId })
+          .select('_id habilitado')
           .exec()
       : null;
     if (!usuario) {
       throw new UnauthorizedException('La sesión ya no es válida');
+    }
+    if (!usuario.habilitado) {
+      throw new UnauthorizedException('El usuario se encuentra deshabilitado');
     }
   }
 

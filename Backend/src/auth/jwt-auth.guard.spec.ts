@@ -41,7 +41,7 @@ describe('JwtAuthGuard', () => {
 
   beforeEach(() => {
     verifyAsync.mockReset();
-    exec.mockReset().mockResolvedValue({ _id: idValido });
+    exec.mockReset().mockResolvedValue({ _id: idValido, habilitado: true });
     findOne.mockClear();
   });
 
@@ -73,7 +73,21 @@ describe('JwtAuthGuard', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('responde 401 si el usuario fue deshabilitado o borrado, aunque su token siga vigente', async () => {
+  it('responde 401 "deshabilitado" si el usuario fue deshabilitado, aunque su token siga vigente', async () => {
+    verifyAsync.mockResolvedValue({ sub: idValido, perfil: 'usuario' });
+    exec.mockResolvedValue({ _id: idValido, habilitado: false });
+    const request: Partial<RequestAutenticada> = {
+      headers: { authorization: 'Bearer vigente' },
+    };
+
+    await expect(
+      guard.canActivate(contexto(RutaPrivada, request)),
+    ).rejects.toThrow('El usuario se encuentra deshabilitado');
+    expect(findOne).toHaveBeenCalledWith({ _id: idValido });
+    expect(request.usuario).toBeUndefined();
+  });
+
+  it('responde 401 si el usuario ya no existe, aunque su token siga vigente', async () => {
     verifyAsync.mockResolvedValue({ sub: idValido, perfil: 'usuario' });
     exec.mockResolvedValue(null);
     const request: Partial<RequestAutenticada> = {
@@ -82,8 +96,7 @@ describe('JwtAuthGuard', () => {
 
     await expect(
       guard.canActivate(contexto(RutaPrivada, request)),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(findOne).toHaveBeenCalledWith({ _id: idValido, habilitado: true });
+    ).rejects.toThrow('La sesión ya no es válida');
     expect(request.usuario).toBeUndefined();
   });
 

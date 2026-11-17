@@ -15,6 +15,16 @@
   padding: 0.9rem 0;
 }
 
+.carga:not(.carga--pequeno) {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  justify-content: center;
+  padding: 0;
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  pointer-events: none;
+}
+
 .spinner {
   width: 92px;
   height: auto;

@@ -61,14 +61,20 @@ describe('Navbar', () => {
   it('con sesión de usuario muestra la navegación sin las opciones de administrador', () => {
     const { html } = crear({ perfil: 'usuario' });
 
-    expect(enlaces(html)).toEqual(['Publicaciones', 'Mi perfil']);
+    expect(enlaces(html)).toEqual(['Publicaciones', 'Compañeros', 'Mi perfil']);
     expect(html.querySelector('.topbar__usuario')?.textContent).toContain('@ana');
   });
 
   it('con sesión de administrador suma Usuarios y Estadísticas', () => {
     const { html } = crear({ perfil: 'administrador' });
 
-    expect(enlaces(html)).toEqual(['Publicaciones', 'Mi perfil', 'Usuarios', 'Estadísticas']);
+    expect(enlaces(html)).toEqual([
+      'Publicaciones',
+      'Compañeros',
+      'Mi perfil',
+      'Usuarios',
+      'Estadísticas',
+    ]);
   });
 
   it('el botón de tema cambia entre claro y oscuro y avisa a qué modo pasa', () => {

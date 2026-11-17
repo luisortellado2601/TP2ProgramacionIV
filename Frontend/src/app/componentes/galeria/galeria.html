@@ -1,0 +1,63 @@
+<section
+  class="galeria"
+  [attr.aria-label]="'Imágenes de ' + titulo()"
+  (mouseenter)="entrar()"
+  (mouseleave)="salir()"
+  (focusin)="entrar()"
+  (focusout)="salir()"
+  (touchstart)="pausarTemporalmente()"
+  (pointerdown)="pausarTemporalmente()"
+>
+  <div class="galeria__marco panel-imagen">
+    <ul class="galeria__pista" #pista (scroll)="alDesplazar()">
+      @for (imagen of imagenes(); track imagen; let i = $index) {
+        <li class="galeria__item">
+          <img
+            [src]="imagen"
+            [alt]="'Imagen ' + (i + 1) + ' de ' + imagenes().length + ' de ' + titulo()"
+            [attr.loading]="i === 0 ? null : 'lazy'"
+            (error)="ocultarImagen($event)"
+          />
+        </li>
+      }
+    </ul>
+
+    @if (imagenes().length > 1) {
+      <button
+        class="btn btn-secondary galeria__flecha galeria__flecha--anterior"
+        type="button"
+        aria-label="Imagen anterior"
+        (click)="mover(-1)"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="M15 5 8 12l7 7" />
+        </svg>
+      </button>
+      <button
+        class="btn btn-secondary galeria__flecha galeria__flecha--siguiente"
+        type="button"
+        aria-label="Imagen siguiente"
+        (click)="mover(1)"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  @if (imagenes().length > 1) {
+    <div class="galeria__puntos">
+      @for (imagen of imagenes(); track imagen; let i = $index) {
+        <button
+          class="galeria__punto"
+          type="button"
+          [class.galeria__punto--activo]="i === actual()"
+          [attr.aria-label]="'Ver imagen ' + (i + 1) + ' de ' + imagenes().length"
+          [attr.aria-current]="i === actual() ? 'true' : null"
+          (click)="ir(i)"
+        ></button>
+      }
+    </div>
+  }
+</section>

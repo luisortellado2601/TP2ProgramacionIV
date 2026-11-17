@@ -1,0 +1,271 @@
+<div class="page">
+  <div class="companeros__cabecera">
+    <h2>Compañeros</h2>
+    <div class="companeros__modos">
+      <button
+        id="modo-buscar"
+        class="btn"
+        [class.btn-primary]="!creando()"
+        [class.btn-secondary]="creando()"
+        type="button"
+        [attr.aria-pressed]="!creando()"
+        (click)="creando.set(false)"
+      >
+        Buscar compañeros
+      </button>
+      <button
+        id="modo-publicar"
+        class="btn"
+        [class.btn-primary]="creando()"
+        [class.btn-secondary]="!creando()"
+        type="button"
+        [attr.aria-pressed]="creando()"
+        (click)="creando.set(true)"
+      >
+        Publicar búsqueda
+      </button>
+    </div>
+  </div>
+
+  @if (creando()) {
+    <form class="card companeros__form" [formGroup]="form" (ngSubmit)="publicar()">
+      <h3>¿A quién buscás?</h3>
+
+      <div class="companeros__grilla">
+        <div class="form-field">
+          <label for="nuevo-juego">Juego</label>
+          <select
+            id="nuevo-juego"
+            formControlName="juego"
+            [class.is-invalid]="form.controls.juego.invalid && form.controls.juego.touched"
+          >
+            <option value="" disabled>Elegí un juego</option>
+            @for (juego of juegos; track juego) {
+              <option [value]="juego">{{ juego }}</option>
+            }
+          </select>
+          @if (form.controls.juego.invalid && form.controls.juego.touched) {
+            <span class="form-field__error">Elegí el juego.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="nuevo-region">Región o servidor</label>
+          <select id="nuevo-region" formControlName="region">
+            @for (region of regiones; track region) {
+              <option [value]="region">{{ region }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="nuevo-plataforma">Plataforma</label>
+          <select id="nuevo-plataforma" formControlName="plataforma">
+            @for (plataforma of plataformas; track plataforma) {
+              <option [value]="plataforma">{{ plataforma }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="nuevo-descripcion">Detalles (opcional)</label>
+        <textarea
+          id="nuevo-descripcion"
+          rows="3"
+          maxlength="280"
+          formControlName="descripcion"
+          [class.is-invalid]="
+            form.controls.descripcion.invalid && form.controls.descripcion.touched
+          "
+        ></textarea>
+      </div>
+
+      <div class="companeros__acciones">
+        <button class="btn btn-secondary" type="button" (click)="creando.set(false)">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Publicando...' : 'Publicar' }}
+        </button>
+      </div>
+    </form>
+  } @else {
+    <form
+      class="card companeros__filtros"
+      [formGroup]="filtros"
+      (ngSubmit)="buscar()"
+      aria-label="Buscar compañeros"
+    >
+      <div class="form-field">
+        <label for="f-juego">Juego</label>
+        <select id="f-juego" formControlName="juego">
+          <option value="">Todos</option>
+          @for (juego of juegos; track juego) {
+            <option [value]="juego">{{ juego }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="f-region">Región</label>
+        <select id="f-region" formControlName="region">
+          <option value="">Todas</option>
+          @for (region of regiones; track region) {
+            <option [value]="region">{{ region }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="f-plataforma">Plataforma</label>
+        <select id="f-plataforma" formControlName="plataforma">
+          <option value="">Todas</option>
+          @for (plataforma of plataformas; track plataforma) {
+            <option [value]="plataforma">{{ plataforma }}</option>
+          }
+        </select>
+      </div>
+      <div class="companeros__botones">
+        <button class="btn btn-primary" type="submit" [disabled]="cargando()">Buscar</button>
+        <button class="btn btn-secondary" type="button" (click)="limpiarFiltros()">Limpiar</button>
+      </div>
+    </form>
+  }
+
+  @if (!creando()) {
+    @if (cargando() && busquedas().length === 0) {
+      <app-spinner mensaje="Buscando compañeros..." />
+    } @else if (busquedas().length === 0) {
+      <div class="card text-center">
+        <p class="text-muted">
+          No hay búsquedas con esos filtros. ¡Publicá la tuya y encontrá con quién jugar!
+        </p>
+      </div>
+    } @else {
+      <ul class="companeros__lista">
+        @for (busqueda of busquedas(); track busqueda.id) {
+          <li class="card busqueda">
+            <div class="busqueda__principal">
+              @if (portada(busqueda); as imagen) {
+                <img
+                  class="busqueda__portada"
+                  [src]="imagen"
+                  alt=""
+                  loading="lazy"
+                  (error)="ocultarImagen($event)"
+                />
+              }
+              <div class="busqueda__cuerpo">
+                <h3>&#64;{{ busqueda.autor.nombreUsuario }} busca compañeros</h3>
+                <ul class="busqueda__chips" aria-label="Datos de la búsqueda">
+                  <li class="busqueda__chip--juego">{{ busqueda.juego }}</li>
+                  <li>{{ busqueda.region }}</li>
+                  @if (busqueda.plataforma) {
+                    <li>{{ busqueda.plataforma }}</li>
+                  }
+                </ul>
+                @if (busqueda.descripcion) {
+                  <p class="busqueda__descripcion">{{ busqueda.descripcion }}</p>
+                }
+                <footer class="busqueda__pie">
+                  <span class="busqueda__autor">
+                    <span class="busqueda__avatar">
+                      {{ busqueda.autor.nombre | iniciales: busqueda.autor.apellido }}
+                    </span>
+                    {{ busqueda.autor.nombre }} {{ busqueda.autor.apellido }}
+                    <span class="text-muted">{{ busqueda.fecha | tiempoRelativo }}</span>
+                  </span>
+                  <span class="busqueda__acciones">
+                    <button
+                      class="btn btn-primary busqueda__contactar"
+                      type="button"
+                      [attr.aria-expanded]="abiertas().has(busqueda.id)"
+                      (click)="alternarContacto(busqueda)"
+                    >
+                      {{ esMia(busqueda) ? 'Mensajes' : 'Contactar' }} ({{
+                        busqueda.respuestas.length
+                      }})
+                    </button>
+                    @if (puedeCerrar(busqueda)) {
+                      <button
+                        class="btn btn-secondary busqueda__cerrar"
+                        type="button"
+                        (click)="cerrar(busqueda)"
+                      >
+                        Cerrar búsqueda
+                      </button>
+                    }
+                  </span>
+                </footer>
+              </div>
+            </div>
+
+            @if (abiertas().has(busqueda.id)) {
+              <section class="contacto" aria-label="Mensajes de la búsqueda">
+                @if (busqueda.respuestas.length === 0) {
+                  @if (esMia(busqueda)) {
+                    <p class="text-muted">Todavía nadie te escribió.</p>
+                  } @else {
+                    <p class="text-muted">Todavía nadie escribió. ¡Sé el primero en contactar!</p>
+                  }
+                } @else {
+                  <ul class="contacto__lista">
+                    @for (respuesta of busqueda.respuestas; track respuesta.id) {
+                      <li class="contacto__mensaje">
+                        <span class="busqueda__avatar">
+                          {{ respuesta.autor.nombre | iniciales: respuesta.autor.apellido }}
+                        </span>
+                        <div>
+                          <p class="contacto__meta">
+                            <strong>&#64;{{ respuesta.autor.nombreUsuario }}</strong>
+                            <span class="text-muted">{{ respuesta.fecha | tiempoRelativo }}</span>
+                          </p>
+                          <p class="contacto__texto">{{ respuesta.mensaje }}</p>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                @if (!esMia(busqueda)) {
+                  <div class="form-field contacto__nuevo">
+                    <label [for]="'mensaje-' + busqueda.id">Tu mensaje</label>
+                    <textarea
+                      #caja
+                      [id]="'mensaje-' + busqueda.id"
+                      rows="2"
+                      [attr.maxlength]="maximoMensaje"
+                      placeholder="Contale cuándo podés jugar o tu usuario del juego"
+                    ></textarea>
+                  </div>
+                  <div class="contacto__acciones">
+                    <button
+                      class="btn btn-primary"
+                      type="button"
+                      [disabled]="enviandoMensaje() === busqueda.id"
+                      (click)="enviarMensaje(busqueda, caja)"
+                    >
+                      {{ enviandoMensaje() === busqueda.id ? 'Enviando...' : 'Enviar mensaje' }}
+                    </button>
+                  </div>
+                }
+              </section>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (hayMas()) {
+        <div class="companeros__mas">
+          <button
+            class="btn btn-secondary"
+            type="button"
+            [disabled]="cargando()"
+            (click)="cargar(false)"
+          >
+            {{ cargando() ? 'Cargando...' : 'Ver más' }}
+          </button>
+        </div>
+      }
+    }
+  }
+</div>

@@ -12,7 +12,13 @@
   <a class="marca" routerLink="/" (click)="cerrar()">
     <svg class="marca__logo" viewBox="0 0 64 64" aria-hidden="true">
       <polygon class="marca__fondo" points="4,4 48,4 60,16 60,60 16,60 4,48" />
-      <polygon class="marca__play" points="25,19 46,32 25,45" />
+      <path
+        class="marca__mando"
+        d="M21 17H43C48 17 50 19 52 24L55 36C56 40 54 43 51 43C48 43 47 42 45 39L43 37H21L19 39C17 42 16 43 13 43C10 43 8 40 9 36L12 24C14 19 16 17 21 17Z"
+      />
+      <path class="marca__detalle" d="M21 24v8M17 28h8" />
+      <circle class="marca__boton" cx="42" cy="25" r="2" />
+      <circle class="marca__boton" cx="47" cy="29" r="2" />
       <path class="marca__luz marca__luz--arriba" d="M48 4 60 16" />
       <path class="marca__luz marca__luz--abajo" d="M4 48 16 60" />
     </svg>
@@ -22,6 +28,7 @@
   <nav class="topbar__nav" aria-label="Principal">
     @if (authService.estaAutenticado()) {
       <a routerLink="/publicaciones" routerLinkActive="is-active">Publicaciones</a>
+      <a routerLink="/companeros" routerLinkActive="is-active">Compañeros</a>
       <a routerLink="/perfil" routerLinkActive="is-active">Mi perfil</a>
       <a *appSoloAdmin routerLink="/admin/usuarios" routerLinkActive="is-active">Usuarios</a>
       <a *appSoloAdmin routerLink="/admin/estadisticas" routerLinkActive="is-active">
@@ -96,6 +103,7 @@
       <a routerLink="/publicaciones" routerLinkActive="is-active" (click)="cerrar()">
         Publicaciones
       </a>
+      <a routerLink="/companeros" routerLinkActive="is-active" (click)="cerrar()">Compañeros</a>
       <a routerLink="/perfil" routerLinkActive="is-active" (click)="cerrar()">Mi perfil</a>
       <a *appSoloAdmin routerLink="/admin/usuarios" routerLinkActive="is-active" (click)="cerrar()">
         Usuarios

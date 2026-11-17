@@ -50,6 +50,7 @@ src/
 │   │   ├── publicaciones/  Listado paginado, orden por fecha o me gusta, crear y eliminar
 │   │   ├── publicacion/    Tarjeta de una publicación (con like y un botón de comentarios con su cantidad, que despliega los 3 más recientes; "Ver N más" lleva al detalle)
 │   │   ├── publicacion-detalle/  Página de una publicación (en grande) con sus comentarios
+│   │   ├── companeros/     Búsqueda de compañeros: buscador por juego, región y plataforma (con botón Buscar), listado paginado, contacto con quien publicó y formulario para publicar la propia búsqueda
 │   │   ├── juegos-destacados/  Deslizable con las carátulas de los juegos populares (arriba del listado de publicaciones)
 │   │   ├── juego-detalle/  Ficha de un juego: banner, sinopsis, plataformas, peso, géneros, desarrollador y año
 │   │   ├── nueva-publicacion/  Formulario de alta con imagen opcional
@@ -86,6 +87,7 @@ src/
 | `/registro` | Registro | Solo sin sesión |
 | `/publicaciones` | Publicaciones | Requiere sesión |
 | `/publicaciones/:id` | Detalle de una publicación y sus comentarios | Requiere sesión |
+| `/companeros` | Búsqueda de compañeros de juego: filtros, listado y publicar una búsqueda | Requiere sesión |
 | `/juegos/:id` | Ficha de un juego popular (ej. `/juegos/elden-ring`) | Requiere sesión |
 | `/perfil` | Mi perfil | Requiere sesión |
 | `/perfil/editar` | Editar mi perfil | Requiere sesión |
@@ -128,9 +130,12 @@ Rediseño en curso, por bloques. Hecho: sistema visual con modo oscuro y claro, 
 - **Fondo:** patrón de glifos neón (`--fondo-patron`, un SVG en línea distinto por tema, sin peticiones de red).
 - **Paneles:** `.card`, el modal y `.panel-imagen` (carátulas) tienen dos esquinas cortadas con `clip-path`; las diagonales se dibujan con degradés a una distancia `--corte × 0,7071` de la esquina, y la de arriba usa `--color-hud`. No llevan sombra ni contorno de foco externo, porque `clip-path` los recorta: el foco de las tarjetas va hacia adentro.
 - **Botones:** teclas con relieve inferior que se hunden al presionar. Los títulos de pantalla (`h2` y `.titulo-marca`) van en mayúsculas e inclinados.
-- **Navegación:** en pantallas de 960 px o más, barra fija con los enlaces, el usuario y *Salir*; en celular, botón de menú y cajón deslizable. La marca (logo y nombre) está en `navbar.html` y en `public/favicon.svg`; los PNG de `public/icons/` se generaron a partir de ese mismo logo.
+- **Navegación:** en pantallas de 960 px o más, barra fija con los enlaces, el usuario y *Salir* (todos con el mismo estilo plano); en celular, botón de menú y cajón deslizable. La marca (un mando de consola en una caja de esquinas cortadas, más el nombre) está en `navbar.html` y en `public/favicon.svg`; los PNG de `public/icons/` se generaron a partir de ese mismo logo.
 - **Spinner:** un mando de consola de un solo color que late (se agranda, se achica y brilla), con los cuatro botones encendiéndose en secuencia. Con movimiento reducido solo cambia la opacidad.
 - **Pantalla de arranque (`cargando`):** una secuencia de unos 2,6 s (los cuatro símbolos, el logo letra por letra y una barra de carga). Se muestra una vez por sesión del navegador y en cada inicio de sesión (el login limpia la marca con `reiniciarArranque()` y pasa por `/`). Con sesión saluda al usuario y entra sola a `/publicaciones`; sin sesión espera un toque. Un toque la saltea. Con movimiento reducido se ve el estado final sin animar.
 - **Juegos populares:** los datos viven en `src/app/data/juegos.ts` (id, título, desarrollador, año, géneros, plataformas, peso, sinopsis y la imagen: `steamAppId` o una URL en `portada`). Desarrollador, año, géneros y peso de los juegos de Steam salen de su ficha pública; los de Fortnite, League of Legends y Valorant, de fuentes de terceros, y su peso varía con las actualizaciones. El peso es aproximado y de la versión de PC; las sinopsis están redactadas para NextPlay. Las imágenes se piden a sus CDN (Steam, Riot y fortnite-api.com) sin guardarlas en el proyecto: si no cargan se ocultan y la tarjeta sigue mostrando el título. Para sumar un juego alcanza con agregar un objeto a `JUEGOS`.
-- **Deslizable de juegos:** avanza solo y despacio (unos 28 px por segundo); se detiene al pasar el mouse, al enfocar con el teclado o al tocarlo, retoma a los 4 s sin actividad, vuelve al principio al llegar al final y tiene un botón de pausa. Con movimiento reducido arranca en pausa.
+- **Deslizable de juegos:** avanza solo de a una tarjeta cada 3,5 s y vuelve al principio al llegar al final. No tiene botón de pausa: se detiene al pasar el mouse, al enfocar con el teclado o al tocarlo, y retoma a los 8 s sin actividad. Con movimiento reducido no avanza solo. Está arriba del feed y al pie de la tarjeta del perfil.
+- **Galería del juego:** dentro de la tarjeta de cada ficha hay un carrusel de capturas (`capturas` en `juegos.ts`; las de Steam salen de su ficha pública) que avanza solo cada 4,5 s, se detiene al pasar el mouse, enfocar o tocar (retoma a los 9 s) y se desliza con el dedo, con flechas y con puntos. Con movimiento reducido no avanza solo.
+- **Perfil:** tarjeta con avatar grande en marco de esquinas cortadas, rol, datos de la cuenta y el deslizable de juegos al pie.
 - **Reacciones:** al dar me gusta, cuatro símbolos (▲ ● ✕ ■) salen disparados del corazón y se desvanecen; al quitarlo no hay ráfaga.
+- **Compañeros:** consume `GET/POST /busquedas`, `POST /busquedas/:id/respuestas` y `DELETE /busquedas/:id` del back (`BusquedasService`). Una búsqueda tiene solo juego, región y plataforma, que se muestran como cuadritos en la tarjeta. Las regiones y plataformas son listas fijas (`models/busqueda.ts`), iguales a las que valida el back, y los juegos salen del catálogo local. El buscador se aplica con el botón *Buscar* y se oculta mientras se publica una búsqueda. Cada tarjeta tiene *Contactar (n)*, que despliega los mensajes y una caja para escribirle a quien publicó. Quien publicó (o un administrador) puede cerrar la búsqueda.

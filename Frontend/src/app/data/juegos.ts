@@ -3,6 +3,11 @@ import { Juego } from '../models/juego';
 export const JUEGOS: readonly Juego[] = [
   {
     id: 'fortnite',
+    capturas: [
+      'https://fortnite-api.com/images/cosmetics/br/cid_349_athena_commando_m_banana/featured.png',
+      'https://fortnite-api.com/images/cosmetics/br/cid_161_athena_commando_m_drift/featured.png',
+      'https://fortnite-api.com/images/cosmetics/br/cid_102_athena_commando_m_raven/featured.png',
+    ],
     titulo: 'Fortnite',
     desarrollador: 'Epic Games',
     lanzamiento: 2017,
@@ -16,6 +21,11 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'league-of-legends',
+    capturas: [
+      'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Jinx_0.jpg',
+      'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ahri_0.jpg',
+      'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Ezreal_0.jpg',
+    ],
     titulo: 'League of Legends',
     desarrollador: 'Riot Games',
     lanzamiento: 2009,
@@ -28,6 +38,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'counter-strike-2',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/9c8b8fd6ebb2c84a1c38541369e6c05db7f1fbe0/ss_9c8b8fd6ebb2c84a1c38541369e6c05db7f1fbe0.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/4ef95eed5fcd98c576bf13e024bc6c845b622132/ss_4ef95eed5fcd98c576bf13e024bc6c845b622132.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/ss_13bb35638c0267759276f511ee97064773b37a51.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/ss_0f8cf82d019c614760fd20801f2bb4001da7ea77.1920x1080.jpg',
+    ],
     titulo: 'Counter-Strike 2',
     desarrollador: 'Valve',
     lanzamiento: 2023,
@@ -40,6 +56,11 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'valorant',
+    capturas: [
+      'https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/fullportrait.png',
+      'https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/fullportrait.png',
+      'https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/fullportrait.png',
+    ],
     titulo: 'Valorant',
     desarrollador: 'Riot Games',
     lanzamiento: 2020,
@@ -53,6 +74,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'grand-theft-auto-v',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_32aa18ab3175e3002217862dd5917646d298ab6b.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_2744f112fa060320d191a50e8b3a92441a648a56.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_da39c16db175f6973770bae6b91d411251763152.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/ss_bd5db78286be0a7c6b2c62519099a9e27e6b06f3.1920x1080.jpg',
+    ],
     titulo: 'Grand Theft Auto V',
     desarrollador: 'Rockstar North',
     lanzamiento: 2013,
@@ -65,6 +92,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'elden-ring',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/ss_943bf6fe62352757d9070c1d33e50b92fe8539f1.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/ss_dcdac9e4b26ac0ee5248bfd2967d764fd00cdb42.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/ss_3c41384a24d86dddd58a8f61db77f9dc0bfda8b5.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/ss_e0316c76f8197405c1312d072b84331dd735d60b.1920x1080.jpg',
+    ],
     titulo: 'Elden Ring',
     desarrollador: 'FromSoftware',
     lanzamiento: 2022,
@@ -77,6 +110,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'red-dead-redemption-2',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/ss_66b553f4c209476d3e4ce25fa4714002cc914c4f.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/ss_bac60bacbf5da8945103648c08d27d5e202444ca.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/ss_668dafe477743f8b50b818d5bbfcec669e9ba93e.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/ss_4ce07ae360b166f0f650e9a895a3b4b7bf15e34f.1920x1080.jpg',
+    ],
     titulo: 'Red Dead Redemption 2',
     desarrollador: 'Rockstar Games',
     lanzamiento: 2018,
@@ -89,6 +128,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'the-witcher-3',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/f7f564ecedd09b3e503b071a637aeefdedbeedd8/ss_f7f564ecedd09b3e503b071a637aeefdedbeedd8.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/0a38e4d0d57f15934772dbe09b322d08132d5518/ss_0a38e4d0d57f15934772dbe09b322d08132d5518.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/19c03c2b997d3a393fc629fd42f55ddb4a3d8dd0/ss_19c03c2b997d3a393fc629fd42f55ddb4a3d8dd0.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/3a3f430982cc3bccac1633d3ea60a30bf3d1ae9e/ss_3a3f430982cc3bccac1633d3ea60a30bf3d1ae9e.1920x1080.jpg',
+    ],
     titulo: 'The Witcher 3: Wild Hunt',
     desarrollador: 'CD PROJEKT RED',
     lanzamiento: 2015,
@@ -101,6 +146,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'cyberpunk-2077',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/ss_2f649b68d579bf87011487d29bc4ccbfdd97d34f.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/900f9bda156599fcd235f08ffb64667f9baa1afe/ss_900f9bda156599fcd235f08ffb64667f9baa1afe.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/f678ed77c2fe7060ac9c64e32e1472e3ec3ab7dc/ss_f678ed77c2fe7060ac9c64e32e1472e3ec3ab7dc.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/0ed9487e305983d60646ba163a3d8970efb6b347/ss_0ed9487e305983d60646ba163a3d8970efb6b347.1920x1080.jpg',
+    ],
     titulo: 'Cyberpunk 2077',
     desarrollador: 'CD PROJEKT RED',
     lanzamiento: 2020,
@@ -113,6 +164,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'baldurs-gate-3',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/ss_c73bc54415178c07fef85f54ee26621728c77504.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/ss_73d93bea842b93914d966622104dcb8c0f42972b.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/ss_cf936d31061b58e98e0c646aee00e6030c410cda.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/ss_b6a6ee6e046426d08ceea7a4506a1b5f44181543.1920x1080.jpg',
+    ],
     titulo: "Baldur's Gate 3",
     desarrollador: 'Larian Studios',
     lanzamiento: 2023,
@@ -125,6 +182,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'god-of-war',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1593500/ss_6eccc970b5de2943546d93d319be1b5c0618f21b.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1593500/ss_f1bff24d3967a21d303d95e11ed892e3d9113057.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1593500/ss_3670ba72c7e3e9c3c3225547ef2c1053504e62b8.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1593500/ss_93a3ca63aa2cd8c675bbb6430324ee3f2d44b845.1920x1080.jpg',
+    ],
     titulo: 'God of War',
     desarrollador: 'Santa Monica Studio',
     lanzamiento: 2018,
@@ -137,6 +200,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'hades',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1145360/ss_c0fed447426b69981cf1721756acf75369801b31.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1145360/ss_71b831acfddfa631e59e57405b347fb04e9ce8d5.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1145360/ss_68300459a8c3daacb2ec687adcdbf4442fcc4f47.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1145360/ss_bcb499a0dd001f4101823f99ec5094d2872ba6ee.1920x1080.jpg',
+    ],
     titulo: 'Hades',
     desarrollador: 'Supergiant Games',
     lanzamiento: 2020,
@@ -149,6 +218,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'stardew-valley',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413150/ss_b887651a93b0525739049eb4194f633de2df75be.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413150/ss_9ac899fe2cda15d48b0549bba77ef8c4a090a71c.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413150/ss_4fa0866709ede3753fdf2745349b528d5e8c4054.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413150/ss_d836f0a5b0447fb6a2bdb0a6ac5f954949d3c41e.1920x1080.jpg',
+    ],
     titulo: 'Stardew Valley',
     desarrollador: 'ConcernedApe',
     lanzamiento: 2016,
@@ -161,6 +236,12 @@ export const JUEGOS: readonly Juego[] = [
   },
   {
     id: 'hollow-knight',
+    capturas: [
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/367520/ss_5384f9f8b96a0b9934b2bc35a4058376211636d2.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/367520/ss_d5b6edd94e77ba6db31c44d8a3c09d807ab27751.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/367520/ss_a81e4231cc8d55f58b51a4a938898af46503cae5.1920x1080.jpg',
+      'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/367520/ss_62e10cf506d461e11e050457b08aa0e2a1c078d0.1920x1080.jpg',
+    ],
     titulo: 'Hollow Knight',
     desarrollador: 'Team Cherry',
     lanzamiento: 2017,

@@ -15,31 +15,21 @@
   font-size: 1.8rem;
 }
 
-.juegos__controles {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-}
-
 .juegos__flechas {
   display: flex;
   gap: 0.6rem;
 }
 
-.juegos__controles .btn {
+.juegos__flechas .btn {
   padding: 0.35rem 0.7rem;
 }
 
-.juegos__controles svg {
+.juegos__flechas svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.juegos__controles svg .relleno {
-  fill: currentColor;
 }
 
 .juegos__pista {
@@ -52,10 +42,6 @@
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-}
-
-.juegos__pista--libre {
-  scroll-snap-type: none;
 }
 
 .juegos__pista::-webkit-scrollbar {

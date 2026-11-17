@@ -15,6 +15,8 @@
 **Última actualización:** 2026-11-15
 **Sprint en curso:** #4, completo y en producción (front y back), con la PWA probada ahí (instalable y abre sin conexión). Tests: back 80 en 13 suites, front 73 en 12 archivos; build y lint en verde. Incluye admin (baja de publicaciones, usuarios, estadísticas con Chart.js), 3 pipes y 3 directivas propias, PWA y editar perfil. `JWT_EXPIRES_IN_SEGUNDOS` queda en **60** (no se vuelve a 900) a propósito, para que el profesor pueda ver fácilmente el vencimiento de token y el refresco.
 
+**Extra (fuera de los sprints):** módulo `busquedas` para encontrar compañeros de juego, con una colección propia (`busquedas`) que no toca las demás. Cada búsqueda guarda juego, región, plataforma (PC, PlayStation, Xbox, Nintendo Switch o Móvil) y detalles opcionales, y lleva dentro los mensajes de contacto (máximo 50). Rutas: `POST /busquedas`, `GET /busquedas` (filtros por juego, región y plataforma, con paginación), `POST /busquedas/:id/respuestas` (contactar al autor) y `DELETE /busquedas/:id` (baja lógica: la cierra el autor o un administrador).
+
 ### Progreso por sprint
 | Sprint | Front | Back | Estado |
 |---|---|---|---|
@@ -60,7 +62,7 @@
 ```
 TP2PrograIV/
 ├── Frontend/   Angular 22 (NextPlay) – componentes en src/app/componentes, servicios, guards
-└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios, estadisticas
+└── Backend/    NestJS 12 + Mongoose – módulos auth, usuarios, publicaciones, comentarios, estadisticas, busquedas
     ├── Funcional.md   Descripción funcional de NextPlay
     └── postman/       Dos colecciones de Postman (Sprint 1-3: 13 requests; Sprint 4: 34) y environments Local y Produccion
 ```

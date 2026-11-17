@@ -9,4 +9,5 @@ export interface Juego {
   sinopsis: string;
   steamAppId?: number;
   portada?: string;
+  capturas: string[];
 }

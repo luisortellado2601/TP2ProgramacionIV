@@ -1,0 +1,93 @@
+:host {
+  display: block;
+}
+
+.galeria__marco {
+  --corte: 20px;
+  background: var(--color-surface-alt);
+}
+
+.galeria__pista {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.galeria__pista::-webkit-scrollbar {
+  display: none;
+}
+
+.galeria__item {
+  flex: 0 0 100%;
+  aspect-ratio: 16 / 9;
+  scroll-snap-align: start;
+}
+
+.galeria__item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.galeria__flecha {
+  position: absolute;
+  top: 50%;
+  margin-top: -22px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.galeria__flecha--anterior {
+  left: 0.75rem;
+}
+
+.galeria__flecha--siguiente {
+  right: 0.75rem;
+}
+
+.galeria__flecha svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.galeria__puntos {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.galeria__punto {
+  width: 26px;
+  height: 10px;
+  padding: 0;
+  background: transparent;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.galeria__punto--activo {
+  background: var(--color-hud);
+  border-color: var(--color-hud);
+}
+
+@media (max-width: 560px) {
+  .galeria__marco {
+    --corte: 14px;
+  }
+
+  .galeria__flecha {
+    display: none;
+  }
+}

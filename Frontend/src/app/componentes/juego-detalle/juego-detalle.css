@@ -4,14 +4,20 @@
 }
 
 .juego {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.juego__principal {
   display: grid;
-  grid-template-columns: minmax(180px, 270px) minmax(0, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(170px, 230px) minmax(0, 1fr);
+  gap: 1.75rem;
   align-items: start;
 }
 
 .juego__portada {
-  --corte: 20px;
+  --corte: 18px;
   background: var(--color-surface-alt);
   aspect-ratio: 2 / 3;
 }
@@ -24,10 +30,11 @@
   object-position: top;
 }
 
-.juego__cuerpo {
+.juego__info {
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 .juego__autor {
@@ -35,8 +42,9 @@
   font-size: 1.05rem;
 }
 
-.juego__cuerpo h3 {
-  margin-bottom: 0.5rem;
+.juego__info h3,
+.juego__imagenes h3 {
+  margin-bottom: 0.6rem;
 }
 
 .juego__sinopsis {
@@ -91,13 +99,13 @@
 }
 
 @media (max-width: 760px) {
-  .juego {
+  .juego__principal {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .juego__portada {
     --corte: 14px;
-    width: min(240px, 70%);
+    width: min(220px, 70%);
     margin-inline: auto;
   }
 

@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { JuegosService } from '../../services/juegos';
+import { Galeria } from '../galeria/galeria';
 
 @Component({
   selector: 'app-juego-detalle',
-  imports: [RouterLink],
+  imports: [RouterLink, Galeria],
   templateUrl: './juego-detalle.html',
   styleUrl: './juego-detalle.css',
 })

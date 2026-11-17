@@ -4,73 +4,80 @@
   </a>
 
   @if (juego; as j) {
-    <article class="juego">
-      <div class="juego__portada panel-imagen">
-        <img
-          [src]="portada"
-          [alt]="'Imagen de ' + j.titulo"
-          width="600"
-          height="900"
-          (error)="ocultarImagen($event)"
-        />
+    <article class="card juego">
+      <div class="juego__principal">
+        <div class="juego__portada panel-imagen">
+          <img
+            [src]="portada"
+            [alt]="'Imagen de ' + j.titulo"
+            width="600"
+            height="900"
+            (error)="ocultarImagen($event)"
+          />
+        </div>
+
+        <div class="juego__info">
+          <header>
+            <h2>{{ j.titulo }}</h2>
+            <p class="text-muted juego__autor">{{ j.desarrollador }}, {{ j.lanzamiento }}</p>
+          </header>
+
+          <section aria-labelledby="sinopsis">
+            <h3 id="sinopsis">Sinopsis</h3>
+            <p class="juego__sinopsis">{{ j.sinopsis }}</p>
+          </section>
+
+          <section aria-labelledby="ficha">
+            <h3 id="ficha">Ficha técnica</h3>
+            <dl class="juego__ficha">
+              <div class="juego__dato">
+                <dt>Peso aproximado</dt>
+                <dd>
+                  <strong class="juego__peso">{{ j.peso }}</strong>
+                  <span class="text-muted">en la versión de PC</span>
+                </dd>
+              </div>
+
+              <div class="juego__dato">
+                <dt>Plataformas</dt>
+                <dd>
+                  <ul class="juego__chips">
+                    @for (plataforma of j.plataformas; track plataforma) {
+                      <li>{{ plataforma }}</li>
+                    }
+                  </ul>
+                </dd>
+              </div>
+
+              <div class="juego__dato">
+                <dt>Géneros</dt>
+                <dd>
+                  <ul class="juego__chips">
+                    @for (genero of j.generos; track genero) {
+                      <li>{{ genero }}</li>
+                    }
+                  </ul>
+                </dd>
+              </div>
+
+              <div class="juego__dato">
+                <dt>Desarrollador</dt>
+                <dd>{{ j.desarrollador }}</dd>
+              </div>
+
+              <div class="juego__dato">
+                <dt>Lanzamiento</dt>
+                <dd>{{ j.lanzamiento }}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
       </div>
 
-      <div class="card juego__cuerpo">
-        <header>
-          <h2>{{ j.titulo }}</h2>
-          <p class="text-muted juego__autor">{{ j.desarrollador }}, {{ j.lanzamiento }}</p>
-        </header>
-
-        <section aria-labelledby="sinopsis">
-          <h3 id="sinopsis">Sinopsis</h3>
-          <p class="juego__sinopsis">{{ j.sinopsis }}</p>
-        </section>
-
-        <section aria-labelledby="ficha">
-          <h3 id="ficha">Ficha técnica</h3>
-          <dl class="juego__ficha">
-            <div class="juego__dato">
-              <dt>Peso aproximado</dt>
-              <dd>
-                <strong class="juego__peso">{{ j.peso }}</strong>
-                <span class="text-muted">en la versión de PC</span>
-              </dd>
-            </div>
-
-            <div class="juego__dato">
-              <dt>Plataformas</dt>
-              <dd>
-                <ul class="juego__chips">
-                  @for (plataforma of j.plataformas; track plataforma) {
-                    <li>{{ plataforma }}</li>
-                  }
-                </ul>
-              </dd>
-            </div>
-
-            <div class="juego__dato">
-              <dt>Géneros</dt>
-              <dd>
-                <ul class="juego__chips">
-                  @for (genero of j.generos; track genero) {
-                    <li>{{ genero }}</li>
-                  }
-                </ul>
-              </dd>
-            </div>
-
-            <div class="juego__dato">
-              <dt>Desarrollador</dt>
-              <dd>{{ j.desarrollador }}</dd>
-            </div>
-
-            <div class="juego__dato">
-              <dt>Lanzamiento</dt>
-              <dd>{{ j.lanzamiento }}</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
+      <section class="juego__imagenes" aria-labelledby="imagenes">
+        <h3 id="imagenes">Imágenes</h3>
+        <app-galeria [imagenes]="j.capturas" [titulo]="j.titulo" />
+      </section>
     </article>
   } @else {
     <div class="card text-center">

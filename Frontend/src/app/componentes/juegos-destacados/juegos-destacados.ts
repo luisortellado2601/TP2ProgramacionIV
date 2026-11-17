@@ -11,10 +11,8 @@ import { RouterLink } from '@angular/router';
 import { Juego } from '../../models/juego';
 import { JuegosService } from '../../services/juegos';
 
-const VELOCIDAD_PX_POR_SEGUNDO = 28;
-const VELOCIDAD_VUELTA_PX_POR_SEGUNDO = 900;
-const ESPERA_TRAS_INTERACCION_MS = 4000;
-const ESPERA_EN_EXTREMO_MS = 1800;
+const INTERVALO_MS = 3500;
+const ESPERA_TRAS_INTERACCION_MS = 8000;
 
 @Component({
   selector: 'app-juegos-destacados',
@@ -29,26 +27,23 @@ export class JuegosDestacados {
   protected readonly juegos = this.juegosService.listar();
   protected readonly alInicio = signal(true);
   protected readonly alFinal = signal(false);
-  protected readonly pausadoPorUsuario = signal(false);
-  protected readonly avanzando = signal(false);
 
-  private posicion = 0;
-  private ultimoValor = 0;
-  private ultimaMarca = 0;
-  private pausaHasta = 0;
   private encima = false;
-  private volviendo = false;
-  private marco = 0;
+  private pausaHasta = 0;
+  private intervalo: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     afterNextRender(() => {
       this.actualizarExtremos();
-      if (this.prefiereMovimientoReducido()) {
-        this.pausadoPorUsuario.set(true);
+      if (!this.prefiereMovimientoReducido()) {
+        this.intervalo = setInterval(() => this.avanzarSolo(), INTERVALO_MS);
       }
-      this.marco = requestAnimationFrame(this.paso);
     });
-    inject(DestroyRef).onDestroy(() => cancelAnimationFrame(this.marco));
+    inject(DestroyRef).onDestroy(() => {
+      if (this.intervalo) {
+        clearInterval(this.intervalo);
+      }
+    });
   }
 
   protected portada(juego: Juego): string {
@@ -62,14 +57,7 @@ export class JuegosDestacados {
   protected mover(sentido: 1 | -1): void {
     const pista = this.pista().nativeElement;
     this.pausarTemporalmente();
-    pista.scrollBy({
-      left: sentido * pista.clientWidth * 0.85,
-      behavior: this.prefiereMovimientoReducido() ? 'auto' : 'smooth',
-    });
-  }
-
-  protected alternarPausa(): void {
-    this.pausadoPorUsuario.update((pausado) => !pausado);
+    pista.scrollBy({ left: sentido * pista.clientWidth * 0.85, behavior: this.comportamiento() });
   }
 
   protected entrar(): void {
@@ -90,46 +78,29 @@ export class JuegosDestacados {
     this.alFinal.set(pista.scrollLeft + pista.clientWidth >= pista.scrollWidth - 1);
   }
 
-  private readonly paso = (marca: number): void => {
+  private avanzarSolo(): void {
+    if (this.encima || performance.now() < this.pausaHasta) {
+      return;
+    }
     const pista = this.pista().nativeElement;
-    const transcurrido = this.ultimaMarca ? Math.min(marca - this.ultimaMarca, 100) : 0;
-    this.ultimaMarca = marca;
-
-    if (Math.abs(pista.scrollLeft - this.ultimoValor) > 2) {
-      this.posicion = pista.scrollLeft;
-      this.ultimoValor = pista.scrollLeft;
-      this.pausaHasta = marca + ESPERA_TRAS_INTERACCION_MS;
+    const alFinal = pista.scrollLeft + pista.clientWidth >= pista.scrollWidth - 1;
+    if (alFinal) {
+      pista.scrollTo({ left: 0, behavior: this.comportamiento() });
+      return;
     }
+    pista.scrollBy({ left: this.anchoDeUnaTarjeta(pista), behavior: this.comportamiento() });
+  }
 
-    const activo = !this.pausadoPorUsuario() && !this.encima && marca >= this.pausaHasta;
-    this.avanzando.set(activo);
+  private anchoDeUnaTarjeta(pista: HTMLElement): number {
+    const tarjeta = pista.querySelector('li');
+    const ancho = tarjeta?.getBoundingClientRect().width ?? 0;
+    const separacion = parseFloat(getComputedStyle(pista).columnGap) || 0;
+    return ancho > 0 ? ancho + separacion : pista.clientWidth * 0.4;
+  }
 
-    if (activo) {
-      const maximo = pista.scrollWidth - pista.clientWidth;
-      if (this.volviendo) {
-        this.posicion = Math.max(
-          0,
-          this.posicion - (VELOCIDAD_VUELTA_PX_POR_SEGUNDO * transcurrido) / 1000,
-        );
-        if (this.posicion <= 0) {
-          this.volviendo = false;
-          this.pausaHasta = marca + ESPERA_EN_EXTREMO_MS;
-        }
-      } else if (this.posicion >= maximo - 1) {
-        this.volviendo = true;
-        this.pausaHasta = marca + ESPERA_EN_EXTREMO_MS;
-      } else {
-        this.posicion = Math.min(
-          maximo,
-          this.posicion + (VELOCIDAD_PX_POR_SEGUNDO * transcurrido) / 1000,
-        );
-      }
-      pista.scrollLeft = this.posicion;
-      this.ultimoValor = pista.scrollLeft;
-    }
-
-    this.marco = requestAnimationFrame(this.paso);
-  };
+  private comportamiento(): ScrollBehavior {
+    return this.prefiereMovimientoReducido() ? 'auto' : 'smooth';
+  }
 
   private prefiereMovimientoReducido(): boolean {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;

@@ -1,43 +1,133 @@
-.perfil__editar {
-  margin-top: 0.9rem;
-}
-
 .perfil__volver {
   display: inline-block;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .perfil-card {
   display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.perfil-cabecera {
+  display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+}
+
+.perfil-marco {
+  --chaflan: 16%;
+  flex-shrink: 0;
+  width: 148px;
+  height: 148px;
+  padding: 5px;
+  background: linear-gradient(135deg, var(--color-hud), var(--color-blue));
+  clip-path: polygon(
+    var(--chaflan) 0,
+    100% 0,
+    100% calc(100% - var(--chaflan)),
+    calc(100% - var(--chaflan)) 100%,
+    0 100%,
+    0 var(--chaflan)
+  );
 }
 
 .perfil-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  border: var(--borde);
-  color: var(--color-ink);
-  font-family: var(--font-display);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.6rem;
   text-transform: uppercase;
+  clip-path: polygon(
+    calc(var(--chaflan) - 3%) 0,
+    100% 0,
+    100% calc(100% - var(--chaflan) + 3%),
+    calc(100% - var(--chaflan) + 3%) 100%,
+    0 100%,
+    0 calc(var(--chaflan) - 3%)
+  );
 }
 
 .perfil-avatar--imagen {
   object-fit: cover;
-  border: var(--borde);
 }
 
-.perfil-datos h2 {
-  margin-bottom: 0.25rem;
+.perfil-datos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.perfil-usuario {
+  color: var(--color-blue);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.perfil-rol {
+  padding: 0.1rem 0.7rem;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.perfil-rol--administrador {
+  color: var(--color-admin);
+}
+
+.perfil-rol--usuario {
+  color: var(--color-info);
+}
+
+.perfil-descripcion {
+  max-width: 62ch;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.perfil-ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1.1rem 1.5rem;
+  margin: 0;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--color-line);
+}
+
+.perfil-dato dt {
+  margin-bottom: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.perfil-dato dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.perfil-juegos {
+  margin-top: 2.5rem;
+}
+
+.perfil-juegos app-juegos-destacados {
+  margin-bottom: 0;
 }
 
 .perfil-subtitulo {
@@ -56,9 +146,18 @@
   gap: 0.75rem;
 }
 
-@media (max-width: 480px) {
-  .perfil-card {
+@media (max-width: 640px) {
+  .perfil-cabecera {
     flex-direction: column;
     text-align: center;
+  }
+
+  .perfil-datos {
+    align-items: center;
+  }
+
+  .perfil-marco {
+    width: 128px;
+    height: 128px;
   }
 }

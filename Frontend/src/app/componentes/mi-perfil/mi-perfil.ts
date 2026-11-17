@@ -6,6 +6,7 @@ import { PublicacionesService } from '../../services/publicaciones';
 import { Publicacion } from '../../models/publicacion';
 import { PublicacionCard } from '../publicacion/publicacion';
 import { Comentarios } from '../comentarios/comentarios';
+import { JuegosDestacados } from '../juegos-destacados/juegos-destacados';
 import { InicialesPipe } from '../../pipes/iniciales-pipe';
 import { Spinner } from '../spinner/spinner';
 
@@ -15,7 +16,15 @@ const COMENTARIOS_POR_PUBLICACION = 3;
 
 @Component({
   selector: 'app-mi-perfil',
-  imports: [DatePipe, RouterLink, PublicacionCard, Comentarios, InicialesPipe, Spinner],
+  imports: [
+    DatePipe,
+    RouterLink,
+    PublicacionCard,
+    Comentarios,
+    InicialesPipe,
+    JuegosDestacados,
+    Spinner,
+  ],
   templateUrl: './mi-perfil.html',
   styleUrl: './mi-perfil.css',
 })

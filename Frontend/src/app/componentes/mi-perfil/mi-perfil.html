@@ -4,33 +4,52 @@
       Volver a publicaciones
     </a>
 
-    <div class="card perfil-card">
-      @if (usuario.imagenPerfilUrl) {
-        <img
-          class="perfil-avatar perfil-avatar--imagen"
-          [src]="usuario.imagenPerfilUrl"
-          [alt]="'Foto de perfil de ' + usuario.nombre"
-        />
-      } @else {
-        <div class="perfil-avatar">
-          {{ usuario.nombre | iniciales: usuario.apellido }}
+    <article class="card perfil-card">
+      <header class="perfil-cabecera">
+        <div class="perfil-marco">
+          @if (usuario.imagenPerfilUrl) {
+            <img
+              class="perfil-avatar perfil-avatar--imagen"
+              [src]="usuario.imagenPerfilUrl"
+              [alt]="'Foto de perfil de ' + usuario.nombre"
+            />
+          } @else {
+            <div class="perfil-avatar">
+              {{ usuario.nombre | iniciales: usuario.apellido }}
+            </div>
+          }
         </div>
+
+        <div class="perfil-datos">
+          <h2>{{ usuario.nombre }} {{ usuario.apellido }}</h2>
+          <p class="perfil-usuario">&#64;{{ usuario.nombreUsuario }}</p>
+          <span class="perfil-rol" [class]="'perfil-rol perfil-rol--' + usuario.perfil">
+            {{ usuario.perfil }}
+          </span>
+        </div>
+
+        <a class="btn btn-secondary perfil__editar" routerLink="/perfil/editar">Editar perfil</a>
+      </header>
+
+      @if (usuario.descripcion) {
+        <p class="perfil-descripcion">{{ usuario.descripcion }}</p>
       }
 
-      <div class="perfil-datos">
-        <h2>{{ usuario.nombre }} {{ usuario.apellido }}</h2>
-        <p class="text-muted">&#64;{{ usuario.nombreUsuario }} · {{ usuario.perfil }}</p>
-        <p class="text-muted">{{ usuario.correo }}</p>
-        <!-- La fecha viaja como medianoche UTC: se muestra en UTC para que no retroceda un día. -->
-        <p class="text-muted">
-          Nacimiento: {{ usuario.fechaNacimiento | date: 'dd/MM/yyyy' : 'UTC' }}
-        </p>
-        @if (usuario.descripcion) {
-          <p>{{ usuario.descripcion }}</p>
-        }
-        <a class="btn btn-secondary perfil__editar" routerLink="/perfil/editar">Editar perfil</a>
-      </div>
-    </div>
+      <dl class="perfil-ficha">
+        <div class="perfil-dato">
+          <dt>Correo</dt>
+          <dd>{{ usuario.correo }}</dd>
+        </div>
+        <div class="perfil-dato">
+          <dt>Nacimiento</dt>
+          <dd>{{ usuario.fechaNacimiento | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+        <div class="perfil-dato">
+          <dt>Miembro desde</dt>
+          <dd>{{ usuario.fechaAlta | date: 'dd/MM/yyyy' }}</dd>
+        </div>
+      </dl>
+    </article>
 
     <h3 class="perfil-subtitulo titulo-marca">Mis últimas publicaciones</h3>
     @if (cargando()) {
@@ -56,5 +75,9 @@
         }
       </div>
     }
+
+    <section class="perfil-juegos">
+      <app-juegos-destacados />
+    </section>
   </div>
 }

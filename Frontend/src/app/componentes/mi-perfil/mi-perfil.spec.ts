@@ -51,7 +51,8 @@ describe('MiPerfil', () => {
     expect(texto).toContain('@ana');
     expect(texto).toContain('ana@mail.com');
     expect(texto).toContain('Me gustan los RPG');
-    expect(texto).toContain('Nacimiento: 20/05/1999');
+    expect(texto).toContain('Nacimiento');
+    expect(texto).toContain('20/05/1999');
   });
 
   it('la fecha de nacimiento no retrocede un día (se muestra en UTC, sin importar la zona horaria)', () => {
@@ -74,6 +75,22 @@ describe('MiPerfil', () => {
     const enlace = html.querySelector('a.perfil__editar');
     expect(enlace?.textContent?.trim()).toBe('Editar perfil');
     expect(enlace?.getAttribute('href')).toBe('/perfil/editar');
+  });
+
+  it('los juegos populares van al pie de la página, después de las publicaciones', () => {
+    const { fixture, html } = crear();
+    backend
+      .expectOne((r) => r.url === `${environment.apiUrl}/publicaciones`)
+      .flush({ total: 0, publicaciones: [] });
+    fixture.detectChanges();
+
+    const juegos = html.querySelector('app-juegos-destacados') as HTMLElement;
+    const subtitulo = html.querySelector('.perfil-subtitulo') as HTMLElement;
+    expect(juegos).not.toBeNull();
+    expect(html.querySelector('.perfil-card app-juegos-destacados')).toBeNull();
+    expect(
+      subtitulo.compareDocumentPosition(juegos) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('mientras carga las publicaciones muestra el spinner', () => {

@@ -61,8 +61,19 @@
   stroke-linejoin: round;
 }
 
-.marca__play {
+.marca__mando {
   fill: var(--color-ink);
+}
+
+.marca__detalle {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.marca__boton {
+  fill: var(--color-primary);
 }
 
 .marca__luz {
@@ -131,10 +142,45 @@
   margin-left: auto;
 }
 
+.topbar__acciones .btn,
+.topbar__acciones .topbar__usuario {
+  --recorte: 9px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--recorte)) 0,
+    100% var(--recorte),
+    100% 100%,
+    var(--recorte) 100%,
+    0 calc(100% - var(--recorte))
+  );
+}
+
+.topbar__acciones .btn:not(:disabled):hover,
+.topbar__acciones .btn:not(:disabled):active,
+.topbar__acciones .topbar__usuario:hover {
+  transform: none;
+  box-shadow: none;
+  filter: none;
+  color: var(--color-blue);
+  background: var(--color-surface-alt);
+}
+
 .topbar__tema {
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  padding: 0.5rem 0.75rem;
 }
 
 .topbar__tema svg {
@@ -145,21 +191,13 @@
   stroke-linejoin: round;
 }
 
-.topbar__usuario {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-text);
-  background: var(--color-surface-alt);
-  border: 2px solid var(--color-line-strong);
-  border-radius: 999px;
-  padding: 0.2rem 0.85rem;
-  text-decoration: none;
+.topbar__acciones .topbar__usuario {
+  letter-spacing: 0.02em;
 }
 
-.topbar__salir {
+.topbar__acciones .topbar__salir {
   display: none;
-  padding: 0.45rem 1rem;
+  text-transform: uppercase;
 }
 
 .cortina {
@@ -324,7 +362,7 @@
     display: flex;
   }
 
-  .topbar__salir {
+  .topbar__acciones .topbar__salir {
     display: inline-flex;
   }
 }
@@ -335,7 +373,7 @@
     gap: 0.7rem;
   }
 
-  .topbar__usuario {
+  .topbar__acciones .topbar__usuario {
     display: none;
   }
 

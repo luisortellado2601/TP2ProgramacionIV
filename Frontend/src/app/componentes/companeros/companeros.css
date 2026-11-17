@@ -1,0 +1,239 @@
+.companeros__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.companeros__modos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 4px;
+}
+
+.companeros__form {
+  margin-bottom: 1.5rem;
+}
+
+.companeros__form h3 {
+  margin-bottom: 1.25rem;
+}
+
+.companeros__grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0 1.25rem;
+}
+
+.companeros__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-bottom: 4px;
+}
+
+.companeros__filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  align-items: end;
+  gap: 0 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+}
+
+.companeros__filtros .form-field {
+  margin-bottom: 0.9rem;
+}
+
+.companeros__botones {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 4px;
+}
+
+.companeros__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.25rem;
+}
+
+.busqueda__principal {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.busqueda__portada {
+  flex-shrink: 0;
+  width: 92px;
+  height: 138px;
+  object-fit: cover;
+  object-position: top;
+  background: var(--color-surface-alt);
+  border: 2px solid var(--color-line-strong);
+}
+
+.busqueda__cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.busqueda__cuerpo h3 {
+  font-size: 1.3rem;
+  overflow-wrap: anywhere;
+}
+
+.busqueda__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.busqueda__chips li {
+  padding: 0.15rem 0.7rem;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.busqueda__chips .busqueda__chip--juego {
+  background: var(--color-primary);
+  border-color: var(--contorno-tecla);
+  color: var(--color-ink);
+}
+
+.busqueda__descripcion {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.busqueda__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.busqueda__autor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.busqueda__avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: var(--borde);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.busqueda__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-bottom: 4px;
+}
+
+.busqueda__acciones .btn {
+  padding: 0.35rem 0.9rem;
+}
+
+.contacto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  background: var(--color-surface-alt);
+  border: var(--borde);
+}
+
+.contacto__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contacto__mensaje {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.contacto__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.contacto__texto {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.contacto__nuevo {
+  margin-bottom: 0;
+}
+
+.contacto__nuevo textarea {
+  resize: vertical;
+}
+
+.contacto__acciones {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+
+.companeros__mas {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 560px) {
+  .busqueda__principal {
+    flex-direction: column;
+  }
+
+  .busqueda__portada {
+    width: 100%;
+    height: 150px;
+    object-position: center 20%;
+  }
+}

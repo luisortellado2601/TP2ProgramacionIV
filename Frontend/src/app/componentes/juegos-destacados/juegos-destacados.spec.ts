@@ -8,16 +8,7 @@ const ANCHO_TOTAL = 2000;
 
 describe('JuegosDestacados', () => {
   function crear(opciones: { movimientoReducido?: boolean } = {}) {
-    vi.useFakeTimers({
-      toFake: [
-        'requestAnimationFrame',
-        'cancelAnimationFrame',
-        'performance',
-        'setTimeout',
-        'clearTimeout',
-        'Date',
-      ],
-    });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance', 'Date'] });
     if (opciones.movimientoReducido) {
       vi.stubGlobal('matchMedia', () => ({ matches: true }));
     }
@@ -26,6 +17,8 @@ describe('JuegosDestacados', () => {
     const html = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
     const pista = html.querySelector('.juegos__pista') as HTMLElement;
+    const scrollBy = vi.fn();
+    const scrollTo = vi.fn();
     let scrollLeft = 0;
     Object.defineProperty(pista, 'scrollLeft', {
       configurable: true,
@@ -34,13 +27,9 @@ describe('JuegosDestacados', () => {
     });
     Object.defineProperty(pista, 'clientWidth', { configurable: true, value: ANCHO_VISIBLE });
     Object.defineProperty(pista, 'scrollWidth', { configurable: true, value: ANCHO_TOTAL });
-    return {
-      fixture,
-      html,
-      pista,
-      posicion: () => scrollLeft,
-      mover: (valor: number) => (scrollLeft = valor),
-    };
+    pista.scrollBy = scrollBy as unknown as typeof pista.scrollBy;
+    pista.scrollTo = scrollTo as unknown as typeof pista.scrollTo;
+    return { fixture, html, scrollBy, scrollTo, mover: (valor: number) => (scrollLeft = valor) };
   }
 
   afterEach(() => {
@@ -84,98 +73,77 @@ describe('JuegosDestacados', () => {
     expect(html.querySelector('.juego-tarjeta__titulo')?.textContent).toContain('Fortnite');
   });
 
-  it('tiene flechas para deslizar y un botón de pausa, accesibles por su nombre', () => {
+  it('tiene flechas para deslizar y no tiene botón de pausa', () => {
     const { html } = crear();
 
     expect(html.querySelector('button[aria-label="Ver juegos anteriores"]')).not.toBeNull();
     expect(html.querySelector('button[aria-label="Ver más juegos"]')).not.toBeNull();
-    expect(
-      html.querySelector('button[aria-label="Pausar el desplazamiento automático"]'),
-    ).not.toBeNull();
+    expect(html.querySelectorAll('.juegos button').length).toBe(2);
   });
 
-  it('se desliza solo, lentamente, sin que nadie lo toque', async () => {
-    const { posicion } = crear();
+  it('avanza solo, de a una tarjeta, en intervalos', async () => {
+    const { scrollBy } = crear();
 
-    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(3400);
+    expect(scrollBy).not.toHaveBeenCalled();
 
-    expect(posicion()).toBeGreaterThan(30);
-    expect(posicion()).toBeLessThan(100);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(scrollBy).toHaveBeenCalledOnce();
+    expect(scrollBy.mock.calls[0][0].left).toBeGreaterThan(0);
+
+    await vi.advanceTimersByTimeAsync(3500);
+    expect(scrollBy).toHaveBeenCalledTimes(2);
   });
 
   it('se detiene mientras el mouse está encima y sigue al sacarlo', async () => {
-    const { html, posicion } = crear();
+    const { html, scrollBy } = crear();
     const seccion = html.querySelector('.juegos') as HTMLElement;
 
     seccion.dispatchEvent(new Event('mouseenter'));
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(posicion()).toBe(0);
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(scrollBy).not.toHaveBeenCalled();
 
     seccion.dispatchEvent(new Event('mouseleave'));
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(posicion()).toBeGreaterThan(30);
+    await vi.advanceTimersByTimeAsync(3600);
+    expect(scrollBy).toHaveBeenCalled();
   });
 
   it('se detiene mientras un elemento tiene el foco del teclado', async () => {
-    const { html, posicion } = crear();
-    const seccion = html.querySelector('.juegos') as HTMLElement;
+    const { html, scrollBy } = crear();
 
-    seccion.dispatchEvent(new Event('focusin'));
-    await vi.advanceTimersByTimeAsync(2000);
+    (html.querySelector('.juegos') as HTMLElement).dispatchEvent(new Event('focusin'));
+    await vi.advanceTimersByTimeAsync(8000);
 
-    expect(posicion()).toBe(0);
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 
-  it('el botón de pausa lo detiene y lo reanuda', async () => {
-    const { fixture, html, posicion } = crear();
-    const boton = () => html.querySelector('.juegos__controles > button') as HTMLButtonElement;
+  it('si la persona lo toca, espera unos segundos antes de seguir solo', async () => {
+    const { html, scrollBy } = crear();
 
-    boton().click();
-    fixture.detectChanges();
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(posicion()).toBe(0);
-    expect(boton().getAttribute('aria-label')).toBe('Reanudar el desplazamiento automático');
-    expect(boton().getAttribute('aria-pressed')).toBe('true');
+    (html.querySelector('.juegos') as HTMLElement).dispatchEvent(new Event('pointerdown'));
+    await vi.advanceTimersByTimeAsync(7000);
+    expect(scrollBy).not.toHaveBeenCalled();
 
-    boton().click();
-    fixture.detectChanges();
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(posicion()).toBeGreaterThan(30);
-    expect(boton().getAttribute('aria-pressed')).toBe('false');
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(scrollBy).toHaveBeenCalled();
   });
 
-  it('si la persona lo desliza, espera unos segundos antes de seguir solo', async () => {
-    const { posicion, mover } = crear();
-    await vi.advanceTimersByTimeAsync(100);
-
-    mover(700);
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(posicion()).toBe(700);
-
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(posicion()).toBeGreaterThan(700);
-  });
-
-  it('al llegar al final espera un momento y vuelve al principio', async () => {
-    const { posicion, mover } = crear();
-    await vi.advanceTimersByTimeAsync(100);
-
+  it('al llegar al final vuelve al principio', async () => {
+    const { scrollBy, scrollTo, mover } = crear();
     mover(ANCHO_TOTAL - ANCHO_VISIBLE);
-    await vi.advanceTimersByTimeAsync(4100);
-    await vi.advanceTimersByTimeAsync(3000);
 
-    expect(posicion()).toBeLessThan(ANCHO_TOTAL - ANCHO_VISIBLE);
+    await vi.advanceTimersByTimeAsync(3600);
+
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ left: 0 }));
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 
-  it('con movimiento reducido no se desliza solo y arranca en pausa', async () => {
-    const { fixture, html, posicion } = crear({ movimientoReducido: true });
-    fixture.detectChanges();
+  it('con movimiento reducido no se desliza solo', async () => {
+    const { scrollBy, scrollTo } = crear({ movimientoReducido: true });
 
-    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(20000);
 
-    expect(posicion()).toBe(0);
-    expect(
-      html.querySelector('button[aria-label="Reanudar el desplazamiento automático"]'),
-    ).not.toBeNull();
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

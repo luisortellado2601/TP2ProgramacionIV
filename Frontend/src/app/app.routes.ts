@@ -34,6 +34,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'companeros',
+    loadComponent: () => import('./componentes/companeros/companeros').then((m) => m.Companeros),
+    canActivate: [authGuard],
+  },
+  {
     path: 'juegos/:id',
     loadComponent: () =>
       import('./componentes/juego-detalle/juego-detalle').then((m) => m.JuegoDetalle),

@@ -40,7 +40,7 @@
 - En Windows, `nest start --watch` puede dejar procesos `node` colgados en el puerto 3000 (`EADDRINUSE`). Buscar el PID con `Get-NetTCPConnection -LocalPort 3000` y matarlo con `Stop-Process`.
 
 ### Decisiones vigentes
-- **Sesión:** el token dura `JWT_EXPIRES_IN_SEGUNDOS` (900 por defecto según el enunciado, pero se entrega en **60** a propósito para que el profesor pueda ver el vencimiento y el refresco sin esperar 15 minutos). El front decodifica el JWT y avisa cuando queda un tercio de su vida (a los 20 s con 60 s), con un modal que no se cierra al hacer clic afuera. Si se ignora, la sesión se cierra sola al vencer el token.
+- **Sesión:** el token dura `JWT_EXPIRES_IN_SEGUNDOS` (900 por defecto según el enunciado, pero se entrega en **60** a propósito para que el profesor pueda ver el vencimiento y el refresco sin esperar 15 minutos). El front decodifica el JWT y avisa cuando queda un tercio de su vida (quedan 20 s con 60 s, o sea a los 40 s de uso), con un modal que no se cierra al hacer clic afuera y cuyo texto no es un cronómetro en vivo. Si se ignora, al vencer solo se cierra el aviso: la sesión se cierra en el siguiente pedido, que da 401 y lo maneja el interceptor.
 - **401** en una ruta protegida: el interceptor cierra la sesión, muestra "Sesión expirada" y manda a `/login`. En login y registro el 401 significa credenciales incorrectas y lo muestra la propia pantalla.
 - Sin bcrypt ni Multer (no vistos en la cursada): hash con `PasswordHasher` (`node:crypto`) e imágenes en base64 subidas a Supabase Storage.
 - Backend en ESM: los imports relativos terminan en `.js`.
@@ -53,7 +53,6 @@
 - Menor: en `darLike`/`quitarLike`, si la publicación se elimina justo entre la comprobación y la actualización, responde 409 en vez de 404.
 - Opcional: definir `CORS_ORIGIN` en el back de Vercel (`https://nextplaygaming.vercel.app`) y borrar la variable vieja `JWT_EXPIRES_IN_MINUTOS`, si existe.
 - PWA sin `SwUpdate`: tras un deploy, quien ya visitó el sitio puede ver la versión anterior hasta recargar una o dos veces.
-- Detalle técnico y decisiones: [`../GUIA_TECNICA.md`](../GUIA_TECNICA.md).
 
 ---
 

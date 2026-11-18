@@ -68,9 +68,9 @@ src/
 │   ├── guards/             authGuard (requiere sesión), guestGuard (solo sin sesión) y adminGuard (solo administradores)
 │   ├── directives/         Directivas propias: `*appSoloAdmin` (muestra el elemento solo a administradores), `appPastillaPerfil` (clase de color de la pastilla según el perfil: administrador o usuario) y `appContadorCaracteres` (contador "n / máx" en campos de texto: amarillo desde el 90 %, rojo con "¡Límite alcanzado!" al completarlo)
 │   ├── pipes/              Pipes propias: `iniciales` (iniciales para el avatar), `estadoUsuario` (clase CSS según habilitado) y `tiempoRelativo` ("hace 5 min", en publicaciones y comentarios)
-│   ├── interceptors/       authInterceptor: agrega el token Bearer y, ante un 401, cierra la sesión y va al login
+│   ├── interceptors/       authInterceptor: agrega el token Bearer solo a la API y, ante un 401 en rutas protegidas, cierra la sesión una sola vez, avisa y va al login
 │   ├── models/             Interfaces de usuario, sesión y payloads
-│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer y cierre automático al vencer), ModalService, PublicacionesService, ComentariosService, UsuariosService, EstadisticasService (rutas de administrador), JuegosService (catálogo local e imágenes), TemaService (modo claro/oscuro) y ActualizacionService (aviso de versión nueva del PWA)
+│   ├── services/           AuthService (sesión en localStorage, `autorizar`, `refrescar`, aviso de sesión por vencer con dos temporizadores: al vencer solo cierra el aviso, la sesión se cierra en el siguiente 401), ModalService, PublicacionesService, ComentariosService, UsuariosService, EstadisticasService (rutas de administrador), JuegosService (catálogo local e imágenes), TemaService (modo claro/oscuro) y ActualizacionService (aviso de versión nueva del PWA)
 │   ├── utils/              Validadores propios, helper de mensajes de error, decodificar JWT, formatear duración y marca de la secuencia de arranque (`arranque.ts`)
 │   ├── app.routes.ts       Rutas con lazy loading
 │   └── app.config.ts       Providers (router, HttpClient con el interceptor)

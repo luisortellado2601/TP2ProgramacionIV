@@ -16,6 +16,8 @@ import { formatearDuracion } from '../utils/formatear-duracion';
 const CLAVE_SESION = 'nextplay_sesion';
 const CLAVE_TOKEN_RECIBIDO = 'nextplay_token_recibido';
 
+const AVISO_ANTES_DE_VENCER_MS = 30 * 1000;
+
 const TITULO_SESION_POR_VENCER = 'Sesión por vencer';
 
 export const MENSAJE_SESION_EXPIRADA =
@@ -131,7 +133,7 @@ export class AuthService {
     }
     const duracionMs = (payload.exp - payload.iat) * 1000;
     const vencimientoMs = recibidoEn + duracionMs;
-    const avisoEnMs = vencimientoMs - duracionMs / 3 - Date.now();
+    const avisoEnMs = vencimientoMs - AVISO_ANTES_DE_VENCER_MS - Date.now();
     if (vencimientoMs - Date.now() <= 0) {
       return;
     }

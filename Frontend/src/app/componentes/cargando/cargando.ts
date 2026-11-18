@@ -93,9 +93,9 @@ export class Cargando implements OnInit {
   }
 
   private armarLema(): string {
-    const nombreUsuario = this.authService.usuarioActual()?.nombreUsuario;
+    const nombreUsuario = this.authService.usuarioActual()?.nombre;
     return nombreUsuario
-      ? `Qué bueno verte, @${nombreUsuario}.`
+      ? `Qué bueno verte, ${nombreUsuario}`
       : 'Compartí reseñas y encontrá con quién jugar.';
   }
 
